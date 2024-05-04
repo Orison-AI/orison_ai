@@ -1,0 +1,23 @@
+server:
+  env_name: ${APP_ENV:openai}
+
+llm:
+  mode: openai
+  max_new_tokens: 12000
+  context_window: 128000
+
+embedding:
+  mode: openai
+  ingest_mode: pipeline
+  count_workers: 3
+
+openai:
+  api_key: ${OPENAI_API_KEY:}
+  model: gpt-4-turbo
+
+rag:
+  similarity_top_k: 5
+  rerank:
+    enabled: True
+    model: cross-encoder/ms-marco-MiniLM-L-2-v2
+    top_n: 1

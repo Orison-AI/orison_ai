@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  orison-service:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    tty: true
+    stdin_open: true
+    image: orison
+    container_name: orison
+    volumes:
+      - ../:/app
+    ports:
+      - "8888:8888"
+      - "5004:5004"
+      - "27017:27017"

@@ -1,0 +1,14 @@
+tqdm
+numpy
+openai
+wget
+nltk
+doc2text
+docx2txt
+pymongo
+streamlit
+mongoengine
+pypdf2
+build
+injector
+ipython
