@@ -14,4 +14,13 @@ services:
     ports:
       - "8888:8888"
       - "5004:5004"
+    depends_on:
+      - mongodb
+
+  mongodb:
+    image: mongo:latest
+    command: [ "mongod", "--bind_ip_all" ]
+    ports:
       - "27017:27017"
+    volumes:
+      - ../vault/mongodb:/data/db

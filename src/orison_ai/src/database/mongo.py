@@ -19,8 +19,8 @@ from pymongo import MongoClient
 
 
 class MongoDB:
-    def __init__(self, db_name, collection_name, db_path="mongodb://localhost:27017/"):
-        self.client = MongoClient(serverSelectionTimeoutMS=1000)
+    def __init__(self, db_name, collection_name, db_path="mongodb://mongodb:27017/"):
+        self.client = MongoClient(db_path, serverSelectionTimeoutMS=1000)
         self.db = self.client[db_name]
         self.collection_name = collection_name
         self.collection = self.db[collection_name]
