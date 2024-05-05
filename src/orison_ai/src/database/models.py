@@ -33,14 +33,24 @@ class Publication(EmbeddedDocument):
     year = IntField()
     impact_factor = FloatField()
     type_of_paper = StringField()
-    feedbacks = ListField(StringField())
+    peer_reviews = ListField(StringField())
 
 
-class GoogleScholarDB(Document):
+class GoogleScholarDB(EmbeddedDocument):
     name = StringField(required=True)
-    position = StringField()
+    designation = StringField()
     affiliation = StringField()
     total_citations = IntField()
     publications = ListField(EmbeddedDocumentField(Publication))
+    other_details = StringField()
 
-    meta = {"collection": "google_scholars"}
+
+class Summary(EmbeddedDocument):
+    questions = ListField(StringField())
+    responses = ListField(StringField())
+
+
+class ApplicantProfile(Document):
+    google_scholar = EmbeddedDocumentField(GoogleScholarDB)
+    summary = EmbeddedDocumentField(Summary)
+    meta = {"collection": "ApplicantProfile"}
