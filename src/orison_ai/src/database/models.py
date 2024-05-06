@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.8
+#! /usr/bin/env python3.9
 
 # ==========================================================================
 #  Copyright (c) Orison AI, 2024.
@@ -26,6 +26,10 @@ from mongoengine import (
 
 
 class Publication(EmbeddedDocument):
+    """
+    MongoDB document class for a Publication detail of the applicant
+    """
+
     title = StringField(required=True)
     authors = ListField(StringField())
     citations_received = IntField()
@@ -36,7 +40,13 @@ class Publication(EmbeddedDocument):
     peer_reviews = ListField(StringField())
 
 
-class GoogleScholarDB(EmbeddedDocument):
+class GoogleScholarDB(Document):
+    """
+    MongoDB document class for Google scholar details of the applicant
+    """
+
+    _id = StringField()
+    user_id = StringField(required=True, unique=True)
     name = StringField(required=True)
     designation = StringField()
     affiliation = StringField()
@@ -45,12 +55,19 @@ class GoogleScholarDB(EmbeddedDocument):
     other_details = StringField()
 
 
-class Summary(EmbeddedDocument):
-    questions = ListField(StringField())
-    responses = ListField(StringField())
+class QandA(EmbeddedDocument):
+    """
+    MongoDB document class for QandA details of the applicant
+    """
+
+    question = StringField(required=True)
+    answer = StringField(required=True)
 
 
-class ApplicantProfile(Document):
-    google_scholar = EmbeddedDocumentField(GoogleScholarDB)
-    summary = EmbeddedDocumentField(Summary)
-    meta = {"collection": "ApplicantProfile"}
+class Story(Document):
+    """
+    MongoDB document class for Story of the applicant
+    """
+
+    user_id = StringField(required=True, unique=True)
+    summary = ListField(EmbeddedDocumentField(QandA))

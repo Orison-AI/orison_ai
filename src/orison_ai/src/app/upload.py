@@ -14,18 +14,18 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-import os, sys
-
-from orison_ai.src.core.loader import PDFLoader
-
-categories = ["awards", "papers", "research"]
+import streamlit as st
 
 
-class Documents:
-    def __init__(self, side_bar, mongo_client):
-        self._mongo_client = mongo_client
+class Upload:
+    def __init__(self, user_id, side_bar):
+        self._user_id = user_id
         self._sidebar = side_bar
-        self.pdf_loader = PDFLoader(categories[2])
+        self._scholar_link = st.sidebar.text_input(
+            label="#### Your Google Scholar Link 👇",
+            placeholder="Your Google Scholar Link",
+            type="default",
+        )
 
     def run(self):
         pass

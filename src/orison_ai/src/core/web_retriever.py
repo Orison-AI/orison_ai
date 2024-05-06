@@ -14,31 +14,28 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-# External imports
-from motor.motor_asyncio import AsyncIOMotorClient
-from bson.objectid import ObjectId
-import logging
+from orison_ai.src.database.google_scholar_collection import GoogleScholarClient
+from orison_ai.src.web_extractors.extractors import (
+    get_google_scholar_info,
+)
+import traceback
+import asyncio
 from orison_ai.src.utils.constants import DB_NAME
 
-_logger = logging.getLogger(__name__)
 
+if __name__ == "__main__":
+    user_id = "rmalhan"
+    client = GoogleScholarClient(user_id=user_id, db_name=DB_NAME)
+    scholar_link = "https://scholar.google.com/citations?user=QW93AM0AAAAJ&hl=en&oi=ao"
 
-class InsertionError(Exception):
-    pass
+    if scholar_link != "":
+        try:
+            scholar_info = get_google_scholar_info(scholar_link)
+        except Exception as e:
+            print(
+                f"Failed to generate google scholar database. Error: {traceback.format_exc(e)}"
+            )
 
-
-class DBInitializer:
-    def __init__(
-        self, db_name: str = DB_NAME, db_path: str = "mongodb://mongodb:27017/"
-    ):
-        """
-        Initializes an instance of a MongoDB object, which can be used to
-        connect to a MongoDB database
-        DB_NAME is the law firm database name
-        Collection names are specific to applicant profiles
-
-        :param db_name: the name of the database to connect to
-        :param db_path: the path to the database
-        """
-        self.client = AsyncIOMotorClient(db_path)
-        self._db = self.client[db_name]
+        if scholar_info is not None:
+            scholar_info.user_id = user_id
+            asyncio.run(client.insert(scholar_info))

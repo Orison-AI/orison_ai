@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.8
+#! /usr/bin/env python3.9
 
 # ==========================================================================
 #  Copyright (c) Orison AI, 2024.
@@ -14,72 +14,101 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-
-def generate_scholar_message(scholar_info):
-    message = ""
-    message = "\n".join(
-        [message, _message_append_helper("Candidate Name", scholar_info.name)]
-    )
-    message = "\n".join(
-        [message, _message_append_helper("Candidate Position", scholar_info.position)]
-    )
-    message = "\n".join(
-        [
-            message,
-            _message_append_helper("Citation Count", scholar_info.total_citations),
-        ]
-    )
-    message = "\n\n".join([message, "Publications:"])
-    message = "\n".join([message, _publication_helper(scholar_info.publications)])
-    return message
+from private_gpt.di import global_injector
 
 
-def _message_append_helper(text, field):
-    if field is None:
-        return ""
-    if isinstance(field, str):
-        if field == "":
-            return ""
-    return f"{text}: {field}"
+def get_motor_db(db_namespace, event_loop=None, asyncio_client=True):
+    """
+    Gets the motor db client given the specified parameter namespace
+
+    Warning: the returned client will only work with the specified event_loop
+    or the current event loop if None! If using multiple event loops, be very
+    careful to create separate clients and not to share futures between them
+
+    :param db_namespace: The parameter namespace
+    :type db_namespace: str
+    :param event_loop: The event loop to use
+    :type event_loop: Union[asyncio.AbstractEventLoop, ioloop.IOLoop, None]
+    :param asyncio_client: True if using an asyncio event loop, false for tornado
+    :rtype: Union[motor.motor_tornado.MotorClient, motor.motor_asyncio.AsyncIOMotorClient]
+    """
+
+    db_params = get_param(db_namespace)
+    with _lock:
+        override_value = _override_hosts.get(db_namespace, None)
+        if override_value:
+            db_params["host"] = override_value
+    return get_motor_db_params(db_params, event_loop, asyncio_client)
 
 
-def _publication_helper(publications):
-    message = ""
-    for publication in publications:
-        message = "\n\n".join(
-            [message, _message_append_helper("Title", publication.title)]
-        )
-        message = "\n".join(
-            [message, _message_append_helper("Authors", publication.authors)]
-        )
-        message = "\n".join(
-            [
-                message,
-                _message_append_helper(
-                    "Citations Received", publication.citations_received
-                ),
-            ]
-        )
-        message = "\n".join(
-            [
-                message,
-                _message_append_helper("Conference Name", publication.conference_name),
-            ]
-        )
-        message = "\n".join([message, _message_append_helper("Year", publication.year)])
-        message = "\n".join(
-            [
-                message,
-                _message_append_helper("Impact Factor", publication.impact_factor),
-            ]
-        )
-        message = "\n".join(
-            [
-                message,
-                _message_append_helper("Type of Paper", publication.type_of_paper),
-            ]
-        )
-        message = "\n".join(
-            [message, _message_append_helper("Feedbacks", publication.feedbacks)]
-        )
-    return message
+def get_motor_db_params(params, event_loop=None, asyncio_client=True):
+    """
+    Gets the motor db client given the specified parameter namespace
+
+    Warning: the returned client will only work with the specified event_loop
+    or the current event loop if None! If using multiple event loops, be very
+    careful to create separate clients and not to share futures between them
+
+    :param params: The parameters to use
+    :type params: dict
+    :param event_loop: The event loop to use
+    :type event_loop: Union[asyncio.AbstractEventLoop, ioloop.IOLoop, None]
+    :param asyncio_client: True if using an asyncio event loop, false for tornado
+    :rtype: Union[motor.motor_tornado.MotorClient, motor.motor_asyncio.AsyncIOMotorClient]
+    """
+
+    host = params["host"]
+    database_name = params["name"]
+    return get_motor_db_host_database(host, database_name, event_loop, asyncio_client)
+
+
+def get_motor_db_host_database(
+    host, database_name, event_loop=None, asyncio_client=True
+):
+    """
+    Gets the motor db client given the specified parameter namespace
+
+    Warning: the returned client will only work with the specified event_loop
+    or the current event loop if None! If using multiple event loops, be very
+    careful to create separate clients and not to share futures between them
+
+    :param host: The parameters to use
+    :type  host: str
+    :param database_name: The database name
+    :type  database_name: str
+    :param event_loop: The event loop to use
+    :type event_loop: Union[asyncio.AbstractEventLoop, ioloop.IOLoop, None]
+    :param asyncio_client: True if using an asyncio event loop, false for tornado
+    :type asyncio_client: bool
+    :rtype: Union[motor.motor_tornado.MotorClient, motor.motor_asyncio.AsyncIOMotorClient]
+    """
+
+    with _lock:
+        if event_loop is None:
+            event_loop = (
+                asyncio.get_event_loop() if asyncio_client else IOLoop.current()
+            )
+        database = _databases.get((host, event_loop, database_name))
+        if database:
+            return database
+
+        client = _motor_clients.get((host, event_loop))
+        if not client:
+            _logger.debug("Creating Motor Client for: %s", host)
+
+            if six.PY2 and asyncio_client:
+                raise Exception("Asyncio clients not supported on Python 2!")
+
+            client_type = AsyncIOMotorClient if asyncio_client else MotorClient
+            client = client_type(host, io_loop=event_loop)
+            _motor_clients[(host, event_loop)] = client
+
+            # TODO (JF) MERGE WITH MOTOR CLIENT FIXTURE CHANGES
+            # def shutdown():
+            #     del _motor_clients[(host, event_loop)]
+            #     client.shutdown()
+            # register_sync_shutdown_callback(shutdown)
+
+        database = client[database_name]
+        _databases[(host, event_loop, database_name)] = database
+        return database

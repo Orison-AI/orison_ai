@@ -12,3 +12,4 @@ pypdf2
 build
 injector
 ipython
+motor

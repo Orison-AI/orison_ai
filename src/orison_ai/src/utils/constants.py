@@ -20,3 +20,4 @@ from pathlib import Path
 PROJECT_ROOT_PATH = Path("/app/")
 VAULT_PATH = Path(os.path.join(PROJECT_ROOT_PATH, "vault"))
 CATEGORIES = ["research"]
+DB_NAME = "orison_ai"

@@ -33,7 +33,7 @@ def get_google_scholar_info(profile_link):
 
     # Extract basic information
     name = soup.find("div", {"id": "gsc_prf_in"}).text.strip()
-    position = soup.find("div", {"class": "gsc_prf_il"}).text.strip()
+    designation = soup.find("div", {"class": "gsc_prf_il"}).text.strip()
 
     # Extract number of citations
     citations = soup.find("td", {"class": "gsc_rsb_std"}).text.strip()
@@ -50,7 +50,7 @@ def get_google_scholar_info(profile_link):
 
     return GoogleScholarDB(
         name=name,
-        position=position,
+        designation=designation,
         total_citations=citations,
         publications=publications,
     )
