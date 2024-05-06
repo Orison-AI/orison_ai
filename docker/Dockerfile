@@ -73,18 +73,6 @@ RUN chmod 755 /app/docker/entrypoint.sh
 
 EXPOSE 5004
 
-# # Install MongoDB and other dependencies
-# RUN apt-get update && \
-#     apt-get install -y mongodb && \
-#     apt-get clean && \
-#     rm -rf /var/lib/apt/lists/*
-
-# # Expose MongoDB port
-# EXPOSE 27017
-
-# Start MongoDB service when the container starts
-CMD ["mongod", "--bind_ip_all"]
-
 RUN echo 'export PYTHONPATH="${PYTHONPATH}:/app/src/"' >> /root/.bashrc
 
 ENTRYPOINT ["bash",  "/app/docker/entrypoint.sh" ]
