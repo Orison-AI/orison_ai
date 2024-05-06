@@ -19,10 +19,9 @@ import sys
 
 import streamlit as st
 from collections import defaultdict
-from orison_ai.src.database.mongo import MongoDB
-from orison_ai.src.app.feed_point import FeedPoint
+from orison_ai.src.app.google_scholar import GoogleScholarApp
 from orison_ai.src.app.summary import Summary
-from orison_ai.src.app.documents import Documents
+from orison_ai.src.app.upload import Upload
 
 # Set page background color
 st.markdown(
@@ -55,23 +54,25 @@ class OrisonApp:
         self._logged_in = None
         self._user_id = ""
         self._mongo_client = None
-        self._feed_page = None
+        self._google_scholar = None
         self._informatics = None
         self._pages = False
         self._sidebar = None
         self._initialize()
 
     def _initialize_pages(self):
-        pages = ["Dashboard", "Documents", "Summary", "Query", "Informatics"]
+        pages = [
+            "Dashboard",
+            "Upload",
+            "StoryTeller",
+            "DocBot",
+            "Informatics",
+            "CompareAI",
+        ]
         # Create sidebar with tabs
         self._sidebar = st.sidebar.radio("Navigation", pages)
 
-        mongo_collection = "demo_v2" + self._user_id
-        mongo_collection = "demo_v1"
-        self._mongo_client = MongoDB("orison_db", mongo_collection)
-        self._feed_page = FeedPoint(self._sidebar, self._mongo_client)
-        self._informatics = Summary(self._sidebar, self._mongo_client)
-        # self._documents = Documents(self._sidebar, self._mongo_client)
+        self._google_scholar = GoogleScholarApp(self._user_id, self._sidebar)
         self._pages = True
 
     def _initialize(self):
