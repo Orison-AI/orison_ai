@@ -8,16 +8,17 @@ import {
   useColorMode, VStack,
 } from '@chakra-ui/react';
 
-function MainMenu({ isOpen, onClose }) {
+function MainMenu({ isOpen, onClose, changeView }) {
 
   const { colorMode } = useColorMode();
   const buttonHoverColor = colorMode === "light" ? "gray.100" : "gray.600";
 
-  const MenuButton = ({label}) => (
+  const MenuButton = ({label, onClick}) => (
     <Button 
       variant="ghost"
       width="100%"
       justifyContent="flex-start"
+      onClick={onClick}
       _hover={{ bg: buttonHoverColor }}
     >
       {label}
@@ -32,10 +33,10 @@ function MainMenu({ isOpen, onClose }) {
         <DrawerHeader>orison.ai</DrawerHeader>
         <DrawerBody pl="4vh">
           <VStack spacing={4}>
-            <MenuButton label="Select Applicant" />
-            <MenuButton label="Upload Documents" />
-            <MenuButton label="Initial Evaluation" />
-            <MenuButton label="Detailed Evaluation" />
+            <MenuButton label="Select Applicant" onClick={() => changeView('selectApplicant')} />
+            <MenuButton label="Upload Documents" onClick={() => changeView('uploadDocuments')} />
+            <MenuButton label="Initial Evaluation" onClick={() => changeView('initialEvaluation')} />
+            <MenuButton label="Detailed Evaluation" onClick={() => changeView('detailedEvaluation')} />
           </VStack>
         </DrawerBody>
       </DrawerContent>
