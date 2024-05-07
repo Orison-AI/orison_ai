@@ -1,16 +1,13 @@
-// src/MainMenu.jsx
+// ./pages/MainMenu.jsx
 
 import React from 'react';
 import {
-  Button, Center,
   Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton,
-  DrawerHeader, DrawerFooter, DrawerBody,
-  Link, useColorMode, VStack,
+  DrawerHeader, DrawerBody,
+  Link, VStack,
 } from '@chakra-ui/react';
 
 function MainMenu({ isOpen, onClose }) {
-  const { colorMode, toggleColorMode } = useColorMode();
-
   return (
     <Drawer isOpen={isOpen} onClose={onClose} placement="left">
       <DrawerOverlay />
@@ -25,13 +22,6 @@ function MainMenu({ isOpen, onClose }) {
             <Link href="#">Detailed Evaluation</Link>
           </VStack>
         </DrawerBody>
-        <DrawerFooter>
-          <Center width="100%">
-            <Button onClick={toggleColorMode}>
-              Color Mode: {colorMode === 'light' ? 'Light' : 'Dark'}
-            </Button>
-          </Center>
-        </DrawerFooter>
       </DrawerContent>
     </Drawer>
   );
