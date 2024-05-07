@@ -14,22 +14,18 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-import os
-import sys
+import asyncio
 import streamlit as st
-import os
-import sys
+from orison_ai.src.database.story_client import StoryClient
+from orison_ai.src.utils.constants import DB_NAME
 
 
-class Summary:
-    def __init__(self, side_bar, mongo_client):
-        self._mongo_client = mongo_client
+class StoryTellerApp:
+    def __init__(self, user_id, side_bar):
+        self._user_id = user_id
         self._sidebar = side_bar
-        self._info = ""
+        self._mongo_client = StoryClient(user_id=self._user_id, db_name=DB_NAME)
         self.run()
-
-    def publish_info(self, page, information):
-        self._info = "\n\n".join([self._info, information])
 
     def _display_qa_pairs(self, qa_pairs):
         # Custom HTML and CSS to style the markdown for questions and answers
@@ -53,28 +49,41 @@ class Summary:
             border-radius: 5px;
             margin-top: 5px;
         }
+        .source {
+            font-family: Arial;
+            font-size: 16px;
+            color: #3c3c3c;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
         </style>
         """,
             unsafe_allow_html=True,
         )
 
         # Loop through each question-answer pair
-        for i in range(0, len(qa_pairs) - 1, 2):
+        for i in range(0, len(qa_pairs) - 1, 3):
             st.markdown(
                 f'<div class="question">{qa_pairs[i]}</div>', unsafe_allow_html=True
             )
             st.markdown(
                 f'<div class="answer">{qa_pairs[i+1]}</div>', unsafe_allow_html=True
             )
+            st.markdown(
+                f'<div class="source">{qa_pairs[i+2]}</div>', unsafe_allow_html=True
+            )
 
     def run(self):
         """ """
-        if self._sidebar == "Summary":
-            latest_data = self._mongo_client.retrieve_data()["Summary"]
+        if self._sidebar == "StoryTeller":
+            story = asyncio.run(self._mongo_client.find_top())
             response = []
-            for question in latest_data.keys():
-                response.append(question)
-                response.append(latest_data[question])
+            for qanda in story.summary:
+                response.append(qanda.question)
+                response.append(qanda.answer)
+                response.append(qanda.source)
 
             st.title(self._sidebar)
             self._display_qa_pairs(response)

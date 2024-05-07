@@ -14,31 +14,32 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-# External imports
-from motor.motor_asyncio import AsyncIOMotorClient
-from bson.objectid import ObjectId
-import logging
-from orison_ai.src.utils.constants import DB_NAME
+# External
 
+import logging
+from orison_ai.src.database.models import GoogleScholarDB
+from orison_ai.src.database.client import DBClient
+from orison_ai.src.utils.constants import DB_NAME
+from bson.objectid import ObjectId
+
+logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 
-class InsertionError(Exception):
-    pass
-
-
-class DBInitializer:
+class GoogleScholarClient(DBClient):
     def __init__(
-        self, db_name: str = DB_NAME, db_path: str = "mongodb://mongodb:27017/"
+        self,
+        user_id: str,
+        db_name: str = DB_NAME,
+        db_path: str = "mongodb://mongodb:27017/",
     ):
         """
-        Initializes an instance of a MongoDB object, which can be used to
-        connect to a MongoDB database
-        DB_NAME is the law firm database name
-        Collection names are specific to applicant profiles
+        Initializes an instance of a DatabaseModifier object, which can be used
+        to insert into or update a database collection given a file
 
-        :param db_name: the name of the database to connect to
+        :param db_name: the name of the database to insert into
         :param db_path: the path to the database
         """
-        self.client = AsyncIOMotorClient(db_path)
-        self._db = self.client[db_name]
+        super(GoogleScholarClient, self).__init__(db_name, db_path)
+        self._collection = self._db[user_id]
+        self._model_class = GoogleScholarDB.__name__

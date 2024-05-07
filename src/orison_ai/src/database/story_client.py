@@ -14,28 +14,31 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-from orison_ai.src.database.google_scholar_client import GoogleScholarClient
-from orison_ai.src.web_extractors.extractors import (
-    get_google_scholar_info,
-)
-import traceback
-import asyncio
+# External
+
+import logging
+from orison_ai.src.database.models import Story
+from orison_ai.src.database.client import DBClient
 from orison_ai.src.utils.constants import DB_NAME
 
+logging.basicConfig(level=logging.INFO)
+_logger = logging.getLogger(__name__)
 
-if __name__ == "__main__":
-    user_id = "rmalhan"
-    client = GoogleScholarClient(user_id=user_id, db_name=DB_NAME)
-    scholar_link = "https://scholar.google.com/citations?user=QW93AM0AAAAJ&hl=en&oi=ao"
 
-    if scholar_link != "":
-        try:
-            scholar_info = get_google_scholar_info(scholar_link)
-        except Exception as e:
-            print(
-                f"Failed to generate google scholar database. Error: {traceback.format_exc(e)}"
-            )
+class StoryClient(DBClient):
+    def __init__(
+        self,
+        user_id: str,
+        db_name: str = DB_NAME,
+        db_path: str = "mongodb://mongodb:27017/",
+    ):
+        """
+        Initializes an instance of a DatabaseModifier object, which can be used
+        to insert into or update a database collection given a file
 
-        if scholar_info is not None:
-            scholar_info.user_id = user_id
-            asyncio.run(client.insert(scholar_info))
+        :param db_name: the name of the database to insert into
+        :param db_path: the path to the database
+        """
+        super(StoryClient, self).__init__(db_name, db_path)
+        self._collection = self._db[user_id]
+        self._model_class = Story.__name__

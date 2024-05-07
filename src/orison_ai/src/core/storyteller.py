@@ -14,54 +14,132 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-import os.path
-import json
-from llama_index.core import (
-    VectorStoreIndex,
-    SimpleDirectoryReader,
-    StorageContext,
-    load_index_from_storage,
+from orison_ai.src.utils.constants import CATEGORIES, VAULT_PATH, ROLE
+from orison_ai.src.utils.ingest_utils import ingest_folder, Source
+from orison_ai.src.database.story_client import StoryClient
+from orison_ai.src.database.models import Story, QandA
+from private_gpt.components.ingest.ingest_component import PipelineIngestComponent
+from private_gpt.server.ingest.ingest_service import IngestService
+from private_gpt.components.llm.llm_component import LLMComponent
+from private_gpt.components.vector_store.vector_store_component import (
+    VectorStoreComponent,
 )
-from llama_index.core.settings import Settings
-from collections import defaultdict
+from private_gpt.components.node_store.node_store_component import NodeStoreComponent
+from private_gpt.components.embedding.embedding_component import EmbeddingComponent
+from private_gpt.di import global_injector
+from private_gpt.settings.settings import Settings
+from private_gpt.server.chunks.chunks_service import ChunksService, ContextFilter
+import logging
+import json
+import os
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import as_completed
+from pathlib import Path
+from IPython import embed
+from openai import OpenAI
+from collections import defaultdict
 
-Settings.chunk_size = 6144
-Settings.chunk_overlap = 1024
-Settings.context_window = 11700
-Settings.num_output = 4096
+client = OpenAI()
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-class StoryTeller:
-    def __init__(self):
-        self._query_engine = None
+RESEARCH_PATH = Path(os.path.join(VAULT_PATH, "research"))
 
-    def _get_response(self, key, indexes, prompt_template):
-        index = indexes[prompt_template["prompt"][key]["index"]]
-        self._query_engine = index.as_query_engine()
-        response = "\n\n"
-        for question in prompt_template["prompt"][key]["question"]:
-            query = question + prompt_template["prompt"][key]["postscript"]
-            response = "\n\n".join(
-                [response, query, self._query_engine.query(query).response]
+if __name__ == "__main__":
+    """
+    NOTES:
+    check ui.py
+    IngestService uses settings to configure ingest_mode and worker count
+    ingest service can upload, check if doc exists, delete and replace doc, etc
+    Use ingest service instance for everything related to documents
+    They are using some kind of python injectory mechanism to get Settings class anywhere
+    One of the observations made is that AI got severly confused with so much data on other awards
+    and research that it actually rated those chunks higher
+    """
+    settings = global_injector.get(Settings)
+    logger.info(f"Settings obtained: {settings}")
+
+    story_client = StoryClient(user_id="rmalhan", db_name="orison_ai")
+    llm_component = LLMComponent(settings=settings)
+    vector_store_component = VectorStoreComponent(settings=settings)
+    node_store_component = NodeStoreComponent(settings=settings)
+    embedding_component = EmbeddingComponent(settings=settings)
+    # ingest_service = IngestService(
+    #     llm_component=llm_component,
+    #     vector_store_component=vector_store_component,
+    #     node_store_component=node_store_component,
+    #     embedding_component=embedding_component,
+    # )
+    # ingest_folder(
+    #     RESEARCH_PATH,
+    #     ignored=["private_gpt", "private_gpt.zip"],
+    #     ingest_service=ingest_service,
+    # )
+
+    chunks_service = ChunksService(
+        llm_component=llm_component,
+        vector_store_component=vector_store_component,
+        embedding_component=embedding_component,
+        node_store_component=node_store_component,
+    )
+
+    with open("/app/templates/prompts.json") as file:
+        js = json.load(file)
+        questions = js["prompt"]["research"]["question"]
+        detail_number = js["prompt"]["research"]["detail_number"]
+        file.close()
+
+    async def get_response(message, limit):
+        response = chunks_service.retrieve_relevant(
+            text=message, limit=limit, prev_next_chunks=6
+        )
+
+        sources = Source.curate_sources(response)
+
+        context = "\n".join(
+            f"{source.text}" for index, source in enumerate(sources, start=1)
+        )
+        prompt = f"Given the context: \n{context}, \n Answer the following: {message}"
+
+        completion = client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[
+                {
+                    "role": "system",
+                    "content": ROLE,
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+        )
+        source_info = ""
+        logger.info("Sources from:")
+        for index, source in enumerate(sources, start=1):
+            source_info = "\n".join(
+                [
+                    source_info,
+                    f"{index}. **{source.file} " f"(page {source.page})**",
+                ]
             )
-        response = response + "\n"
-        return response
+        chat_response = completion.choices[0].message.content
+        logger.info(
+            f"\nQuestion: {message}. \nResponse:\n {chat_response}\n Sources: {source_info}"
+        )
+        q_and_a = QandA(question=message, answer=chat_response, source=source_info)
+        return q_and_a
 
-    def summarize(self, indexes, prompt_template):
-        response = ""
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = [
-                executor.submit(self._get_response, key, indexes, prompt_template)
-                for key in prompt_template["prompt"]
-            ]
-            for future in as_completed(futures):
-                try:
-                    result = future.result()
-                except Exception as exc:
-                    print(f"Error loading response: {exc}")
-                else:
-                    response = "\n".join([response, result])
-        return response
+    async def get_story(questions, detail_number):
+        story = Story()
+        tasks = [
+            asyncio.create_task(get_response(message, detail_number[i]))
+            for i, message in enumerate(questions)
+        ]
+        for task in asyncio.as_completed(tasks):
+            q_and_a = await task
+            story.summary.append(q_and_a)
+        return story
+
+    story = asyncio.run(get_story(questions, detail_number))
+    asyncio.run(story_client.insert(story))

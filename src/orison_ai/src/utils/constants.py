@@ -21,3 +21,10 @@ PROJECT_ROOT_PATH = Path("/app/")
 VAULT_PATH = Path(os.path.join(PROJECT_ROOT_PATH, "vault"))
 CATEGORIES = ["research"]
 DB_NAME = "orison_ai"
+REVISION = "1"
+ROLE = """
+    You are a helpful, respectful and honest assistant.
+    Always answer as helpfully as possible and follow ALL given instructions.
+    Do not speculate or make up information.
+    Please describe the contribution to the field in words that someone with no technical background will understand. Use simple terms to express what makes the contribution so important or innovative and provide examples where applicable.
+"""

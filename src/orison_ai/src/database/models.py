@@ -14,6 +14,7 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
+from datetime import datetime
 from mongoengine import (
     Document,
     IntField,
@@ -22,7 +23,13 @@ from mongoengine import (
     EmbeddedDocument,
     EmbeddedDocumentField,
     FloatField,
+    DateTimeField,
 )
+
+
+class BaseModel(Document):
+    data_created = DateTimeField(required=True, default=datetime.utcnow())
+    meta = {"allow_inheritance": True}
 
 
 class Publication(EmbeddedDocument):
@@ -40,13 +47,22 @@ class Publication(EmbeddedDocument):
     peer_reviews = ListField(StringField())
 
 
-class GoogleScholarDB(Document):
+class QandA(EmbeddedDocument):
+    """
+    MongoDB document class for QandA details of the applicant
+    """
+
+    question = StringField(required=True)
+    answer = StringField(required=True)
+    source = StringField()
+
+
+class GoogleScholarDB(BaseModel):
     """
     MongoDB document class for Google scholar details of the applicant
     """
 
-    _id = StringField()
-    user_id = StringField(required=True, unique=True)
+    model_class = StringField(required=True, default="GoogleScholarDB")
     name = StringField(required=True)
     designation = StringField()
     affiliation = StringField()
@@ -55,19 +71,10 @@ class GoogleScholarDB(Document):
     other_details = StringField()
 
 
-class QandA(EmbeddedDocument):
-    """
-    MongoDB document class for QandA details of the applicant
-    """
-
-    question = StringField(required=True)
-    answer = StringField(required=True)
-
-
-class Story(Document):
+class Story(BaseModel):
     """
     MongoDB document class for Story of the applicant
     """
 
-    user_id = StringField(required=True, unique=True)
-    summary = ListField(EmbeddedDocumentField(QandA))
+    model_class = StringField(required=True, default="Story")
+    summary = ListField(EmbeddedDocumentField(QandA), default=[])

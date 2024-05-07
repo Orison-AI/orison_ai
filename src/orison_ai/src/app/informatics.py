@@ -20,7 +20,7 @@ import logging
 from orison_ai.src.web_extractors.utils import generate_scholar_message
 import traceback
 from orison_ai.src.utils.constants import DB_NAME
-from orison_ai.src.database.google_scholar_collection import GoogleScholarClient
+from orison_ai.src.database.google_scholar_client import GoogleScholarClient
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class GoogleScholarApp:
 
         try:
             _logger.info("Fetching google scholar data.")
-            scholar_info = asyncio.run(self._mongo_client.find_one(self._user_id))
+            scholar_info = asyncio.run(self._mongo_client.find_top())
             _logger.info(f"Obtained google scholar data:\n {scholar_info}")
             if scholar_info is not None:
                 st.write(generate_scholar_message(scholar_info))

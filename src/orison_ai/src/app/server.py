@@ -19,8 +19,8 @@ import sys
 
 import streamlit as st
 from collections import defaultdict
-from orison_ai.src.app.google_scholar import GoogleScholarApp
-from orison_ai.src.app.summary import Summary
+from orison_ai.src.app.informatics import GoogleScholarApp
+from orison_ai.src.app.story_teller import StoryTellerApp
 from orison_ai.src.app.upload import Upload
 
 # Set page background color
@@ -73,6 +73,7 @@ class OrisonApp:
         self._sidebar = st.sidebar.radio("Navigation", pages)
 
         self._google_scholar = GoogleScholarApp(self._user_id, self._sidebar)
+        self._story_teller = StoryTellerApp(self._user_id, self._sidebar)
         self._pages = True
 
     def _initialize(self):
