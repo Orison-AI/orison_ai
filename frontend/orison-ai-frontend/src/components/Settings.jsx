@@ -1,4 +1,4 @@
-// ./pages/Settings.jsx
+// ./components/Settings.jsx
 
 import React from 'react';
 import {

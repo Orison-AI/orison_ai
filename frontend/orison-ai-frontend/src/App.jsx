@@ -2,15 +2,12 @@
 
 // External
 import React, { useState } from 'react';
-import { 
-  Box, Center, HStack, IconButton, Icon,
-  useDisclosure, VStack,
-} from '@chakra-ui/react';
-import { HamburgerIcon, SettingsIcon } from '@chakra-ui/icons';
+import { useDisclosure, VStack } from '@chakra-ui/react';
 
 // Internal
-import MainMenu from './pages/MainMenu';
-import Settings from './pages/Settings';
+import MainMenu from './components/MainMenu';
+import Header from './components/Header';
+import Settings from './components/Settings';
 
 const App = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
@@ -22,23 +19,7 @@ const App = () => {
 
   return (
     <VStack height="100%" width="100%" padding="2vh">
-      <HStack width="100%">
-        <IconButton 
-          aria-label="Open menu" 
-          icon={<Icon as={HamburgerIcon} />} 
-          onClick={toggleMenu} 
-          variant="outline" 
-        />
-        <Center width="100%">
-          <Box fontSize="3vh">orison.ai</Box>
-        </Center>
-        <IconButton 
-          aria-label="Open settings" 
-          icon={<Icon as={SettingsIcon} />}
-          onClick={onOpen} 
-          variant="outline" 
-        />
-      </HStack>
+      <Header toggleMenu={toggleMenu} onSettingsOpen={onOpen} />
       <MainMenu isOpen={isMenuOpen} onClose={toggleMenu} />
       <Settings isOpen={isOpen} onClose={onClose} />
     </VStack>

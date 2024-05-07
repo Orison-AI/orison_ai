@@ -1,4 +1,4 @@
-// ./pages/MainMenu.jsx
+// ./components/MainMenu.jsx
 
 import React from 'react';
 import {
