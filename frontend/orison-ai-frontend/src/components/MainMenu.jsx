@@ -5,17 +5,20 @@ import {
   Button,
   Drawer, DrawerOverlay, DrawerContent,
   DrawerCloseButton, DrawerHeader, DrawerBody,
-  VStack,
+  useColorMode, VStack,
 } from '@chakra-ui/react';
 
 function MainMenu({ isOpen, onClose }) {
+
+  const { colorMode } = useColorMode();
+  const buttonHoverColor = colorMode === "light" ? "gray.100" : "gray.600";
 
   const MenuButton = ({label}) => (
     <Button 
       variant="ghost"
       width="100%"
       justifyContent="flex-start"
-      _hover={{ bg: "gray.600" }}
+      _hover={{ bg: buttonHoverColor }}
     >
       {label}
     </Button>
