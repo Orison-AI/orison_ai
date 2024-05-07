@@ -5,7 +5,7 @@ import {
   Button, Center,
   Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton,
   DrawerHeader, DrawerFooter, DrawerBody,
-  useColorMode, VStack, Link,
+  Link, useColorMode, VStack,
 } from '@chakra-ui/react';
 
 function MainMenu({ isOpen, onClose }) {
@@ -19,9 +19,10 @@ function MainMenu({ isOpen, onClose }) {
         <DrawerHeader>orison.ai</DrawerHeader>
         <DrawerBody>
           <VStack spacing={4}>
-            <Link href="#">Option 1</Link>
-            <Link href="#">Option 2</Link>
-            <Link href="#">Option 3</Link>
+            <Link href="#">Select Applicant</Link>
+            <Link href="#">Upload Documents</Link>
+            <Link href="#">Initial Evaluation</Link>
+            <Link href="#">Detailed Evaluation</Link>
           </VStack>
         </DrawerBody>
         <DrawerFooter>

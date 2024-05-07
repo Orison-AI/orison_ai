@@ -27,7 +27,7 @@ const App = () => {
           variant="outline" 
         />
         <Center width="100%">
-          <Box fontSize="xl">orison.ai</Box>
+          <Box fontSize="3vh">orison.ai</Box>
         </Center>
       </HStack>
       <MainMenu isOpen={isMenuOpen} onClose={toggleMenu} />
