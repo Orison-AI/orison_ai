@@ -1,16 +1,16 @@
-// App.jsx
+// ./App.jsx
 
 // External
 import React, { useState } from 'react';
 import { 
-  Button, useColorMode,
+  Box, Center, HStack, IconButton, Icon, VStack,
 } from '@chakra-ui/react';
+import { HamburgerIcon } from '@chakra-ui/icons';
 
 // Internal
 import MainMenu from './pages/MainMenu';
 
 const App = () => {
-  const { colorMode, toggleColorMode } = useColorMode();
   const [isMenuOpen, setMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -18,13 +18,20 @@ const App = () => {
   };
 
   return (
-    <div>
-      <Button onClick={toggleMenu}>Toggle Menu</Button>
+    <VStack height="100%" width="100%" padding="2vh">
+      <HStack width="100%">
+        <IconButton 
+          aria-label="Open menu" 
+          icon={<Icon as={HamburgerIcon} />} 
+          onClick={toggleMenu} 
+          variant="outline" 
+        />
+        <Center width="100%">
+          <Box fontSize="xl">orison.ai</Box>
+        </Center>
+      </HStack>
       <MainMenu isOpen={isMenuOpen} onClose={toggleMenu} />
-      <Button onClick={toggleColorMode}>
-        Color Mode: {colorMode === 'light' ? 'Light' : 'Dark'}
-      </Button>
-    </div>
+    </VStack>
   );
 }
 
