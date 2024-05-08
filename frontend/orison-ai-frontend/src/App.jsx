@@ -5,21 +5,36 @@ import React, { useState } from 'react';
 import { useDisclosure, VStack } from '@chakra-ui/react';
 
 // Internal
+import Views from './common/views';
 import MainMenu from './components/MainMenu';
 import Header from './components/Header';
 import Settings from './components/Settings';
-import SelectApplicant from './components/pages/SelectApplicant';
+import ManageApplicants from './components/pages/ManageApplicants/ManageApplicants';
 import UploadDocuments from './components/pages/UploadDocuments';
-import InitialEvaluation from './components/pages/InitialEvaluation';
-import DetailedEvaluation from './components/pages/DetailedEvaluation';
+import Screening from './components/pages/Screening';
+import StoryBuilder from './components/pages/StoryBuilder';
+
+const initialApplicants = [
+  { id: 1, name: 'John Doe', visaType: 'H-1B', status: 'Pending' },
+  { id: 2, name: 'Jane Smith', visaType: 'B-2', status: 'Approved' },
+];
 
 const App = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [currentView, setCurrentView] = useState('selectApplicant');
+  const [currentView, setCurrentView] = useState('manageApplicants');
+  const [applicants, setApplicants] = useState(initialApplicants);
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
 
   const toggleMenu = () => {
     setMenuOpen(!isMenuOpen);
+  };
+
+  const setSelectedApplicantCustom = (newApplicant) => {
+    if (!newApplicant && currentView !== Views.MANAGE_APPLICANTS) {
+      changeView(Views.MANAGE_APPLICANTS);
+    }
+    setSelectedApplicant(newApplicant);
   };
 
   const changeView = (viewName) => {
@@ -29,23 +44,35 @@ const App = () => {
 
   const renderCurrentView = () => {
     switch(currentView) {
-      case 'selectApplicant':
-        return <SelectApplicant />;
-      case 'uploadDocuments':
-        return <UploadDocuments />;
-      case 'initialEvaluation':
-        return <InitialEvaluation />;
-      case 'detailedEvaluation':
-        return <DetailedEvaluation />;
+      case Views.MANAGE_APPLICANTS:
+        return <ManageApplicants
+          applicants={applicants}
+          setApplicants={setApplicants}
+          setSelectedApplicant={setSelectedApplicant}
+          setCurrentView={setCurrentView}
+        />;
+      case Views.UPLOAD_DOCUMENTS:
+        return <UploadDocuments selectedApplicant={selectedApplicant} />;
+      case Views.SCREENING:
+        return <Screening selectedApplicant={selectedApplicant} />;
+      case Views.STORY_BUILDER:
+        return <StoryBuilder selectedApplicant={selectedApplicant} />;
       default:
-        return <SelectApplicant />; // Default case
+        return <ManageApplicants applicants={applicants} setApplicants={setApplicants} />; // Default case
     }
   };
 
   return (
     <VStack height="100%" width="100%" padding="2vh">
       <Header toggleMenu={toggleMenu} onSettingsOpen={onOpen} />
-      <MainMenu isOpen={isMenuOpen} onClose={toggleMenu} changeView={changeView} />
+      <MainMenu
+        isOpen={isMenuOpen}
+        onClose={toggleMenu}
+        changeView={changeView}
+        applicants={applicants}
+        selectedApplicant={selectedApplicant}
+        setSelectedApplicant={setSelectedApplicantCustom}
+      />
       <Settings isOpen={isOpen} onClose={onClose} />
       {renderCurrentView()}
     </VStack>
