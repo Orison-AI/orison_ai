@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.9
+#! /usr/bin/env python3.10
 
 # ==========================================================================
 #  Copyright (c) Orison AI, 2024.
@@ -20,7 +20,7 @@ from orison_ai.src.database.story_client import StoryClient
 from orison_ai.src.utils.constants import DB_NAME
 
 
-class StoryTellerApp:
+class StoryBuilderApp:
     def __init__(self, user_id, side_bar):
         self._user_id = user_id
         self._sidebar = side_bar
@@ -77,7 +77,7 @@ class StoryTellerApp:
 
     def run(self):
         """ """
-        if self._sidebar == "StoryTeller":
+        if self._sidebar == "StoryBuilder":
             story = asyncio.run(self._mongo_client.find_top())
             response = []
             for qanda in story.summary:

@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.9
+#! /usr/bin/env python3.10
 
 # ==========================================================================
 #  Copyright (c) Orison AI, 2024.
@@ -24,6 +24,7 @@ from mongoengine import (
     EmbeddedDocumentField,
     FloatField,
     DateTimeField,
+    BooleanField,
 )
 
 
@@ -63,6 +64,7 @@ class GoogleScholarDB(BaseModel):
     """
 
     model_class = StringField(required=True, default="GoogleScholarDB")
+    profile_link = StringField(required=True)
     name = StringField(required=True)
     designation = StringField()
     affiliation = StringField()
@@ -78,3 +80,46 @@ class Story(BaseModel):
 
     model_class = StringField(required=True, default="Story")
     summary = ListField(EmbeddedDocumentField(QandA), default=[])
+
+
+class PersonalData(BaseModel):
+    """
+    MongoDB document class for Meta details of the applicant
+    """
+
+    model_class = StringField(required=True, default="PersonalData")
+    name = StringField(required=True)
+    email = StringField(required=True)
+    phone = StringField()
+    address = StringField()
+    city = StringField()
+    state = StringField()
+    country = StringField()
+    zip_code = StringField()
+    googlescholar = StringField()
+    linkedin = StringField()
+    github = StringField()
+    twitter = StringField()
+    facebook = StringField()
+    instagram = StringField()
+    website = StringField()
+    other_details = StringField()
+
+
+class MetaExtract(BaseModel):
+    """
+    MongoDB document class for Meta details of the applicant
+    The details get extracted from accepted or rejected historical profiles
+    """
+
+    field_keywords = ListField(StringField())
+    designation = StringField()
+    total_citations = IntField()
+    total_publications = IntField()
+    journal_names = ListField(StringField())
+    conference_names = ListField(StringField())
+    number_patents = IntField()
+    number_awards = IntField()
+    media_names = ListField(StringField())
+    acceptance_status = BooleanField()
+    story = StringField()

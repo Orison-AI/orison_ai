@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.9
+#! /usr/bin/env python3.10
 
 # ==========================================================================
 #  Copyright (c) Orison AI, 2024.
@@ -20,7 +20,7 @@ import sys
 import streamlit as st
 from collections import defaultdict
 from orison_ai.src.app.informatics import GoogleScholarApp
-from orison_ai.src.app.story_teller import StoryTellerApp
+from orison_ai.src.app.story_builder import StoryBuilderApp
 from orison_ai.src.app.upload import Upload
 
 # Set page background color
@@ -64,7 +64,7 @@ class OrisonApp:
         pages = [
             "Dashboard",
             "Upload",
-            "StoryTeller",
+            "StoryBuilder",
             "DocBot",
             "Informatics",
             "CompareAI",
@@ -73,7 +73,7 @@ class OrisonApp:
         self._sidebar = st.sidebar.radio("Navigation", pages)
 
         self._google_scholar = GoogleScholarApp(self._user_id, self._sidebar)
-        self._story_teller = StoryTellerApp(self._user_id, self._sidebar)
+        self._story_builder = StoryBuilderApp(self._user_id, self._sidebar)
         self._pages = True
 
     def _initialize(self):

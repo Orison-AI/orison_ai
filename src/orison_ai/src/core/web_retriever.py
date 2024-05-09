@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.9
+#! /usr/bin/env python3.10
 
 # ==========================================================================
 #  Copyright (c) Orison AI, 2024.
@@ -15,7 +15,7 @@
 # ==========================================================================
 
 from orison_ai.src.database.google_scholar_client import GoogleScholarClient
-from orison_ai.src.web_extractors.extractors import (
+from orison_ai.src.web_extractors.google_scholar import (
     get_google_scholar_info,
 )
 import traceback
