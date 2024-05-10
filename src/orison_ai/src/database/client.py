@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.9
+#! /usr/bin/env python3.10
 
 # ==========================================================================
 #  Copyright (c) Orison AI, 2024.
@@ -26,6 +26,7 @@ from pymongo import DESCENDING, ASCENDING
 from orison_ai.src.utils.constants import DB_NAME
 from orison_ai.src.database import models
 
+logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 

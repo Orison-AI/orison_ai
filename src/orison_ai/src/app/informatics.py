@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.9
+#! /usr/bin/env python3.10
 
 # ==========================================================================
 #  Copyright (c) Orison AI, 2024.
@@ -17,7 +17,6 @@
 import streamlit as st
 import asyncio
 import logging
-from orison_ai.src.web_extractors.utils import generate_scholar_message
 import traceback
 from orison_ai.src.utils.constants import DB_NAME
 from orison_ai.src.database.google_scholar_client import GoogleScholarClient
@@ -42,10 +41,14 @@ class GoogleScholarApp:
             scholar_info = asyncio.run(self._mongo_client.find_top())
             _logger.info(f"Obtained google scholar data:\n {scholar_info}")
             if scholar_info is not None:
-                st.write(generate_scholar_message(scholar_info))
+                st.json(scholar_info.to_json())
             else:
                 _logger.warning("Google scholar data is None.")
         except Exception as e:
             _logger.error(
                 f"Failed to obtain google scholar data. Error: {traceback.format_exc(e)}"
             )
+
+
+if __name__ == "__main__":
+    GoogleScholarApp(user_id="rmalhan", side_bar="Informatics")
