@@ -19,9 +19,9 @@ import sys
 
 import streamlit as st
 from collections import defaultdict
-from orison_ai.src.app.informatics import GoogleScholarApp
-from orison_ai.src.app.story_builder import StoryBuilderApp
-from orison_ai.src.app.upload import Upload
+from orison_ai.src.api.informatics import GoogleScholarApp
+from orison_ai.src.api.story_builder import StoryBuilderApp
+from orison_ai.src.api.upload import Upload
 
 # Set page background color
 st.markdown(
@@ -53,6 +53,7 @@ class OrisonApp:
     def __init__(self):
         self._logged_in = None
         self._user_id = ""
+        self._business_id = "demo_v2"
         self._mongo_client = None
         self._google_scholar = None
         self._informatics = None
@@ -64,6 +65,7 @@ class OrisonApp:
         pages = [
             "Dashboard",
             "Upload",
+            "Screening",
             "StoryBuilder",
             "DocBot",
             "Informatics",
@@ -72,8 +74,12 @@ class OrisonApp:
         # Create sidebar with tabs
         self._sidebar = st.sidebar.radio("Navigation", pages)
 
-        self._google_scholar = GoogleScholarApp(self._user_id, self._sidebar)
-        self._story_builder = StoryBuilderApp(self._user_id, self._sidebar)
+        self._google_scholar = GoogleScholarApp(
+            self._business_id, self._user_id, self._sidebar
+        )
+        self._story_builder = StoryBuilderApp(
+            self._business_id, self._user_id, self._sidebar
+        )
         self._pages = True
 
     def _initialize(self):

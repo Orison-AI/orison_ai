@@ -18,6 +18,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson.objectid import ObjectId
 import logging
+from typing import Optional
 from mongoengine import Document, EmbeddedDocument
 from typing import List, Union
 from pymongo import DESCENDING, ASCENDING
@@ -69,7 +70,11 @@ class DBClient(DBInitializer):
         super(DBClient, self).__init__(db_name, db_path)
 
     async def find_top(
-        self, business_id: str, user_id: str, order: [1, -1] = DESCENDING
+        self,
+        business_id: str,
+        user_id: str,
+        filters: Optional[dict] = {},
+        order: [1, -1] = DESCENDING,
     ) -> Union[EmbeddedDocument, Document, None]:
         """
         Finds a mongoengine Document item from the collection and converts it to a mongo object
@@ -88,7 +93,7 @@ class DBClient(DBInitializer):
 
         item = (
             await self._collection.find(
-                {"business_id": business_id, "user_id": user_id}
+                {"business_id": business_id, "user_id": user_id} | filters
             )
             .sort("date_created", order)
             .limit(1)
@@ -102,7 +107,12 @@ class DBClient(DBInitializer):
         return self._model(**doc_dict)
 
     async def find_many(
-        self, business_id: str, user_id: str, k: int = 1, order: [1, -1] = DESCENDING
+        self,
+        business_id: str,
+        user_id: str,
+        filters: Optional[dict] = {},
+        k: int = 1,
+        order: [1, -1] = DESCENDING,
     ) -> Union[List[EmbeddedDocument], List[Document], None]:
         """
         Finds many document items given a limit k from the collection and converts them to mongo objects
@@ -131,7 +141,7 @@ class DBClient(DBInitializer):
         return [
             self._model(**{k: v for k, v in item.items() if k != "_id"})
             async for item in self._collection.find(
-                {"business_id": business_id, "user_id": user_id}
+                {"business_id": business_id, "user_id": user_id} | filters
             )
             .sort("date_created", order)
             .limit(k)
