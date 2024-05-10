@@ -14,11 +14,10 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-from orison_ai.src.utils.constants import CATEGORIES, VAULT_PATH, ROLE
+from orison_ai.src.utils.constants import VAULT_PATH, ROLE
 from orison_ai.src.utils.ingest_utils import ingest_folder, Source
 from orison_ai.src.database.story_client import StoryClient
 from orison_ai.src.database.models import Story, QandA
-from private_gpt.components.ingest.ingest_component import PipelineIngestComponent
 from private_gpt.server.ingest.ingest_service import IngestService
 from private_gpt.components.llm.llm_component import LLMComponent
 from private_gpt.components.vector_store.vector_store_component import (
@@ -28,22 +27,18 @@ from private_gpt.components.node_store.node_store_component import NodeStoreComp
 from private_gpt.components.embedding.embedding_component import EmbeddingComponent
 from private_gpt.di import global_injector
 from private_gpt.settings.settings import Settings
-from private_gpt.server.chunks.chunks_service import ChunksService, ContextFilter
+from private_gpt.server.chunks.chunks_service import ChunksService
 import logging
 import json
 import os
 import asyncio
 from pathlib import Path
-from IPython import embed
 from openai import OpenAI
-from collections import defaultdict
 
 client = OpenAI()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-RESEARCH_PATH = Path(os.path.join(VAULT_PATH, "research"))
 
 
 def ingest_documents(path: Path):
@@ -159,5 +154,6 @@ async def analyze_documents(type_of_story: str):
 
 
 if __name__ == "__main__":
+    RESEARCH_PATH = Path(os.path.join(VAULT_PATH, "research"))
     asyncio.run(ingest_documents(RESEARCH_PATH))
     asyncio.run(analyze_documents("detailed"))
