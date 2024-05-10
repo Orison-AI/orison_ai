@@ -1,3 +1,5 @@
 vim
 wget
 curl
+gunicorn
+uvicorn

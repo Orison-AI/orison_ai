@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.9
+#! /usr/bin/env python3.10
 
 # ==========================================================================
 #  Copyright (c) Orison AI, 2024.
@@ -14,11 +14,10 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-from orison_ai.src.utils.constants import CATEGORIES, VAULT_PATH, ROLE
+from orison_ai.src.utils.constants import VAULT_PATH, ROLE, DB_NAME
 from orison_ai.src.utils.ingest_utils import ingest_folder, Source
 from orison_ai.src.database.story_client import StoryClient
 from orison_ai.src.database.models import Story, QandA
-from private_gpt.components.ingest.ingest_component import PipelineIngestComponent
 from private_gpt.server.ingest.ingest_service import IngestService
 from private_gpt.components.llm.llm_component import LLMComponent
 from private_gpt.components.vector_store.vector_store_component import (
@@ -28,53 +27,62 @@ from private_gpt.components.node_store.node_store_component import NodeStoreComp
 from private_gpt.components.embedding.embedding_component import EmbeddingComponent
 from private_gpt.di import global_injector
 from private_gpt.settings.settings import Settings
-from private_gpt.server.chunks.chunks_service import ChunksService, ContextFilter
+from private_gpt.server.chunks.chunks_service import ChunksService
 import logging
 import json
 import os
 import asyncio
 from pathlib import Path
-from IPython import embed
 from openai import OpenAI
-from collections import defaultdict
 
 client = OpenAI()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-RESEARCH_PATH = Path(os.path.join(VAULT_PATH, "research"))
 
-if __name__ == "__main__":
+def ingest_documents(path: Path):
     """
-    NOTES:
-    check ui.py
-    IngestService uses settings to configure ingest_mode and worker count
-    ingest service can upload, check if doc exists, delete and replace doc, etc
-    Use ingest service instance for everything related to documents
-    They are using some kind of python injectory mechanism to get Settings class anywhere
-    One of the observations made is that AI got severly confused with so much data on other awards
-    and research that it actually rated those chunks higher
+    Ingest the documents from the path
+    :param path: the path to the documents
     """
+    logger.info(f"Ingesting documents from {path}")
     settings = global_injector.get(Settings)
     logger.info(f"Settings obtained: {settings}")
-
-    story_client = StoryClient(user_id="rmalhan", db_name="orison_ai")
     llm_component = LLMComponent(settings=settings)
     vector_store_component = VectorStoreComponent(settings=settings)
     node_store_component = NodeStoreComponent(settings=settings)
     embedding_component = EmbeddingComponent(settings=settings)
-    # ingest_service = IngestService(
-    #     llm_component=llm_component,
-    #     vector_store_component=vector_store_component,
-    #     node_store_component=node_store_component,
-    #     embedding_component=embedding_component,
-    # )
-    # ingest_folder(
-    #     RESEARCH_PATH,
-    #     ignored=["private_gpt", "private_gpt.zip"],
-    #     ingest_service=ingest_service,
-    # )
+
+    ingest_service = IngestService(
+        llm_component=llm_component,
+        vector_store_component=vector_store_component,
+        node_store_component=node_store_component,
+        embedding_component=embedding_component,
+    )
+    ingest_folder(
+        path,
+        ignored=["private_gpt", "private_gpt.zip"],
+        ingest_service=ingest_service,
+    )
+
+
+async def analyze_documents(business_id: str, user_id: str, type_of_story: str):
+    """
+    Analyze the documents and generate a story
+    :param business_id: the business id
+    :param user_id: the user id
+    :param type_of_story: the type of story
+    :return: None
+    """
+    settings = global_injector.get(Settings)
+    logger.info(f"Settings obtained: {settings}")
+
+    story_client = StoryClient(db_name=DB_NAME)
+    llm_component = LLMComponent(settings=settings)
+    vector_store_component = VectorStoreComponent(settings=settings)
+    node_store_component = NodeStoreComponent(settings=settings)
+    embedding_component = EmbeddingComponent(settings=settings)
 
     chunks_service = ChunksService(
         llm_component=llm_component,
@@ -141,5 +149,14 @@ if __name__ == "__main__":
             story.summary.append(q_and_a)
         return story
 
-    story = asyncio.run(get_story(questions, detail_number))
-    asyncio.run(story_client.insert(story))
+    story = await get_story(questions, detail_number)
+    story.business_id = business_id
+    story.user_id = user_id
+    story.type_of_story = type_of_story
+    await story_client.insert(story)
+
+
+if __name__ == "__main__":
+    RESEARCH_PATH = Path(os.path.join(VAULT_PATH, "research"))
+    asyncio.run(ingest_documents(RESEARCH_PATH))
+    asyncio.run(analyze_documents("detailed"))

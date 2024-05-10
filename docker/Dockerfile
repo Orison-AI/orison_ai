@@ -29,6 +29,8 @@ RUN apt-get update && \
 RUN echo "alias python=python3.10" >> /root/.bashrc
 RUN echo "alias python3=python3.10" >> /root/.bashrc
 
+# ToDo: Add symlink for python3 to python3.10
+
 # Install any additional Python packages needed
 RUN python3.10 -m pip install --no-cache-dir -r packages-python3.txt
 
