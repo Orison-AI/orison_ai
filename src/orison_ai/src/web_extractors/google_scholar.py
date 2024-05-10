@@ -20,88 +20,134 @@ import requests
 from bs4 import BeautifulSoup
 import logging
 import re
-import traceback
-import scholar_network as sn
+import asyncio
+from scholarly import scholarly
 
 # Internal
 
-from orison_ai.src.database.models import GoogleScholarDB, Publication
+from orison_ai.src.database.models import GoogleScholarDB, Publication, Author
 from orison_ai.src.utils.urls import url_exists
 from orison_ai.src.utils.exceptions import INVALID_URL
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def extract_user(url: str):
+async def extract_user(url: str):
     """
     Extract the user ID from a Google Scholar URL.
     :param url: The Google Scholar URL
     """
 
-    # This pattern matches 'user=' followed by any characters until a '?' or end of string
     match = re.search(r"user=([a-zA-Z0-9]+)", url)
     if match:
-        return match.group(1)
+        user_id = match.group(1)
+        return user_id
     return None
 
 
-def get_google_scholar_info(profile_link: str):
+async def get_google_scholar_info(scholar_link: str):
     """
     Extract information from a Google Scholar profile.
-    :param profile_link: The link to the Google Scholar profile
+    :param scholar_link: The link to the Google Scholar profile
     :return: A GoogleScholarDB object containing the extracted information
     """
 
-    if not profile_link.startswith("http"):
-        profile_link = "http://" + profile_link
+    if not scholar_link.startswith("http"):
+        scholar_link = "http://" + scholar_link
 
     try:
-        url_exists(profile_link)
+        await url_exists(scholar_link)
     except INVALID_URL as e:
         raise e
 
-    user_id = extract_user(profile_link)
+    user_id = await extract_user(scholar_link)
     if user_id is None:
         logger.warning("No user ID found in the Google Scholar profile link.")
         return None
+    else:
+        logger.info(f"User ID found: {user_id}")
 
-    sn.scrape_single_author(scholar_id=user_id, preferred_browser="chrome")
+    # Fetch data from the Google Scholar profile
+    author = await asyncio.to_thread(scholarly.search_author_id, user_id)
+    # Fill the author object with more detailed information, including publications
+    author = await asyncio.to_thread(scholarly.fill, author)
 
-    # # Fetch search results from Google
-    # headers = {"User-Agent": "Mozilla/5.0"}
+    co_authors = []
+    for co_author in author.get("coauthors"):
+        co_authors.append(
+            Author(
+                scholar_id=co_author.get("scholar_id"),
+                name=co_author.get("name"),
+                affiliation=co_author.get("affiliation"),
+            )
+        )
 
-    # # Fetch data from the Google Scholar profile
-    # response = requests.get(profile_link, headers=headers)
-    # soup = BeautifulSoup(response.text, "html.parser")
+    async def get_publication_details_async(publication):
+        loop = asyncio.get_running_loop()
+        # Run the synchronous function in a default executor (ThreadPoolExecutor)
+        detailed_publication = await loop.run_in_executor(
+            None, lambda x: scholarly.fill(x), publication
+        )
+        return detailed_publication
 
-    # # Extract basic information
-    # name = soup.find("div", {"id": "gsc_prf_in"}).text.strip()
-    # designation = soup.find("div", {"class": "gsc_prf_il"}).text.strip()
+    tasks = [
+        asyncio.create_task(get_publication_details_async(publication))
+        for publication in author.get("publications")
+    ]
+    detailed_publications = await asyncio.gather(*tasks)
 
-    # # Extract number of citations
-    # citations = soup.find("td", {"class": "gsc_rsb_std"}).text.strip()
+    publications = []
+    for detailed_pub in detailed_publications:
+        type_of_paper = "Unknown"
+        if "journal" in [
+            detailed_pub.get("bib").get("citation"),
+            detailed_pub.get("bib").get("publisher"),
+        ]:
+            type_of_paper = "Journal"
+        elif "conference" in [
+            detailed_pub.get("bib").get("citation"),
+            detailed_pub.get("bib").get("publisher"),
+        ]:
+            type_of_paper = "Conference"
+        elif "article" in [
+            detailed_pub.get("bib").get("citation"),
+            detailed_pub.get("bib").get("publisher"),
+        ]:
+            type_of_paper = "Article"
+        publications.append(
+            Publication(
+                title=detailed_pub.get("bib").get("title"),
+                authors=detailed_pub.get("bib").get("author"),
+                abstract=detailed_pub.get("bib").get("abstract"),
+                cited_by=detailed_pub.get("num_citations"),
+                forum_name=detailed_pub.get("citation"),
+                year=detailed_pub.get("bib").get("pub_year"),
+                type_of_paper=type_of_paper,
+                peer_reviews=detailed_pub.get("bib").get("journal"),
+            )
+        )
 
-    # # Extract publications and their citations
-    # publications = []
-    # for row in soup.find_all("tr", {"class": "gsc_a_tr"}):
-    #     title = row.find("a", {"class": "gsc_a_at"}).text.strip()
-    #     authors = row.find("div", {"class": "gs_gray"}).text.strip()
-    #     cited_by = row.find("a", {"class": "gsc_a_ac"}).text.strip()
-    #     publications.append(
-    #         Publication(title=title, authors=authors, citations_received=cited_by)
-    #     )
-
-    # return GoogleScholarDB(
-    #     name=name,
-    #     designation=designation,
-    #     total_citations=citations,
-    #     publications=publications,
-    # )
-    return None
+    return GoogleScholarDB(
+        author=Author(
+            profile_link=scholar_link,
+            scholar_id=user_id,
+            name=author.get("name"),
+            affiliation=author.get("affiliation"),
+        ),
+        co_authors=co_authors,
+        keywords=author.get("interests"),
+        homepage=author.get("homepage"),
+        cited_by=author.get("citedby"),
+        cited_by_5y=author.get("citedby5y"),
+        h_index=author.get("hindex"),
+        h_index_5y=author.get("hindex5y"),
+        cited_each_year=author.get("cites_per_year"),
+        publications=publications,
+    )
 
 
 if __name__ == "__main__":
     scholar_link = "https://scholar.google.com/citations?user=QW93AM0AAAAJ&hl=en&oi=ao"
-
-    info = get_google_scholar_info(scholar_link)
-    logger.info(f"Google Scholar info: {info}")
+    info = asyncio.run(get_google_scholar_info(scholar_link))
+    logger.info(f"Google Scholar info: {info.to_json()}")

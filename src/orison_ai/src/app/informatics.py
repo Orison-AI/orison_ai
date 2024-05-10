@@ -23,7 +23,8 @@ from orison_ai.src.utils.constants import DB_NAME
 from orison_ai.src.database.google_scholar_client import GoogleScholarClient
 
 logging.basicConfig(level=logging.INFO)
-_logger = logging.getLogger(__name__)
+_logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class GoogleScholarApp:

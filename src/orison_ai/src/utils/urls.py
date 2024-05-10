@@ -27,7 +27,7 @@ from orison_ai.src.utils.exceptions import INVALID_URL
 logger = logging.getLogger(__name__)
 
 
-def url_exists(url: str):
+async def url_exists(url: str):
     """
     Check if a URL exists by sending a HEAD request to the URL
     and checking the response status code.
