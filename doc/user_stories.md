@@ -1,0 +1,33 @@
+# Orison AI - User Stories
+
+- As a immigration attorney I want to...
+    - Perform an initial evaluation of an applicant
+        - Specify applicant (resume) sources:
+            - Google scholar
+            - LinkedIn
+            - Portfolio website
+            - Resume document
+        - View data to determine where an applicant stands in their field
+            - Citation count
+            - Awards and patents
+            - Impact of research
+            - Publication count
+            - Quality of publications and conferences
+            - Peer reviews of applicant's research
+        - Make a decision on whether to assist the applicant in filing for a visa (not part of Orison)
+            - Go - assist the applicant in filing for the visa type of their choice
+            - Suggest new visa type
+            - No-Go - the applicant does not have the prerequisites for visa application
+    - Perform a detailed evaluation of an applicant
+        - Upload research documents from a particular visa applicant
+        - Specify category of research document as part of the upload, using the following categories:
+            - Awards - applicant's award (large category, structured docs)
+            - Research - applicant's research (large category, structured docs)
+            - Reviews - write-ups that the applicant did about other research (small category, unstructured docs)
+            - Feedback - what have other people said about the applicant (small category, unstructured docs)
+        - View answers to questionaire extracted from applicant's documentation
+        - In Chat, ask additional questions to be answered automatically using data from the applicant documentation
+        - Chat with questionaire answers
+            - Request and update to an answer
+            - Tell me more about an answer using the applicant documentation
+            - Simplify answers for layman understanding
