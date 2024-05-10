@@ -74,7 +74,8 @@ class GoogleScholarDB(BaseModel):
     MongoDB document class for Google scholar details of the applicant
     """
 
-    model_class = StringField(required=True, default="GoogleScholarDB")
+    business_id = StringField(required=True)
+    user_id = StringField(required=True)
     author = EmbeddedDocumentField(Author)
     co_authors = ListField(EmbeddedDocumentField(Author))
     keywords = ListField(StringField())
@@ -93,7 +94,8 @@ class Story(BaseModel):
     MongoDB document class for Story of the applicant
     """
 
-    model_class = StringField(required=True, default="Story")
+    business_id = StringField(required=True)
+    user_id = StringField(required=True)
     type_of_story = StringField()  # Preliminary or Detailed
     summary = ListField(EmbeddedDocumentField(QandA), default=[])
 
@@ -103,7 +105,6 @@ class PersonalData(BaseModel):
     MongoDB document class for Meta details of the applicant
     """
 
-    model_class = StringField(required=True, default="PersonalData")
     name = StringField(required=True)
     email = StringField(required=True)
     phone = StringField()

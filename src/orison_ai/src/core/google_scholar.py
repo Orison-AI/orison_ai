@@ -48,7 +48,7 @@ async def extract_user(url: str):
     return None
 
 
-async def get_google_scholar_info(scholar_link: str):
+async def get_google_scholar_info(business_id: str, user_id: str, scholar_link: str):
     """
     Extract information from a Google Scholar profile.
     :param scholar_link: The link to the Google Scholar profile
@@ -63,15 +63,15 @@ async def get_google_scholar_info(scholar_link: str):
     except INVALID_URL as e:
         raise e
 
-    user_id = await extract_user(scholar_link)
-    if user_id is None:
+    scholar_id = await extract_user(scholar_link)
+    if scholar_id is None:
         logger.warning("No user ID found in the Google Scholar profile link.")
         return None
     else:
-        logger.info(f"User ID found: {user_id}")
+        logger.info(f"User ID found: {scholar_id}")
 
     # Fetch data from the Google Scholar profile
-    author = await asyncio.to_thread(scholarly.search_author_id, user_id)
+    author = await asyncio.to_thread(scholarly.search_author_id, scholar_id)
     # Fill the author object with more detailed information, including publications
     author = await asyncio.to_thread(scholarly.fill, author)
 
@@ -131,9 +131,11 @@ async def get_google_scholar_info(scholar_link: str):
         )
 
     return GoogleScholarDB(
+        business_id=business_id,
+        user_id=user_id,
         author=Author(
             profile_link=scholar_link,
-            scholar_id=user_id,
+            scholar_id=scholar_id,
             name=author.get("name"),
             affiliation=author.get("affiliation"),
         ),
@@ -151,12 +153,17 @@ async def get_google_scholar_info(scholar_link: str):
 
 if __name__ == "__main__":
     user_id = "rmalhan"
+    business_id = "demo_v2"
     client = GoogleScholarClient(user_id=user_id, db_name=DB_NAME)
     scholar_link = "https://scholar.google.com/citations?user=QW93AM0AAAAJ&hl=en&oi=ao"
 
     if scholar_link != "":
         try:
-            scholar_info = asyncio.run(get_google_scholar_info(scholar_link))
+            scholar_info = asyncio.run(
+                get_google_scholar_info(
+                    user_id=user_id, business_id=business_id, scholar_link=scholar_link
+                )
+            )
         except Exception as e:
             print(
                 f"Failed to generate google scholar database. Error: {traceback.format_exc(e)}"

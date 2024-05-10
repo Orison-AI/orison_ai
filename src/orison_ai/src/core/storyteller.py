@@ -14,7 +14,7 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-from orison_ai.src.utils.constants import VAULT_PATH, ROLE
+from orison_ai.src.utils.constants import VAULT_PATH, ROLE, DB_NAME
 from orison_ai.src.utils.ingest_utils import ingest_folder, Source
 from orison_ai.src.database.story_client import StoryClient
 from orison_ai.src.database.models import Story, QandA
@@ -42,6 +42,10 @@ logger = logging.getLogger(__name__)
 
 
 def ingest_documents(path: Path):
+    """
+    Ingest the documents from the path
+    :param path: the path to the documents
+    """
     logger.info(f"Ingesting documents from {path}")
     settings = global_injector.get(Settings)
     logger.info(f"Settings obtained: {settings}")
@@ -63,21 +67,18 @@ def ingest_documents(path: Path):
     )
 
 
-async def analyze_documents(type_of_story: str):
+async def analyze_documents(business_id: str, user_id: str, type_of_story: str):
     """
-    NOTES:
-    check ui.py
-    IngestService uses settings to configure ingest_mode and worker count
-    ingest service can upload, check if doc exists, delete and replace doc, etc
-    Use ingest service instance for everything related to documents
-    They are using some kind of python injectory mechanism to get Settings class anywhere
-    One of the observations made is that AI got severly confused with so much data on other awards
-    and research that it actually rated those chunks higher
+    Analyze the documents and generate a story
+    :param business_id: the business id
+    :param user_id: the user id
+    :param type_of_story: the type of story
+    :return: None
     """
     settings = global_injector.get(Settings)
     logger.info(f"Settings obtained: {settings}")
 
-    story_client = StoryClient(user_id="rmalhan", db_name="orison_ai")
+    story_client = StoryClient(db_name=DB_NAME)
     llm_component = LLMComponent(settings=settings)
     vector_store_component = VectorStoreComponent(settings=settings)
     node_store_component = NodeStoreComponent(settings=settings)
@@ -149,6 +150,8 @@ async def analyze_documents(type_of_story: str):
         return story
 
     story = await get_story(questions, detail_number)
+    story.business_id = business_id
+    story.user_id = user_id
     story.type_of_story = type_of_story
     await story_client.insert(story)
 

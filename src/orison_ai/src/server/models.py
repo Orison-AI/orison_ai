@@ -24,6 +24,7 @@ class IngestRequest(BaseModel):
 
 
 class DownloadRequest(BaseModel):
+    business_id: str
     user_id: str
     database: str
     category: str
@@ -31,4 +32,6 @@ class DownloadRequest(BaseModel):
 
 
 class AnalysisRequest(BaseModel):
+    business_id: str
+    user_id: str
     category: str

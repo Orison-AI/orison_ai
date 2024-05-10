@@ -28,7 +28,6 @@ _logger = logging.getLogger(__name__)
 class StoryClient(DBClient):
     def __init__(
         self,
-        user_id: str,
         db_name: str = DB_NAME,
         db_path: str = "mongodb://mongodb:27017/",
     ):
@@ -40,5 +39,5 @@ class StoryClient(DBClient):
         :param db_path: the path to the database
         """
         super(StoryClient, self).__init__(db_name, db_path)
-        self._collection = self._db[user_id]
-        self._model_class = Story.__name__
+        self._model = Story
+        self._collection = self._db[self._model.__name__]

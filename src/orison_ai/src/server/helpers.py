@@ -35,14 +35,16 @@ logger = logging.getLogger(__name__)
 
 
 async def download_scholar_helper(
-    user_id: str, database: str, category: str, parameters: dict
+    business_id: str, user_id: str, database: str, category: str, parameters: dict
 ):
-    client = GoogleScholarClient(user_id=user_id, db_name=database)
+    client = GoogleScholarClient(db_name=database)
     scholar_link = parameters.get("scholar_link")
     folder_path = os.path.join(VAULT_PATH, category)  # Where would we fetch this from?
     if scholar_link != "":
         try:
-            scholar_info = await get_google_scholar_info(scholar_link)
+            scholar_info = await get_google_scholar_info(
+                business_id=business_id, user_id=user_id, scholar_link=scholar_link
+            )
         except Exception as e:
             logger.error(
                 f"Failed to generate google scholar database. Error: {traceback.format_exc(e)}"
@@ -73,9 +75,11 @@ async def ingest_helper(category: str):
         raise e
 
 
-async def analysis_helper(type_of_story: str):
+async def analysis_helper(business_id: str, user_id: str, type_of_story: str):
     try:
-        await analyze_documents(type_of_story)
+        await analyze_documents(
+            business_id=business_id, user_id=user_id, type_of_story=type_of_story
+        )
     except Exception as e:
         logger.error(f"Failed to analyze documents. Error: {traceback.format_exc(e)}")
         raise e

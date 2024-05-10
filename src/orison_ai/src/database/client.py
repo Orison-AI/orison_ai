@@ -67,26 +67,29 @@ class DBClient(DBInitializer):
         :param db_path: the path to the database
         """
         super(DBClient, self).__init__(db_name, db_path)
-        self._model_class = None
 
     async def find_top(
-        self, order: [1, -1] = DESCENDING
+        self, business_id: str, user_id: str, order: [1, -1] = DESCENDING
     ) -> Union[EmbeddedDocument, Document, None]:
         """
         Finds a mongoengine Document item from the collection and converts it to a mongo object
         Order is either ASCENDING or DESCENDING
 
+        :param business_id: the business id of the document to find
+        :param user_id: the user id of the document to find
         :param order: the order in which to sort the documents
         :return: the entry found in mongo db for the requesting model class instance
                 converted to a mongo object
         """
         if self._collection is None:
             raise ValueError("Collection not set")
-        if self._model_class is None:
-            raise ValueError("Model class not set")
+        if self._model is None:
+            raise ValueError("DB Model not set")
 
         item = (
-            await self._collection.find({"model_class": self._model_class})
+            await self._collection.find(
+                {"business_id": business_id, "user_id": user_id}
+            )
             .sort("date_created", order)
             .limit(1)
             .next()
@@ -95,22 +98,28 @@ class DBClient(DBInitializer):
         if not item:
             _logger.info(f"No document for model: {self._model_class} was found")
             return None
-        class_attr = getattr(models, self._model_class)
         doc_dict = {k: v for k, v in item.items() if k != "_id"}
-        return class_attr(**doc_dict)
+        return self._model(**doc_dict)
 
     async def find_many(
-        self, k: int = 1, order: [1, -1] = DESCENDING
+        self, business_id: str, user_id: str, k: int = 1, order: [1, -1] = DESCENDING
     ) -> Union[List[EmbeddedDocument], List[Document], None]:
         """
         Finds many document items given a limit k from the collection and converts them to mongo objects
         Order is either ASCENDING or DESCENDING
 
+        :param business_id: the business id of the document to find
+        :param user_id: the user id of the document to find
         :param k: the number of documents to find
         :param order: the order in which to sort the documents
         :return: entries found in mongo converted to list of mongo objects
         """
         _logger.debug(f"Database operation: find {k} documents by order: {order}")
+
+        if self._collection is None:
+            raise ValueError("Collection not set")
+        if self._model is None:
+            raise ValueError("DB Model not set")
 
         if order in [ASCENDING, DESCENDING]:
             raise ValueError(
@@ -119,10 +128,11 @@ class DBClient(DBInitializer):
         if k < 1:
             raise ValueError("Number of documents k must be greater than 0")
 
-        class_attr = getattr(models, self._model_class)
         return [
-            class_attr(**{k: v for k, v in item.items() if k != "_id"})
-            async for item in self._collection.find({"model_class": self._model_class})
+            self._model(**{k: v for k, v in item.items() if k != "_id"})
+            async for item in self._collection.find(
+                {"business_id": business_id, "user_id": user_id}
+            )
             .sort("date_created", order)
             .limit(k)
             .next()
@@ -132,17 +142,18 @@ class DBClient(DBInitializer):
         """
         Inserts a mongo doc object into the mongo database
 
+        :param business_id: the business id of the document to insert
+        :param user_id: the user id of the document to insert
         :param doc: the object to insert into the database
 
         :return: the inserted mongo id
         """
         _logger.debug(f"Database operation: inserting document: {doc}")
 
-        class_attr = getattr(models, self._model_class)
-        if not isinstance(doc, class_attr):
+        if not isinstance(doc, self._model):
             raise TypeError(
                 f"The mongo doc provided {doc} of type {type(doc)} "
-                f"needs to be type {type(self._model_class)}"
+                f"needs to be type {self._model}"
             )
 
         result = await self._collection.insert_one(doc.to_mongo().to_dict())
