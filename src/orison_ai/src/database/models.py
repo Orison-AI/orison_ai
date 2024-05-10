@@ -94,6 +94,7 @@ class Story(BaseModel):
     """
 
     model_class = StringField(required=True, default="Story")
+    type_of_story = StringField()  # Preliminary or Detailed
     summary = ListField(EmbeddedDocumentField(QandA), default=[])
 
 

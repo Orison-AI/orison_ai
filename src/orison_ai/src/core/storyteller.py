@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.9
+#! /usr/bin/env python3.10
 
 # ==========================================================================
 #  Copyright (c) Orison AI, 2024.
@@ -45,7 +45,30 @@ logger = logging.getLogger(__name__)
 
 RESEARCH_PATH = Path(os.path.join(VAULT_PATH, "research"))
 
-if __name__ == "__main__":
+
+def ingest_documents(path: Path):
+    logger.info(f"Ingesting documents from {path}")
+    settings = global_injector.get(Settings)
+    logger.info(f"Settings obtained: {settings}")
+    llm_component = LLMComponent(settings=settings)
+    vector_store_component = VectorStoreComponent(settings=settings)
+    node_store_component = NodeStoreComponent(settings=settings)
+    embedding_component = EmbeddingComponent(settings=settings)
+
+    ingest_service = IngestService(
+        llm_component=llm_component,
+        vector_store_component=vector_store_component,
+        node_store_component=node_store_component,
+        embedding_component=embedding_component,
+    )
+    ingest_folder(
+        path,
+        ignored=["private_gpt", "private_gpt.zip"],
+        ingest_service=ingest_service,
+    )
+
+
+async def analyze_documents(type_of_story: str):
     """
     NOTES:
     check ui.py
@@ -64,17 +87,6 @@ if __name__ == "__main__":
     vector_store_component = VectorStoreComponent(settings=settings)
     node_store_component = NodeStoreComponent(settings=settings)
     embedding_component = EmbeddingComponent(settings=settings)
-    # ingest_service = IngestService(
-    #     llm_component=llm_component,
-    #     vector_store_component=vector_store_component,
-    #     node_store_component=node_store_component,
-    #     embedding_component=embedding_component,
-    # )
-    # ingest_folder(
-    #     RESEARCH_PATH,
-    #     ignored=["private_gpt", "private_gpt.zip"],
-    #     ingest_service=ingest_service,
-    # )
 
     chunks_service = ChunksService(
         llm_component=llm_component,
@@ -141,5 +153,11 @@ if __name__ == "__main__":
             story.summary.append(q_and_a)
         return story
 
-    story = asyncio.run(get_story(questions, detail_number))
-    asyncio.run(story_client.insert(story))
+    story = await get_story(questions, detail_number)
+    story.type_of_story = type_of_story
+    await story_client.insert(story)
+
+
+if __name__ == "__main__":
+    asyncio.run(ingest_documents(RESEARCH_PATH))
+    asyncio.run(analyze_documents("detailed"))
