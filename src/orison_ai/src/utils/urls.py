@@ -24,6 +24,7 @@ import logging
 
 from orison_ai.src.utils.exceptions import INVALID_URL
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

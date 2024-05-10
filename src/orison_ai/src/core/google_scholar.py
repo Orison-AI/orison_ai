@@ -16,11 +16,10 @@
 
 # External
 
-import requests
-from bs4 import BeautifulSoup
 import logging
 import re
 import asyncio
+import traceback
 from scholarly import scholarly
 
 # Internal
@@ -28,6 +27,9 @@ from scholarly import scholarly
 from orison_ai.src.database.models import GoogleScholarDB, Publication, Author
 from orison_ai.src.utils.urls import url_exists
 from orison_ai.src.utils.exceptions import INVALID_URL
+from orison_ai.src.utils.data_utils import stringify_keys
+from orison_ai.src.database.google_scholar_client import GoogleScholarClient
+from orison_ai.src.utils.constants import DB_NAME
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -142,12 +144,22 @@ async def get_google_scholar_info(scholar_link: str):
         cited_by_5y=author.get("citedby5y"),
         h_index=author.get("hindex"),
         h_index_5y=author.get("hindex5y"),
-        cited_each_year=author.get("cites_per_year"),
+        cited_each_year=stringify_keys(author.get("cites_per_year")),
         publications=publications,
     )
 
 
 if __name__ == "__main__":
+    user_id = "rmalhan"
+    client = GoogleScholarClient(user_id=user_id, db_name=DB_NAME)
     scholar_link = "https://scholar.google.com/citations?user=QW93AM0AAAAJ&hl=en&oi=ao"
-    info = asyncio.run(get_google_scholar_info(scholar_link))
-    logger.info(f"Google Scholar info: {info.to_json()}")
+
+    if scholar_link != "":
+        try:
+            scholar_info = asyncio.run(get_google_scholar_info(scholar_link))
+        except Exception as e:
+            print(
+                f"Failed to generate google scholar database. Error: {traceback.format_exc(e)}"
+            )
+        if scholar_info is not None:
+            asyncio.run(client.insert(scholar_info))

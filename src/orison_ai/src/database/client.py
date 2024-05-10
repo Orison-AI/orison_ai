@@ -26,8 +26,8 @@ from pymongo import DESCENDING, ASCENDING
 from orison_ai.src.utils.constants import DB_NAME
 from orison_ai.src.database import models
 
-_logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+_logger = logging.getLogger(__name__)
 
 
 class InsertionError(Exception):
