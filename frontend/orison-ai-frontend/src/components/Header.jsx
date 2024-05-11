@@ -1,9 +1,13 @@
 // ./components/Header.jsx
 
+// React
 import React from 'react';
 
-// Chackra
-import { Box, Center, HStack, Icon, IconButton, useColorModeValue } from '@chakra-ui/react';
+// Chakra
+import {
+  Box, Center, HStack, Icon, IconButton,
+  useColorModeValue,
+} from '@chakra-ui/react';
 import { HamburgerIcon, SettingsIcon } from '@chakra-ui/icons';
 
 function Header({ toggleMenu, onSettingsOpen }) {

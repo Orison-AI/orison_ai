@@ -4,13 +4,15 @@
 import React from 'react';
 
 // Chakra
-import { useColorMode, Button, HStack } from '@chakra-ui/react';
+import {
+  Button, Center, useColorMode,
+} from '@chakra-ui/react';
 
 const ColorModeToggle = () => {
   const { colorMode, toggleColorMode } = useColorMode();
 
   return (
-    <HStack width="20vh" spacing={0}>
+    <Center width="20vh">
       <Button
         onClick={toggleColorMode}
         isDisabled={colorMode === 'light'}
@@ -31,7 +33,7 @@ const ColorModeToggle = () => {
       >
         Dark
       </Button>
-    </HStack>
+    </Center>
   );
 };
 

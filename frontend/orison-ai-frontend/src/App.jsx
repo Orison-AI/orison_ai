@@ -13,7 +13,7 @@ import { useDisclosure, VStack } from '@chakra-ui/react';
 import Views from './common/views';
 import Header from './components/Header';
 import MainMenu from './components/MainMenu';
-import Settings from './components/Settings';
+import Settings from './components/settings/Settings';
 import Auth from './components/auth/Auth';
 import ManageApplicants from './components/pages/ManageApplicants/ManageApplicants';
 import UploadDocuments from './components/pages/UploadDocuments';
