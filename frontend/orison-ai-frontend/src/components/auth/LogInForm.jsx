@@ -11,7 +11,8 @@ import {
   Button, FormControl, FormLabel, Input, useToast, VStack,
 } from "@chakra-ui/react";
 
-const LogInForm = ({ onSwitch, email, setEmail }) => {
+const LogInForm = ({ initialEmail, setLoginEmail }) => {
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');
   const toast = useToast();
   const auth = getAuth();
@@ -27,6 +28,7 @@ const LogInForm = ({ onSwitch, email, setEmail }) => {
           duration: 5000,
           isClosable: true,
         });
+        setLoginEmail(email);
       })
       .catch((error) => {
         toast({
@@ -49,7 +51,7 @@ const LogInForm = ({ onSwitch, email, setEmail }) => {
         <FormLabel>Password</FormLabel>
         <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </FormControl>
-      <Button type="submit" colorScheme="blue">Login</Button>
+      <Button mt="2vh" type="submit" colorScheme="blue">Login</Button>
     </VStack>
   );
 };
