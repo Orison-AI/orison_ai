@@ -12,8 +12,8 @@ import {
   Input, useToast, VStack,
 } from "@chakra-ui/react";
 
-const SignUpForm = ({ initialEmail, setLoginEmail }) => {
-  const [email, setEmail] = useState(initialEmail);
+const SignUpForm = () => {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -56,7 +56,6 @@ const SignUpForm = ({ initialEmail, setLoginEmail }) => {
           duration: 5000,
           isClosable: true,
         });
-        setLoginEmail(email);
       })
       .catch((firebaseError) => {
         toast({

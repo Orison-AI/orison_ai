@@ -2,18 +2,9 @@
 
 ## Auth
 
-- Higher priority:
-    - Header
-        - Background
-        - Logout button in header
-    - Smoke tests
-        - Verify user sign-in works
-    - Settings
-        - ColorModeToggle
-        - Display username in settings
-        - Option to delete user in settings, with confirmation pop-up -- need to log them out and delete the user
-
 - Lower priority:
+    - Display username in settings
+    - Confirmation button and text field before deleting user
     - Google account support
     - Check if account already exists for email before or during user creation
     - Login caching
