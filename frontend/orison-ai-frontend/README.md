@@ -1,4 +1,4 @@
-# Getting Started with Create React App
+# Orison AI Frontend
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
@@ -68,3 +68,10 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+## Firebase
+
+### `firebase deploy`
+
+Deploy your built app to firebase hosting. Make sure you do `npm run build` first to update the build files in `build/`.  
+This will update the publicly hosted app, so don't mess anything up!

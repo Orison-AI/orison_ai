@@ -9,14 +9,10 @@ import { ChakraProvider } from '@chakra-ui/react';
 
 // Firebase
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 
 // Internal
 import App from './App';
 import theme from './common/theme';
-
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -31,8 +27,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+initializeApp(firebaseConfig);
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
