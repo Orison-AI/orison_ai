@@ -26,3 +26,6 @@ streamlit run path/to/api/server.py --server.port 5004
 
 - Enter "rmalhan" as user id and login.
 - Navigate to different radio buttons to see results pulled from mongo
+
+## UI Mocks
+https://app.diagrams.net/#G1aSTaQyNfZddZbYDaOraN6fZ3naUI6_or#%7B%22pageId%22%3A%22G5q3h0-aANIR-RvPyDPR%22%7D
