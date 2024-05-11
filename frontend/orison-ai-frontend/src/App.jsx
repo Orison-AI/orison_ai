@@ -14,8 +14,7 @@ import Views from './common/views';
 import Header from './components/Header';
 import MainMenu from './components/MainMenu';
 import Settings from './components/Settings';
-import SignIn from './components/SignIn';
-import SignUp from './components/SignUp';
+import Auth from './components/auth/Auth';
 import ManageApplicants from './components/pages/ManageApplicants/ManageApplicants';
 import UploadDocuments from './components/pages/UploadDocuments';
 import Screening from './components/pages/Screening';
@@ -29,6 +28,7 @@ const initialApplicants = [
 const App = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [showSignUp, setShowSignUp] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [currentView, setCurrentView] = useState('manageApplicants');
   const [applicants, setApplicants] = useState(initialApplicants);
@@ -66,9 +66,9 @@ const App = () => {
     toggleMenu();  // Close menu
   };
 
-  // if (!user) {
-  //   return <SignUp />;
-  // }
+  if (!user) {
+    return <Auth />;
+  }
 
   const renderCurrentView = () => {
     switch(currentView) {
