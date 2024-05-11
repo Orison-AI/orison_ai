@@ -28,7 +28,6 @@ const initialApplicants = [
 const App = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [showSignUp, setShowSignUp] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [currentView, setCurrentView] = useState('manageApplicants');
   const [applicants, setApplicants] = useState(initialApplicants);

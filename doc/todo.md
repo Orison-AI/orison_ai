@@ -2,8 +2,6 @@
 
 ## Auth
 
-- Cosmetics
-    - Color mode chooser
 - Smoke tests
     - Verify user creation works
     - Verify user sign-in works
