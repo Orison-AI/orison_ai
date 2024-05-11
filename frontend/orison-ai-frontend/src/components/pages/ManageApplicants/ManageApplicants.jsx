@@ -136,7 +136,7 @@ const ManageApplicants = ({applicants, setApplicants, setSelectedApplicant, setC
                     <IconButton icon={<EditIcon />} onClick={() => startEdit(applicant.id)} colorScheme="blue" />
                   </>
                 )}
-                <Button ml="0.5vh" onClick={() => uploadDocsForApplicant(applicant)}>Upload</Button>
+                <Button ml="1.0vh" onClick={() => uploadDocsForApplicant(applicant)}>Upload</Button>
                 <Button ml="0.5vh" onClick={() => screenApplicant(applicant)}>Screen</Button>
                 <Button ml="0.5vh" onClick={() => reviewApplicant(applicant)}>Review</Button>
               </Td>

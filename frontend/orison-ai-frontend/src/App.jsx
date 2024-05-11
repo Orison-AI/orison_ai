@@ -1,14 +1,20 @@
 // ./App.jsx
 
-// External
-import React, { useState } from 'react';
+// React
+import React, { useEffect, useState } from 'react';
+
+// Firebase
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+
+// Chakra
 import { useDisclosure, VStack } from '@chakra-ui/react';
 
 // Internal
 import Views from './common/views';
-import MainMenu from './components/MainMenu';
 import Header from './components/Header';
-import Settings from './components/Settings';
+import MainMenu from './components/MainMenu';
+import Settings from './components/settings/Settings';
+import Auth from './components/auth/Auth';
 import ManageApplicants from './components/pages/ManageApplicants/ManageApplicants';
 import UploadDocuments from './components/pages/UploadDocuments';
 import Screening from './components/pages/Screening';
@@ -21,10 +27,27 @@ const initialApplicants = [
 
 const App = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [currentView, setCurrentView] = useState('manageApplicants');
   const [applicants, setApplicants] = useState(initialApplicants);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        // User is signed in
+        setUser(currentUser);
+      } else {
+        // No user is signed in
+        setUser(null);
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
 
   const toggleMenu = () => {
     setMenuOpen(!isMenuOpen);
@@ -41,6 +64,10 @@ const App = () => {
     setCurrentView(viewName);
     toggleMenu();  // Close menu
   };
+
+  if (!user) {
+    return <Auth />;
+  }
 
   const renderCurrentView = () => {
     switch(currentView) {
@@ -63,7 +90,7 @@ const App = () => {
   };
 
   return (
-    <VStack height="100%" width="100%" padding="2vh">
+    <VStack height="100%" width="100%">
       <Header toggleMenu={toggleMenu} onSettingsOpen={onOpen} />
       <MainMenu
         isOpen={isMenuOpen}
