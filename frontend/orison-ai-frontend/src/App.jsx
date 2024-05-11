@@ -90,7 +90,7 @@ const App = () => {
   };
 
   return (
-    <VStack height="100%" width="100%" padding="2vh">
+    <VStack height="100%" width="100%">
       <Header toggleMenu={toggleMenu} onSettingsOpen={onOpen} />
       <MainMenu
         isOpen={isMenuOpen}

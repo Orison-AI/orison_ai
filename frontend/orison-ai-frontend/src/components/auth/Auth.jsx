@@ -13,8 +13,6 @@ import ColorModeToggle from "../settings/ColorModeToggle";
 import LogInForm from './LogInForm';
 import SignUpForm from './SignUpForm';
 
-// TODO: Fix re-rendering of forms whenever email changes. This breaks the form behavior.
-
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [isSignUp, setSignUp] = useState(true);
