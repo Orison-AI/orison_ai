@@ -3,9 +3,8 @@
 // React
 import React from 'react';
 
-
 // Firebase
-import { getAuth, signOut, deleteUser } from "firebase/auth";
+import { signOut, deleteUser } from "firebase/auth";
 
 // Chakra
 import {
@@ -15,10 +14,10 @@ import {
 } from '@chakra-ui/react';
 
 // Internal
+import { auth } from '../../firebaseConfig';
 import ColorModeToggle from "../settings/ColorModeToggle";
 
 function Settings({ isOpen, onClose }) {
-  const auth = getAuth();
   const toast = useToast();
 
   const handleLogout = () => {

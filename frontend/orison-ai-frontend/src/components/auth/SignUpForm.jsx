@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 
 // Firebase
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 // Chakra
 import {
@@ -12,13 +12,15 @@ import {
   Input, useToast, VStack,
 } from "@chakra-ui/react";
 
+// Internal
+import { auth } from '../../firebaseConfig';
+
 const SignUpForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const toast = useToast();
-  const auth = getAuth();
 
   const validatePassword = () => {
     let errors = [];

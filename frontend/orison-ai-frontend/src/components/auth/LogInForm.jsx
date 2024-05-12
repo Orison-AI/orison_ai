@@ -4,18 +4,20 @@
 import React, { useState } from 'react';
 
 // Firebase
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 // Chakra
 import {
   Button, FormControl, FormLabel, Input, useToast, VStack,
 } from "@chakra-ui/react";
 
+// Internal
+import { auth } from '../../firebaseConfig';
+
 const LogInForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const toast = useToast();
-  const auth = getAuth();
 
   const handleSubmit = (e) => {
     e.preventDefault();
