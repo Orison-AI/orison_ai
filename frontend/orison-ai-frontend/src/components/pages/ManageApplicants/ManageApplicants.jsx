@@ -35,22 +35,31 @@ const ManageApplicants = ({applicants, setApplicants, setSelectedApplicant, setC
 
   // Set the applicants list
   useEffect(() => {
+    let unsubscribe = () => {};
+
     async function fetchApplicants() {
       if (user) {
         const attorneysCollection = collection(db, "attorneys", user.uid, "applicants");
 
-        const unsubscribe = onSnapshot(attorneysCollection, (snapshot) => {
+        unsubscribe = onSnapshot(attorneysCollection, (snapshot) => {
           const newApplicants = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
           }));
           setApplicants(newApplicants);
+        }, (error) => {
+          console.error("Error fetching applicants:", error);
         });
       }
     }
   
     // Call the async function
     fetchApplicants();
+
+    // Return the cleanup function
+    return () => {
+      unsubscribe();
+    };
   }, [user, setApplicants]);
 
   const addNewApplicant = async () => {
