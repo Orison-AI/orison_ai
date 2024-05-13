@@ -1,15 +1,24 @@
 // ./components/pages/UploadDocuments.jsx
 
 // React
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, doc, setDoc } from 'firebase/firestore';
+import {
+  getStorage, ref, uploadBytes, getDownloadURL, deleteObject,
+} from 'firebase/storage';
+import {
+  collection, doc, setDoc, getDocs, deleteDoc
+} from 'firebase/firestore';
 
 // Chakra
-import { HStack, Spacer, Text, VStack, useToast } from '@chakra-ui/react';
+import {
+  HStack, IconButton,
+  Table, Thead, Tbody, Tr, Th, Td,
+  Text, useToast, VStack,
+} from '@chakra-ui/react';
+import { CloseIcon } from '@chakra-ui/icons';
 
 // Dropzone
 import { useDropzone } from 'react-dropzone';
@@ -20,6 +29,20 @@ import { db, auth } from '../../firebaseConfig';
 const UploadDocuments = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
   const toast = useToast();
+  const [documents, setDocuments] = useState([]);
+
+  const fetchDocuments = useCallback(async () => {
+    if (user && selectedApplicant) {
+      const applicantsCollection = collection(db, 'attorneys', user.uid, 'applicants', selectedApplicant.id, 'files');
+      const querySnapshot = await getDocs(applicantsCollection);
+      const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setDocuments(docs);
+    }
+  }, [user, selectedApplicant]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
 
   const onDrop = async (acceptedFiles) => {
     const storage = getStorage();
@@ -60,6 +83,9 @@ const UploadDocuments = ({ selectedApplicant }) => {
           duration: 5000,
           isClosable: true,
         });
+
+        // Fetch updated documents
+        fetchDocuments();
       } catch (error) {
         console.error(`Error saving metadata for file: ${error.message}`);
         toast({
@@ -71,6 +97,42 @@ const UploadDocuments = ({ selectedApplicant }) => {
         });
       }
     });
+  };
+
+  const deleteFile = async (fileName, fileUrl) => {
+    const storage = getStorage();
+    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${fileName}`;
+    const storageRef = ref(storage, filePath);
+
+    try {
+      // Delete the file from Firebase Storage
+      await deleteObject(storageRef);
+
+      // Delete the file reference from Firestore
+      const applicantsCollection = collection(db, "attorneys", user.uid, "applicants");
+      const fileRef = doc(applicantsCollection, selectedApplicant.id, "files", fileName);
+      await deleteDoc(fileRef);
+
+      toast({
+        title: 'File Deleted',
+        description: `File ${fileName} deleted successfully.`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+
+      // Fetch updated documents
+      fetchDocuments();
+    } catch (error) {
+      console.error(`Error deleting file: ${error.message}`);
+      toast({
+        title: 'Error Deleting File',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
@@ -92,6 +154,29 @@ const UploadDocuments = ({ selectedApplicant }) => {
             <Text>Drag files here or click to select files</Text>
         }
       </VStack>
+      <Table variant="simple" width="50%" marginTop="4vh">
+        <Thead>
+          <Tr>
+            <Th>File Name</Th>
+            <Th></Th>
+          </Tr>
+        </Thead>
+        <Tbody fontSize="2vh">
+          {documents.map(doc => (
+            <Tr key={doc.id}>
+              <Td>{doc.id}</Td>
+              <Td isNumeric>
+                <IconButton
+                  icon={<CloseIcon />}
+                  colorScheme="red"
+                  variant="ghost"
+                  onClick={() => deleteFile(doc.id, doc.url)}
+                />
+              </Td>
+            </Tr>
+          ))}
+        </Tbody>
+      </Table>
     </VStack>
   );
 }

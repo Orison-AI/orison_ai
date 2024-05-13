@@ -73,7 +73,6 @@ const ManageApplicants = ({
         name: "",
         visaType: "",
         status: "",
-        files: {},
       });
       startEdit(newDoc.id);
     } catch (error) {

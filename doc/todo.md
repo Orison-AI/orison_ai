@@ -18,13 +18,12 @@
 
 ## Database
 
-- Table displaying documents uploaded for the applicant
-    - File name
-    - Ability to delete documents
 - Upload feature
     - Use icon to indicate drag-n-drop
     - Use button for browsing
     - If file version already uploaded, prompt user to confirm before overwriting
+    - Display spinner while uploading that says "Uploading xyz.txt"
+    - Clean-up toasts
 
 ## Backend Comms
 
