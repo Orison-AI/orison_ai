@@ -7,13 +7,13 @@ import { getFirestore } from "firebase/firestore";
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDt1iKNn_Lcr0WxlPkB9re7TIsO9Zqowek",
-  authDomain: "orison-ai-visa-review.firebaseapp.com",
-  projectId: "orison-ai-visa-review",
-  storageBucket: "orison-ai-visa-review.appspot.com",
-  messagingSenderId: "253912522017",
-  appId: "1:253912522017:web:31af271fc1a46708df7260",
-  measurementId: "G-B1Z2968M43"
+  apiKey: "AIzaSyD-DL2nGP24pCQE9ySboRrRp638MvSKV0M",
+  authDomain: "orison-ai-visa-apply.firebaseapp.com",
+  projectId: "orison-ai-visa-apply",
+  storageBucket: "orison-ai-visa-apply.appspot.com",
+  messagingSenderId: "685108028813",
+  appId: "1:685108028813:web:06164ab1ea0a4f765089c4",
+  measurementId: "G-0X5RE57SDJ"
 };
 
 // Initialize Firebase
