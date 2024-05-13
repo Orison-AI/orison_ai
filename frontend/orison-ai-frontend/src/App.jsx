@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { onAuthStateChanged } from "firebase/auth";
 
 // Chakra
-import { useDisclosure, VStack } from '@chakra-ui/react';
+import { Text, useDisclosure, VStack } from '@chakra-ui/react';
 
 // Internal
 
@@ -71,6 +71,7 @@ const App = () => {
         return <ManageApplicants
           applicants={applicants}
           setApplicants={setApplicants}
+          selectedApplicant={selectedApplicant}
           setSelectedApplicant={setSelectedApplicant}
           setCurrentView={setCurrentView}
         />;
@@ -81,7 +82,7 @@ const App = () => {
       case Views.STORY_BUILDER:
         return <StoryBuilder selectedApplicant={selectedApplicant} />;
       default:
-        return <ManageApplicants applicants={applicants} setApplicants={setApplicants} />; // Default case
+        return <Text>Invalid View</Text>
     }
   };
 

@@ -22,7 +22,11 @@ import { db, auth } from '../../../firebaseConfig';
 import Views from '../../../common/views';
 import DeleteApplicantModal from './DeleteApplicantModal';
 
-const ManageApplicants = ({applicants, setApplicants, setSelectedApplicant, setCurrentView}) => {
+const ManageApplicants = ({
+  applicants, setApplicants,
+  selectedApplicant, setSelectedApplicant,
+  setCurrentView,
+}) => {
   const [editId, setEditId] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [applicantToDelete, setApplicantToDelete] = useState(null);
@@ -39,9 +43,9 @@ const ManageApplicants = ({applicants, setApplicants, setSelectedApplicant, setC
 
     async function fetchApplicants() {
       if (user) {
-        const attorneysCollection = collection(db, "attorneys", user.uid, "applicants");
+        const applicantsCollection = collection(db, "attorneys", user.uid, "applicants");
 
-        unsubscribe = onSnapshot(attorneysCollection, (snapshot) => {
+        unsubscribe = onSnapshot(applicantsCollection, (snapshot) => {
           const newApplicants = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
@@ -63,12 +67,13 @@ const ManageApplicants = ({applicants, setApplicants, setSelectedApplicant, setC
   }, [user, setApplicants]);
 
   const addNewApplicant = async () => {
-    const attorneysCollection = collection(db, "attorneys", user.uid, "applicants");
+    const applicantsCollection = collection(db, "attorneys", user.uid, "applicants");
     try {
-      const newDoc = await addDoc(attorneysCollection, {
+      const newDoc = await addDoc(applicantsCollection, {
         name: "",
         visaType: "",
-        status: ""
+        status: "",
+        files: {},
       });
       startEdit(newDoc.id);
     } catch (error) {
@@ -80,13 +85,13 @@ const ManageApplicants = ({applicants, setApplicants, setSelectedApplicant, setC
   const cancelEdit = () => setEditId(null);
 
   const saveEdit = async (id) => {
-    const attorneysCollection = collection(db, "attorneys", user.uid, "applicants");
+    const applicantsCollection = collection(db, "attorneys", user.uid, "applicants");
     try {
-      await setDoc(doc(attorneysCollection, id), {
+      await setDoc(doc(applicantsCollection, id), {
         name: nameRef.current.value,
         visaType: visaTypeRef.current.value,
-        status: statusRef.current.value
-      });
+        status: statusRef.current.value,
+      }, { merge: true });
     } catch (error) {
       console.error("Failed to add new applicant:", error);
     }
@@ -94,9 +99,12 @@ const ManageApplicants = ({applicants, setApplicants, setSelectedApplicant, setC
   };
 
   const deleteApplicant = async (id) => {
-    const attorneysCollection = collection(db, "attorneys", user.uid, "applicants");
+    const applicantsCollection = collection(db, "attorneys", user.uid, "applicants");
     try {
-      await deleteDoc(doc(attorneysCollection, id));
+      if (selectedApplicant.id === id) {
+        setSelectedApplicant(null);
+      }
+      await deleteDoc(doc(applicantsCollection, id));
       onClose(); // Only close the modal if deletion is successful
     } catch (error) {
       console.error("Failed to delete applicant:", error);
@@ -131,7 +139,7 @@ const ManageApplicants = ({applicants, setApplicants, setSelectedApplicant, setC
 
   return (
     <Box width="100%">
-      <Text fontSize="2vh" m="2vh" mb="4vh" color="gray.400">Manage Applicants</Text>
+      <Text fontSize="3vh" m="2vh" mb="4vh" color="gray.400">Manage Applicants</Text>
       <Table variant="simple">
         <Thead>
           <Tr>

@@ -18,11 +18,23 @@
 
 ## Database
 
-- Upload docs
-- Store docs in the cloud
-- Delete docs
+- Table displaying documents uploaded for the applicant
+    - File name
+    - Ability to delete documents
+- Upload feature
+    - Use icon to indicate drag-n-drop
+    - Use button for browsing
+    - If file version already uploaded, prompt user to confirm before overwriting
 
 ## Backend Comms
 
 - Deploy a REST API to Google App Engine
 - Send messages each way
+
+## Bugs
+
+- Make login inputs double-click selectable
+- Deletion
+    - Make sure that deleted applicants are also deselected
+    - When applicant is deleted, delete all of their documents from filestore
+    - When account is deleted, delete all of their applicant's documents from filestore
