@@ -1,5 +1,7 @@
 FROM ubuntu:focal
 
+ARG DEBIAN_FRONTEND=noninteractive
+
 # Set the working directory
 WORKDIR /app
 
@@ -35,7 +37,7 @@ RUN echo "alias python3=python3.10" >> /root/.bashrc
 RUN python3.10 -m pip install --no-cache-dir -r packages-python3.txt
 
 # Install any additional system packages needed
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+RUN apt-get update && apt-get install -y \
     build-essential \
     git \
     cmake \
