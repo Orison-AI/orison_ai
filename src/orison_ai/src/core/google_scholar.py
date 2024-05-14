@@ -48,7 +48,7 @@ async def extract_user(url: str):
     return None
 
 
-async def get_google_scholar_info(business_id: str, user_id: str, scholar_link: str):
+async def get_google_scholar_info(attorney_id: str, user_id: str, scholar_link: str):
     """
     Extract information from a Google Scholar profile.
     :param scholar_link: The link to the Google Scholar profile
@@ -131,7 +131,7 @@ async def get_google_scholar_info(business_id: str, user_id: str, scholar_link: 
         )
 
     return GoogleScholarDB(
-        business_id=business_id,
+        attorney_id=attorney_id,
         user_id=user_id,
         author=Author(
             profile_link=scholar_link,
@@ -153,15 +153,15 @@ async def get_google_scholar_info(business_id: str, user_id: str, scholar_link: 
 
 if __name__ == "__main__":
     user_id = "rmalhan"
-    business_id = "demo_v2"
-    client = GoogleScholarClient(user_id=user_id, db_name=DB_NAME)
+    attorney_id = "demo_v2"
+    client = GoogleScholarClient()
     scholar_link = "https://scholar.google.com/citations?user=QW93AM0AAAAJ&hl=en&oi=ao"
 
     if scholar_link != "":
         try:
             scholar_info = asyncio.run(
                 get_google_scholar_info(
-                    user_id=user_id, business_id=business_id, scholar_link=scholar_link
+                    user_id=user_id, attorney_id=attorney_id, scholar_link=scholar_link
                 )
             )
         except Exception as e:

@@ -53,7 +53,7 @@ class OrisonApp:
     def __init__(self):
         self._logged_in = None
         self._user_id = ""
-        self._business_id = "demo_v2"
+        self._attorney_id = "demo_v2"
         self._mongo_client = None
         self._google_scholar = None
         self._informatics = None
@@ -75,10 +75,10 @@ class OrisonApp:
         self._sidebar = st.sidebar.radio("Navigation", pages)
 
         self._google_scholar = GoogleScholarApp(
-            self._business_id, self._user_id, self._sidebar
+            self._attorney_id, self._user_id, self._sidebar
         )
         self._story_builder = StoryBuilderApp(
-            self._business_id, self._user_id, self._sidebar
+            self._attorney_id, self._user_id, self._sidebar
         )
         self._pages = True
 

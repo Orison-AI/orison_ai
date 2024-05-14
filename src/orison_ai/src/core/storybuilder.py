@@ -17,7 +17,7 @@
 from orison_ai.src.utils.constants import VAULT_PATH, ROLE, DB_NAME
 from orison_ai.src.utils.ingest_utils import ingest_folder, Source
 from orison_ai.src.database.story_client import StoryClient
-from orison_ai.src.database.models import Story, QandA
+from orison_ai.src.database.models import StoryBuilderDB, QandA
 from private_gpt.server.ingest.ingest_service import IngestService
 from private_gpt.components.llm.llm_component import LLMComponent
 from private_gpt.components.vector_store.vector_store_component import (
@@ -67,10 +67,10 @@ def ingest_documents(path: Path):
     )
 
 
-async def analyze_documents(business_id: str, user_id: str, type_of_story: str):
+async def analyze_documents(attorney_id: str, user_id: str, type_of_story: str):
     """
     Analyze the documents and generate a story
-    :param business_id: the business id
+    :param attorney_id: the business id
     :param user_id: the user id
     :param type_of_story: the type of story
     :return: None
@@ -78,7 +78,7 @@ async def analyze_documents(business_id: str, user_id: str, type_of_story: str):
     settings = global_injector.get(Settings)
     logger.info(f"Settings obtained: {settings}")
 
-    story_client = StoryClient(db_name=DB_NAME)
+    story_client = StoryClient()
     llm_component = LLMComponent(settings=settings)
     vector_store_component = VectorStoreComponent(settings=settings)
     node_store_component = NodeStoreComponent(settings=settings)
@@ -139,7 +139,7 @@ async def analyze_documents(business_id: str, user_id: str, type_of_story: str):
         return q_and_a
 
     async def get_story(questions, detail_number):
-        story = Story()
+        story = StoryBuilderDB()
         tasks = [
             asyncio.create_task(get_response(message, detail_number[i]))
             for i, message in enumerate(questions)
@@ -150,7 +150,7 @@ async def analyze_documents(business_id: str, user_id: str, type_of_story: str):
         return story
 
     story = await get_story(questions, detail_number)
-    story.business_id = business_id
+    story.attorney_id = attorney_id
     story.user_id = user_id
     story.type_of_story = type_of_story
     await story_client.insert(story)

@@ -14,10 +14,9 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-from orison_ai.src.core.storyteller import StoryTeller
+from orison_ai.src.core.storybuilder import StoryBuilder
 from orison_ai.src.utils.constants import CATEGORIES, VAULT_PATH
 from orison_ai.src.utils.ingest_utils import ingest_folder, Source
-from orison_ai.src.database.client import MongoDB
 from private_gpt.components.ingest.ingest_component import PipelineIngestComponent
 from private_gpt.server.ingest.ingest_service import IngestService
 from private_gpt.components.llm.llm_component import LLMComponent
@@ -62,7 +61,7 @@ if __name__ == "__main__":
     and research that it actually rated those chunks higher
     """
     logger.info("Initializing story teller")
-    story_teller = StoryTeller()
+    story_teller = StoryBuilderDB()
     settings = global_injector.get(Settings)
     logger.info(f"Settings obtained: {settings}")
 

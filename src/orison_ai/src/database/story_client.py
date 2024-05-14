@@ -17,27 +17,19 @@
 # External
 
 import logging
-from orison_ai.src.database.models import Story
-from orison_ai.src.database.client import DBClient
-from orison_ai.src.utils.constants import DB_NAME
+from orison_ai.src.database.models import StoryBuilderDB
+from orison_ai.src.database.firebase import FirestoreClient
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 
-class StoryClient(DBClient):
-    def __init__(
-        self,
-        db_name: str = DB_NAME,
-        db_path: str = "mongodb://mongodb:27017/",
-    ):
+class StoryClient(FirestoreClient):
+    def __init__(self):
         """
-        Initializes an instance of a DatabaseModifier object, which can be used
+        Initializes an instance of a StoryClient object, which can be used
         to insert into or update a database collection given a file
-
-        :param db_name: the name of the database to insert into
-        :param db_path: the path to the database
         """
-        super(StoryClient, self).__init__(db_name, db_path)
-        self._model = Story
-        self._collection = self._db[self._model.__name__]
+        super(StoryClient, self).__init__()
+        self._model = StoryBuilderDB
+        self._collection = self.client.collection(self._model.__name__)

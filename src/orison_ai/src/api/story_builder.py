@@ -21,11 +21,11 @@ from orison_ai.src.utils.constants import DB_NAME
 
 
 class StoryBuilderApp:
-    def __init__(self, business_id, user_id, side_bar):
-        self._business_id = business_id
+    def __init__(self, attorney_id, user_id, side_bar):
+        self._attorney_id = attorney_id
         self._user_id = user_id
         self._sidebar = side_bar
-        self._mongo_client = StoryClient(db_name=DB_NAME)
+        self._mongo_client = StoryClient()
         self.run()
 
     def _display_qa_pairs(self, qa_pairs):
@@ -83,7 +83,7 @@ class StoryBuilderApp:
         if self._sidebar == "StoryBuilder":
             story = asyncio.run(
                 self._mongo_client.find_top(
-                    business_id=self._business_id,
+                    attorney_id=self._attorney_id,
                     user_id=self._user_id,
                     filters={"type_of_story": "detailed"},
                 )
@@ -100,7 +100,7 @@ class StoryBuilderApp:
         elif self._sidebar == "Screening":
             story = asyncio.run(
                 self._mongo_client.find_top(
-                    business_id=self._business_id,
+                    attorney_id=self._attorney_id,
                     user_id=self._user_id,
                     filters={"type_of_story": "preliminary"},
                 )

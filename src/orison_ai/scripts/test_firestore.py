@@ -1,0 +1,27 @@
+#! /usr/bin/env python3.10
+
+import asyncio
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+from orison_ai.src.database.models import GoogleScholarDB
+from orison_ai.src.core.google_scholar import get_google_scholar_info
+from orison_ai.src.database.google_scholar_client import GoogleScholarClient
+
+# cred = credentials.Certificate("/app/vault/credentials/firebase.json")
+
+# app = firebase_admin.initialize_app(cred)
+# client = firestore.client(app)
+# collection = client.collection(GoogleScholarDB.__name__)
+
+scholar_client = GoogleScholarClient()
+
+# user_id = "rmalhan"
+# attorney_id = "demo_v2"
+# scholar_link = "https://scholar.google.com/citations?user=QW93AM0AAAAJ&hl=en&oi=ao"
+# scholar_info = asyncio.run(get_google_scholar_info(attorney_id, user_id, scholar_link))
+# asyncio.run(scholar_client.insert(scholar_info))
+result = asyncio.run(scholar_client.find_top("demo_v2", "rmalhan"))
+import IPython
+
+IPython.embed()

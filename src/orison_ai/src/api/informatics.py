@@ -26,11 +26,11 @@ _logger = logging.getLogger(__name__)
 
 
 class GoogleScholarApp:
-    def __init__(self, business_id, user_id, side_bar):
+    def __init__(self, attorney_id, user_id, side_bar):
         self._user_id = user_id
-        self._business_id = business_id
+        self._attorney_id = attorney_id
         self._sidebar = side_bar
-        self._mongo_client = GoogleScholarClient(db_name=DB_NAME)
+        self._mongo_client = GoogleScholarClient()
         self.run()
 
     def run(self):
@@ -41,7 +41,7 @@ class GoogleScholarApp:
             _logger.info("Fetching google scholar data.")
             scholar_info = asyncio.run(
                 self._mongo_client.find_top(
-                    business_id=self._business_id, user_id=self._user_id
+                    attorney_id=self._attorney_id, user_id=self._user_id
                 )
             )
             _logger.info(f"Obtained google scholar data:\n {scholar_info}")
@@ -56,4 +56,4 @@ class GoogleScholarApp:
 
 
 if __name__ == "__main__":
-    GoogleScholarApp(business_id="demo_v2", user_id="rmalhan", side_bar="Informatics")
+    GoogleScholarApp(attorney_id="demo_v2", user_id="rmalhan", side_bar="Informatics")
