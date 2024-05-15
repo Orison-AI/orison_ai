@@ -14,6 +14,7 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
+from concurrent.futures import ThreadPoolExecutor
 import asyncio
 import streamlit as st
 from orison_ai.src.api.informatics import GoogleScholarApp
@@ -51,11 +52,14 @@ class OrisonApp:
         self._user_id = ""
         self._attorney_id = "demo_v2"
         self._google_scholar = None
-        self._story_builder = None
+        self._story_builder_screening = None
+        self._story_builder_detailed = None
         self._informatics = None
         self._pages = False
         self._sidebar = None
-        asyncio.run(self._initialize())
+
+    async def dummy_task(self):
+        return
 
     async def _initialize_pages(self):
         pages = [
@@ -74,16 +78,30 @@ class OrisonApp:
             self._google_scholar = GoogleScholarApp(
                 self._attorney_id, self._user_id, self._sidebar
             )
-        if not self._story_builder:
-            self._story_builder = StoryBuilderApp(
-                self._attorney_id, self._user_id, self._sidebar
-            )
-
-        await self._google_scholar.run()
-        await self._story_builder.run()
+        if not self._story_builder_screening:
+            if self._sidebar == "Screening":
+                self._story_builder_screening = StoryBuilderApp(
+                    self._attorney_id, self._user_id, self._sidebar
+                )
+        if not self._story_builder_detailed:
+            if self._sidebar == "StoryBuilder":
+                self._story_builder_detailed = StoryBuilderApp(
+                    self._attorney_id, self._user_id, self._sidebar
+                )
+        await asyncio.gather(
+            self._google_scholar.run() if self._google_scholar else self.dummy_task(),
+            asyncio.sleep(0.1),
+            self._story_builder_screening.run()
+            if self._story_builder_screening
+            else self.dummy_task(),
+            asyncio.sleep(0.1),
+            self._story_builder_detailed.run()
+            if self._story_builder_detailed
+            else self.dummy_task(),
+        )
         self._pages = True
 
-    async def _initialize(self):
+    async def initialize(self):
         st.title("Orison AI")
 
         if "logged_in" not in st.session_state:
@@ -112,3 +130,11 @@ class OrisonApp:
 
 if __name__ == "__main__":
     app = OrisonApp()
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    with ThreadPoolExecutor(5) as executor:
+        loop.set_default_executor(executor)
+        loop.run_until_complete(app.initialize())
+    executor.shutdown(wait=True)
+    loop.close()

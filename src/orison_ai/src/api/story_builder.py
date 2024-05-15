@@ -119,15 +119,13 @@ class StoryBuilderApp:
 
 
 if __name__ == "__main__":
-
-    async def helper():
-        story_app = StoryBuilderApp(
-            attorney_id="demo_v2", user_id="rmalhan", side_bar="Screening"
-        )
-        await story_app.run()
-        story_app = StoryBuilderApp(
-            attorney_id="demo_v2", user_id="rmalhan", side_bar="StoryBuilder"
-        )
-        await story_app.run()
-
-    asyncio.run(helper())
+    story_app_screening = StoryBuilderApp(
+        attorney_id="demo_v2", user_id="rmalhan", side_bar="Screening"
+    )
+    story_app_detailed = StoryBuilderApp(
+        attorney_id="demo_v2", user_id="rmalhan", side_bar="StoryBuilder"
+    )
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(
+        asyncio.gather(story_app_screening.run(), story_app_detailed.run())
+    )
