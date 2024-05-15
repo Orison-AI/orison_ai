@@ -21,7 +21,14 @@ scholar_client = GoogleScholarClient()
 # scholar_link = "https://scholar.google.com/citations?user=QW93AM0AAAAJ&hl=en&oi=ao"
 # scholar_info = asyncio.run(get_google_scholar_info(attorney_id, user_id, scholar_link))
 # asyncio.run(scholar_client.insert(scholar_info))
-result = asyncio.run(scholar_client.find_top("demo_v2", "rmalhan"))
-import IPython
 
-IPython.embed()
+
+async def helper():
+    await scholar_client.find_top("demo_v2", "rmalhan")
+    await scholar_client.find_top("demo_v2", "rmalhan")
+
+
+result = asyncio.run(helper())
+# import IPython
+
+# IPython.embed()

@@ -1,7 +1,3 @@
-# Orison settings
-mongo:
-  db_name: demo_v1
-
 # The default configuration file.
 # More information about configuration can be found in the documentation: https://docs.privategpt.dev/
 # Syntax in `private_pgt/settings/settings.py`

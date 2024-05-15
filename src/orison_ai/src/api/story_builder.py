@@ -15,9 +15,15 @@
 # ==========================================================================
 
 import asyncio
+import logging
 import streamlit as st
 from orison_ai.src.database.story_client import StoryClient
-from orison_ai.src.utils.constants import DB_NAME
+from orison_ai.src.database.models import StoryBuilderDB
+
+logging.basicConfig(level=logging.INFO)
+_logger = logging.getLogger(__name__)
+
+client = StoryClient()
 
 
 class StoryBuilderApp:
@@ -25,8 +31,6 @@ class StoryBuilderApp:
         self._attorney_id = attorney_id
         self._user_id = user_id
         self._sidebar = side_bar
-        self._mongo_client = StoryClient()
-        self.run()
 
     def _display_qa_pairs(self, qa_pairs):
         # Custom HTML and CSS to style the markdown for questions and answers
@@ -76,18 +80,18 @@ class StoryBuilderApp:
                 f'<div class="source">{qa_pairs[i+2]}</div>', unsafe_allow_html=True
             )
 
-    def run(self):
+    async def run(self):
         """
         Fetches the story data from the database and displays it on the Streamlit app
         """
         if self._sidebar == "StoryBuilder":
-            story = asyncio.run(
-                self._mongo_client.find_top(
-                    attorney_id=self._attorney_id,
-                    user_id=self._user_id,
-                    filters={"type_of_story": "detailed"},
-                )
+            # story = StoryBuilderDB()
+            story = await client.find_top(
+                attorney_id=self._attorney_id,
+                user_id=self._user_id,
+                filters={"type_of_story": "detailed"},
             )
+            _logger.info(f"Obtained story data:\n {story.to_json()}")
             response = []
             for qanda in story.summary:
                 response.append(qanda.question)
@@ -98,13 +102,13 @@ class StoryBuilderApp:
             self._display_qa_pairs(response)
 
         elif self._sidebar == "Screening":
-            story = asyncio.run(
-                self._mongo_client.find_top(
-                    attorney_id=self._attorney_id,
-                    user_id=self._user_id,
-                    filters={"type_of_story": "preliminary"},
-                )
+            # story = StoryBuilderDB()
+            story = await client.find_top(
+                attorney_id=self._attorney_id,
+                user_id=self._user_id,
+                filters={"type_of_story": "preliminary"},
             )
+            _logger.info(f"Obtained story data:\n {story.to_json()}")
             response = []
             for qanda in story.summary:
                 response.append(qanda.question)
@@ -112,3 +116,18 @@ class StoryBuilderApp:
                 response.append(qanda.source)
             st.title(self._sidebar)
             self._display_qa_pairs(response)
+
+
+if __name__ == "__main__":
+
+    async def helper():
+        story_app = StoryBuilderApp(
+            attorney_id="demo_v2", user_id="rmalhan", side_bar="Screening"
+        )
+        await story_app.run()
+        story_app = StoryBuilderApp(
+            attorney_id="demo_v2", user_id="rmalhan", side_bar="StoryBuilder"
+        )
+        await story_app.run()
+
+    asyncio.run(helper())

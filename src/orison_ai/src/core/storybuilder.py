@@ -14,7 +14,7 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-from orison_ai.src.utils.constants import VAULT_PATH, ROLE, DB_NAME
+from orison_ai.src.utils.constants import VAULT_PATH, ROLE
 from orison_ai.src.utils.ingest_utils import ingest_folder, Source
 from orison_ai.src.database.story_client import StoryClient
 from orison_ai.src.database.models import StoryBuilderDB, QandA

@@ -32,7 +32,6 @@ from pymongo import DESCENDING, ASCENDING
 
 # Internal
 from orison_ai.src.utils.constants import FIREBASE_CREDENTIALS
-from orison_ai.src.database import models
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
@@ -45,7 +44,10 @@ class FireStoreDB:
         connect to a FireStoreDB database
         """
         cred = credentials.Certificate(FIREBASE_CREDENTIALS)
-        app = firebase_admin.initialize_app(cred)
+        try:
+            app = firebase_admin.get_app()
+        except:
+            app = firebase_admin.initialize_app(cred)
         self.client = firestore_async.client(app)
 
 
@@ -74,7 +76,8 @@ class FirestoreClient(FireStoreDB):
         :return: the entry found in firestore db for the requesting model class instance
                 converted to a mongo object
         """
-        return await self.find_top_k(attorney_id, user_id, filters, 1, order)[0]
+        result = await self.find_top_k(attorney_id, user_id, filters, 1, order)
+        return result[0]
 
     async def find_top_k(
         self,

@@ -29,7 +29,6 @@ from orison_ai.src.utils.urls import url_exists
 from orison_ai.src.utils.exceptions import INVALID_URL
 from orison_ai.src.utils.data_utils import stringify_keys
 from orison_ai.src.database.google_scholar_client import GoogleScholarClient
-from orison_ai.src.utils.constants import DB_NAME
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

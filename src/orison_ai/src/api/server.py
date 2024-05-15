@@ -14,14 +14,10 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-import os
-import sys
-
+import asyncio
 import streamlit as st
-from collections import defaultdict
 from orison_ai.src.api.informatics import GoogleScholarApp
 from orison_ai.src.api.story_builder import StoryBuilderApp
-from orison_ai.src.api.upload import Upload
 
 # Set page background color
 st.markdown(
@@ -54,14 +50,14 @@ class OrisonApp:
         self._logged_in = None
         self._user_id = ""
         self._attorney_id = "demo_v2"
-        self._mongo_client = None
         self._google_scholar = None
+        self._story_builder = None
         self._informatics = None
         self._pages = False
         self._sidebar = None
-        self._initialize()
+        asyncio.run(self._initialize())
 
-    def _initialize_pages(self):
+    async def _initialize_pages(self):
         pages = [
             "Dashboard",
             "Upload",
@@ -74,15 +70,20 @@ class OrisonApp:
         # Create sidebar with tabs
         self._sidebar = st.sidebar.radio("Navigation", pages)
 
-        self._google_scholar = GoogleScholarApp(
-            self._attorney_id, self._user_id, self._sidebar
-        )
-        self._story_builder = StoryBuilderApp(
-            self._attorney_id, self._user_id, self._sidebar
-        )
+        if not self._google_scholar:
+            self._google_scholar = GoogleScholarApp(
+                self._attorney_id, self._user_id, self._sidebar
+            )
+        if not self._story_builder:
+            self._story_builder = StoryBuilderApp(
+                self._attorney_id, self._user_id, self._sidebar
+            )
+
+        await self._google_scholar.run()
+        await self._story_builder.run()
         self._pages = True
 
-    def _initialize(self):
+    async def _initialize(self):
         st.title("Orison AI")
 
         if "logged_in" not in st.session_state:
@@ -93,7 +94,7 @@ class OrisonApp:
             self._user_id = st.session_state.user_id
             self._logged_in = True
             if not self._pages:
-                self._initialize_pages()
+                await self._initialize_pages()
 
             if st.button("Log out"):
                 st.session_state.logged_in = False
