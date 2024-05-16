@@ -31,7 +31,7 @@ from mongoengine import (
 
 class BaseModel(Document):
     name = StringField()
-    user_id = StringField(required=True)
+    attorney_id = StringField(required=True)
     applicant_id = StringField(required=True)
     date_created = DateTimeField(required=True, default=datetime.utcnow())
     meta = {"allow_inheritance": True}

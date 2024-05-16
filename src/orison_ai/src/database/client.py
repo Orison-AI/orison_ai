@@ -71,7 +71,7 @@ class DBClient(DBInitializer):
 
     async def find_top(
         self,
-        user_id: str,
+        attorney_id: str,
         applicant_id: str,
         filters: Optional[dict] = {},
         order: [1, -1] = DESCENDING,
@@ -80,17 +80,17 @@ class DBClient(DBInitializer):
         Finds a mongoengine Document item from the collection and converts it to a mongo object
         Order is either ASCENDING or DESCENDING
 
-        :param user_id: the business id of the document to find
+        :param attorney_id: the business id of the document to find
         :param applicant_id: the user id of the document to find
         :param order: the order in which to sort the documents
         :return: the entry found in mongo db for the requesting model class instance
                 converted to a mongo object
         """
-        return await self.find_top_k(user_id, applicant_id, filters, 1, order)
+        return await self.find_top_k(attorney_id, applicant_id, filters, 1, order)
 
     async def find_top_k(
         self,
-        user_id: str,
+        attorney_id: str,
         applicant_id: str,
         filters: Optional[dict] = {},
         k: int = 1,
@@ -100,7 +100,7 @@ class DBClient(DBInitializer):
         Finds many document items given a limit k from the collection and converts them to mongo objects
         Order is either ASCENDING or DESCENDING
 
-        :param user_id: the business id of the document to find
+        :param attorney_id: the business id of the document to find
         :param applicant_id: the user id of the document to find
         :param k: the number of documents to find
         :param order: the order in which to sort the documents
@@ -123,7 +123,7 @@ class DBClient(DBInitializer):
         return [
             self._model(**{k: v for k, v in item.items() if k != "_id"})
             async for item in self._collection.find(
-                {"user_id": user_id, "applicant_id": applicant_id} | filters
+                {"attorney_id": attorney_id, "applicant_id": applicant_id} | filters
             )
             .sort("date_created", order)
             .limit(k)
@@ -134,7 +134,7 @@ class DBClient(DBInitializer):
         """
         Inserts a mongo doc object into the mongo database
 
-        :param user_id: the business id of the document to insert
+        :param attorney_id: the business id of the document to insert
         :param applicant_id: the user id of the document to insert
         :param doc: the object to insert into the database
 

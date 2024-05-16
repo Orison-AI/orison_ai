@@ -37,11 +37,11 @@ logger = logging.getLogger(__name__)
 """
 DEMO:
 
-curl -X POST "http://127.0.0.1:5004/download_scholar"      -H "Content-Type: application/json"      -d '{"user_id" : "demo_v2", "applicant_id": "rmalhan", "database" : "orison_ai", "category": "preliminary", "parameters" : {"scholar_link" : "https://scholar.google.com/citations?user=QW93AM0AAAAJ&hl=en&oi=ao", "file_name" : "scholar_profile"}}'
+curl -X POST "http://127.0.0.1:5004/download_scholar"      -H "Content-Type: application/json"      -d '{"attorney_id" : "demo_v2", "applicant_id": "rmalhan", "database" : "orison_ai", "category": "preliminary", "parameters" : {"scholar_link" : "https://scholar.google.com/citations?user=QW93AM0AAAAJ&hl=en&oi=ao", "file_name" : "scholar_profile"}}'
 
 curl -X POST "http://127.0.0.1:5004/ingest"      -H "Content-Type: application/json"      -d '{"category" : "preliminary"}'
 
-curl -X POST "http://127.0.0.1:5004/analyze"      -H "Content-Type: application/json"      -d '{"user_id" : "demo_v2", "applicant_id" : "rmalhan", "category" : "preliminary"}'
+curl -X POST "http://127.0.0.1:5004/analyze"      -H "Content-Type: application/json"      -d '{"attorney_id" : "demo_v2", "applicant_id" : "rmalhan", "category" : "preliminary"}'
 """
 
 
@@ -49,7 +49,7 @@ curl -X POST "http://127.0.0.1:5004/analyze"      -H "Content-Type: application/
 async def download_scholar(request: DownloadRequest, background_tasks: BackgroundTasks):
     background_tasks.add_task(
         download_scholar_helper,
-        request.user_id,
+        request.attorney_id,
         request.applicant_id,
         request.database,
         request.category,
@@ -72,7 +72,7 @@ async def ingest(request: IngestRequest, background_tasks: BackgroundTasks):
 @app.post("/analyze")
 async def analyze(request: AnalysisRequest, background_tasks: BackgroundTasks):
     background_tasks.add_task(
-        analysis_helper, request.user_id, request.applicant_id, request.category
+        analysis_helper, request.attorney_id, request.applicant_id, request.category
     )
     return {
         "message": "Analysis task created",

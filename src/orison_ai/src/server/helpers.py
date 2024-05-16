@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 async def download_scholar_helper(
-    user_id: str, applicant_id: str, database: str, category: str, parameters: dict
+    attorney_id: str, applicant_id: str, database: str, category: str, parameters: dict
 ):
     client = GoogleScholarClient()
     scholar_link = parameters.get("scholar_link")
@@ -43,7 +43,7 @@ async def download_scholar_helper(
     if scholar_link != "":
         try:
             scholar_info = await get_google_scholar_info(
-                user_id=user_id,
+                attorney_id=attorney_id,
                 applicant_id=applicant_id,
                 scholar_link=scholar_link,
             )
@@ -77,10 +77,10 @@ async def ingest_helper(category: str):
         raise e
 
 
-async def analysis_helper(user_id: str, applicant_id: str, type_of_story: str):
+async def analysis_helper(attorney_id: str, applicant_id: str, type_of_story: str):
     try:
         await analyze_documents(
-            user_id=user_id,
+            attorney_id=attorney_id,
             applicant_id=applicant_id,
             type_of_story=type_of_story,
         )

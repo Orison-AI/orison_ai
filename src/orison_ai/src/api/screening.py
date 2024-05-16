@@ -26,8 +26,8 @@ client = ScreeningClient()
 
 
 class ScreeningApp:
-    def __init__(self, user_id, applicant_id, side_bar):
-        self._user_id = user_id
+    def __init__(self, attorney_id, applicant_id, side_bar):
+        self._attorney_id = attorney_id
         self._applicant_id = applicant_id
         self._sidebar = side_bar
 
@@ -85,7 +85,7 @@ class ScreeningApp:
         """
         if self._sidebar == "Screening":
             story = await client.find_top(
-                user_id=self._user_id,
+                attorney_id=self._attorney_id,
                 applicant_id=self._applicant_id,
             )
             _logger.info(f"Obtained story data:\n {story.to_json()}")
@@ -100,6 +100,6 @@ class ScreeningApp:
 
 # if __name__ == "__main__":
 #     story_app_screening = ScreeningApp(
-#         user_id="demo_v2", applicant_id="rmalhan0112@gmail.com", side_bar="Screening"
+#         attorney_id="demo_v2", applicant_id="rmalhan0112@gmail.com", side_bar="Screening"
 #     )
 #     asyncio.run(story_app_screening.run())

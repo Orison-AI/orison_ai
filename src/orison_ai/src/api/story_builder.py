@@ -26,8 +26,8 @@ client = StoryClient()
 
 
 class StoryBuilderApp:
-    def __init__(self, user_id, applicant_id, side_bar):
-        self._user_id = user_id
+    def __init__(self, attorney_id, applicant_id, side_bar):
+        self._attorney_id = attorney_id
         self._applicant_id = applicant_id
         self._sidebar = side_bar
 
@@ -85,7 +85,7 @@ class StoryBuilderApp:
         """
         if self._sidebar == "StoryBuilder":
             story = await client.find_top(
-                user_id=self._user_id,
+                attorney_id=self._attorney_id,
                 applicant_id=self._applicant_id,
             )
             _logger.info(f"Obtained story data:\n {story.to_json()}")
@@ -101,6 +101,6 @@ class StoryBuilderApp:
 
 # if __name__ == "__main__":
 #     story_app_detailed = StoryBuilderApp(
-#         user_id="demo_v2", applicant_id="rmalhan0112@gmail.com", side_bar="StoryBuilder"
+#         attorney_id="demo_v2", applicant_id="rmalhan0112@gmail.com", side_bar="StoryBuilder"
 #     )
 #     asyncio.run(story_app_detailed.run())

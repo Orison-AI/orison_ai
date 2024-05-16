@@ -47,7 +47,9 @@ async def extract_user(url: str):
     return None
 
 
-async def get_google_scholar_info(user_id: str, applicant_id: str, scholar_link: str):
+async def get_google_scholar_info(
+    attorney_id: str, applicant_id: str, scholar_link: str
+):
     """
     Extract information from a Google Scholar profile.
     :param scholar_link: The link to the Google Scholar profile
@@ -130,7 +132,7 @@ async def get_google_scholar_info(user_id: str, applicant_id: str, scholar_link:
         )
 
     return GoogleScholarDB(
-        user_id=user_id,
+        attorney_id=attorney_id,
         applicant_id=applicant_id,
         author=Author(
             profile_link=scholar_link,
@@ -152,7 +154,7 @@ async def get_google_scholar_info(user_id: str, applicant_id: str, scholar_link:
 
 if __name__ == "__main__":
     applicant_id = "rmalhan"
-    user_id = "demo_v2"
+    attorney_id = "demo_v2"
     client = GoogleScholarClient()
     scholar_link = "https://scholar.google.com/citations?user=QW93AM0AAAAJ&hl=en&oi=ao"
 
@@ -161,7 +163,7 @@ if __name__ == "__main__":
             scholar_info = asyncio.run(
                 get_google_scholar_info(
                     applicant_id=applicant_id,
-                    user_id=user_id,
+                    attorney_id=attorney_id,
                     scholar_link=scholar_link,
                 )
             )

@@ -28,9 +28,9 @@ client = GoogleScholarClient()
 
 
 class GoogleScholarApp:
-    def __init__(self, user_id, applicant_id, side_bar):
+    def __init__(self, attorney_id, applicant_id, side_bar):
         self._applicant_id = applicant_id
-        self._user_id = user_id
+        self._attorney_id = attorney_id
         self._sidebar = side_bar
 
     async def run(self):
@@ -40,7 +40,7 @@ class GoogleScholarApp:
         try:
             _logger.info("Fetching google scholar data.")
             scholar_info = await client.find_top(
-                user_id=self._user_id, applicant_id=self._applicant_id
+                attorney_id=self._attorney_id, applicant_id=self._applicant_id
             )
             _logger.info(f"Obtained google scholar data:\n {scholar_info.to_json()}")
             if scholar_info is not None:
@@ -55,6 +55,6 @@ class GoogleScholarApp:
 
 # if __name__ == "__main__":
 #     scholar_app = GoogleScholarApp(
-#         user_id="demo_v2", applicant_id="rmalhan0112@gmail.com", side_bar="Informatics"
+#         attorney_id="demo_v2", applicant_id="rmalhan0112@gmail.com", side_bar="Informatics"
 #     )
 #     asyncio.run(scholar_app.run())

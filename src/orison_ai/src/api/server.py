@@ -51,7 +51,7 @@ class OrisonApp:
     def __init__(self):
         self._logged_in = None
         self._applicant_id = "rmalhan0112@gmail.com"
-        self._user_id = "demo_v2"
+        self._attorney_id = "demo_v2"
         self._google_scholar = None
         self._story_builder_screening = None
         self._story_builder_detailed = None
@@ -77,17 +77,17 @@ class OrisonApp:
 
         if not self._google_scholar:
             self._google_scholar = GoogleScholarApp(
-                self._user_id, self._applicant_id, self._sidebar
+                self._attorney_id, self._applicant_id, self._sidebar
             )
         if not self._story_builder_screening:
             if self._sidebar == "Screening":
                 self._story_builder_screening = ScreeningApp(
-                    self._user_id, self._applicant_id, self._sidebar
+                    self._attorney_id, self._applicant_id, self._sidebar
                 )
         if not self._story_builder_detailed:
             if self._sidebar == "StoryBuilder":
                 self._story_builder_detailed = StoryBuilderApp(
-                    self._user_id, self._applicant_id, self._sidebar
+                    self._attorney_id, self._applicant_id, self._sidebar
                 )
         await asyncio.gather(
             self._google_scholar.run() if self._google_scholar else self.dummy_task(),
