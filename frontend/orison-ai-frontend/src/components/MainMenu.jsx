@@ -51,9 +51,7 @@ const MainMenu = ({
               placeholder="Select an applicant"
               value={selectedApplicant ? selectedApplicant.id : undefined}
               onChange={e => {
-                const selectedId = parseInt(e.target.value, 10);
-                const foundApplicant = applicants.find(app => app.id === selectedId);
-                setSelectedApplicant(foundApplicant);
+                setSelectedApplicant(applicants.find(app => app.id === e.target.value));
               }}
             >
               {applicants.map(app => (

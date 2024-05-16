@@ -4,12 +4,14 @@
 import React, { useEffect, useState } from 'react';
 
 // Firebase
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 
 // Chakra
-import { useDisclosure, VStack } from '@chakra-ui/react';
+import { Text, useDisclosure, VStack } from '@chakra-ui/react';
 
 // Internal
+
+import { auth } from './firebaseConfig';
 import Views from './common/views';
 import Header from './components/Header';
 import MainMenu from './components/MainMenu';
@@ -20,21 +22,15 @@ import UploadDocuments from './components/pages/UploadDocuments';
 import Screening from './components/pages/Screening';
 import StoryBuilder from './components/pages/StoryBuilder';
 
-const initialApplicants = [
-  { id: 1, name: 'John Doe', visaType: 'H-1B', status: 'Pending' },
-  { id: 2, name: 'Jane Smith', visaType: 'B-2', status: 'Approved' },
-];
-
 const App = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [currentView, setCurrentView] = useState('manageApplicants');
-  const [applicants, setApplicants] = useState(initialApplicants);
+  const [applicants, setApplicants] = useState([]);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
 
   useEffect(() => {
-    const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         // User is signed in
@@ -75,6 +71,7 @@ const App = () => {
         return <ManageApplicants
           applicants={applicants}
           setApplicants={setApplicants}
+          selectedApplicant={selectedApplicant}
           setSelectedApplicant={setSelectedApplicant}
           setCurrentView={setCurrentView}
         />;
@@ -85,7 +82,7 @@ const App = () => {
       case Views.STORY_BUILDER:
         return <StoryBuilder selectedApplicant={selectedApplicant} />;
       default:
-        return <ManageApplicants applicants={applicants} setApplicants={setApplicants} />; // Default case
+        return <Text>Invalid View</Text>
     }
   };
 

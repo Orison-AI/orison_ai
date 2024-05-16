@@ -14,7 +14,7 @@ const DeleteApplicantModal = ({ isOpen, onClose, onDelete, applicant }) => {
         <ModalHeader>Delete Applicant</ModalHeader>
         <ModalBody>
           <Text>
-            Are you sure you want to delete <strong>{applicant}</strong>? This action cannot be undone.
+            Are you sure you want to delete <strong>{applicant?.name}</strong>? This action cannot be undone.
           </Text>
         </ModalBody>
         <ModalFooter>

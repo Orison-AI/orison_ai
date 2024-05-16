@@ -1,70 +1,130 @@
 // ./components/pages/ManageApplicants/ManageApplicants.jsx
 
-// External
-import React, { useState, useRef } from 'react';
+// React
+import React, { useEffect, useState, useRef } from 'react';
+
+// Firebase
+import { useAuthState } from 'react-firebase-hooks/auth';
+import {
+  addDoc, collection, deleteDoc, doc,
+  onSnapshot, query, setDoc, where,
+} from "firebase/firestore";
+
+// Chakra
 import {
   Box, Button, Center, IconButton, Input,
-  Table, Thead, Tbody, Tr, Th, Td,
-  Text, useColorMode, useDisclosure,
+  Table, Thead, Tbody, Tr, Th, Td, Text,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { EditIcon, CloseIcon, CheckIcon } from '@chakra-ui/icons';
 
 // Internal
+import { db, auth } from '../../../firebaseConfig';
 import Views from '../../../common/views';
 import DeleteApplicantModal from './DeleteApplicantModal';
 
-const ManageApplicants = ({applicants, setApplicants, setSelectedApplicant, setCurrentView}) => {
+const ManageApplicants = ({
+  applicants, setApplicants,
+  selectedApplicant, setSelectedApplicant,
+  setCurrentView,
+}) => {
   const [editId, setEditId] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [applicantToDelete, setApplicantToDelete] = useState(null);
-  const { colorMode } = useColorMode();
-
-  const titleColor = colorMode === "light" ? "gray.400" : "gray.400";
+  const [user] = useAuthState(auth);
 
   // Refs for edit fields
   const nameRef = useRef();
-  const visaTypeRef = useRef();
+  const emailRef = useRef();
   const statusRef = useRef();
+
+  // Set the applicants list
+  useEffect(() => {
+    let unsubscribe = () => {};
+
+    async function fetchApplicants() {
+      if (user) {
+        const q = query(collection(db, "applicants"), where("user_id", "==", user.uid));
+
+        unsubscribe = onSnapshot(
+          q, (snapshot) => {
+            const newApplicants = snapshot.docs
+              .map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              }));
+            setApplicants(newApplicants);
+          },
+          (error) => {
+            console.error("Error fetching applicants:", error);
+          }
+        );
+      }
+    }
+  
+    // Call the async function
+    fetchApplicants();
+
+    // Return the cleanup function
+    return () => {
+      unsubscribe();
+    };
+  }, [user, setApplicants]);
+
+  const addNewApplicant = async () => {
+    try {
+      const newDoc = await addDoc(collection(db, "applicants"), {
+        user_id: user.uid,
+        name: "",
+        email: "",
+        status: "",
+      });
+      startEdit(newDoc.id);
+    } catch (error) {
+      console.error("Failed to add new applicant:", error);
+    }
+  };
 
   const startEdit = (id) => setEditId(id);
   const cancelEdit = () => setEditId(null);
 
-  const saveEdit = (id) => {
-    const updatedName = nameRef.current.value;
-    const updatedVisaType = visaTypeRef.current.value;
-    const updatedStatus = statusRef.current.value;
-    setApplicants(applicants.map(applicant =>
-      applicant.id === id ? { ...applicant, name: updatedName, visaType: updatedVisaType, status: updatedStatus } : applicant
-    ));
-    cancelEdit();
-  };
-
-  const handleKeyDown = (e, id) => {
-    if (e.key === 'Enter') {
-      saveEdit(id);
+  const saveEdit = async (applicant) => {
+    try {
+      if (user) {
+        await setDoc(doc(collection(db, "applicants"), applicant.id), {
+          user_id: user.uid,
+          name: nameRef.current.value || "",
+          email: emailRef.current.value || "",
+          status: statusRef.current.value || "",
+        }, { merge: true });
+      }
+    } catch (error) {
+      console.error("Failed to add new applicant:", error);
     }
+    setEditId(null);
   };
 
-  const addNewApplicant = () => {
-    cancelEdit(); // Ensure no other items are being edited
-    const newApplicant = {
-      id: Date.now(), // Using the current timestamp for a unique ID
-      name: '',       // Initial empty value
-      visaType: '',   // Initial empty value
-      status: ''      // Initial empty value
-    };
-    setApplicants([...applicants, newApplicant]); // Add the new applicant to the state
-    setEditId(newApplicant.id); // Set this new applicant to be in edit mode immediately
-  };
-
-  const deleteApplicant = (id) => {
-    setApplicants(applicants.filter(applicant => applicant.id !== id));
-    onClose();
+  const deleteApplicant = async (applicant) => {
+    try {
+      if (selectedApplicant && selectedApplicant.id === applicant.id) {
+        setSelectedApplicant(null);
+      }
+      await deleteDoc(doc(collection(db, "applicants"), applicant.id));
+      onClose(); // Only close the modal if deletion is successful
+    } catch (error) {
+      console.error("Failed to delete applicant:", error);
+    }
   };
 
   const confirmDelete = (applicant) => {
     setApplicantToDelete(applicant);
     onOpen();
+  };
+
+  const handleKeyDown = (e, applicant) => {
+    if (e.key === 'Enter') {
+      saveEdit(applicant);
+    }
   };
 
   const uploadDocsForApplicant = (applicant) => {
@@ -84,12 +144,12 @@ const ManageApplicants = ({applicants, setApplicants, setSelectedApplicant, setC
 
   return (
     <Box width="100%">
-      <Text fontSize="2vh" m="2vh" mb="4vh" color={titleColor}>Manage Applicants</Text>
+      <Text fontSize="3vh" m="2vh" mb="4vh" color="gray.400">Manage Applicants</Text>
       <Table variant="simple">
         <Thead>
           <Tr>
             <Th>Name</Th>
-            <Th>Visa Type</Th>
+            <Th>Email</Th>
             <Th>Status</Th>
             <Th>Actions</Th>
             <Th></Th>
@@ -103,32 +163,32 @@ const ManageApplicants = ({applicants, setApplicants, setSelectedApplicant, setC
                   <Input
                     defaultValue={applicant.name}
                     ref={nameRef}
-                    onKeyDown={(e) => handleKeyDown(e, applicant.id)}
+                    onKeyDown={(e) => handleKeyDown(e, applicant)}
                   />
                 ) : applicant.name}
               </Td>
               <Td minWidth="20vh">
                 {editId === applicant.id ? (
                   <Input
-                    defaultValue={applicant.visaType} 
-                    ref={visaTypeRef}
-                    onKeyDown={(e) => handleKeyDown(e, applicant.id)}
+                    defaultValue={applicant.email} 
+                    ref={emailRef}
+                    onKeyDown={(e) => handleKeyDown(e, applicant)}
                   />
-                ) : applicant.visaType}
+                ) : applicant.email}
               </Td>
               <Td minWidth="20vh">
                 {editId === applicant.id ? (
                   <Input
                     defaultValue={applicant.status}
                     ref={statusRef}
-                    onKeyDown={(e) => handleKeyDown(e, applicant.id)}
+                    onKeyDown={(e) => handleKeyDown(e, applicant)}
                   />
                 ) : applicant.status}
               </Td>
               <Td minWidth="35vh">
                 {editId === applicant.id ? (
                   <>
-                    <IconButton icon={<CheckIcon />} onClick={() => saveEdit(applicant.id)} colorScheme="green" mr="0.5vh" />
+                    <IconButton icon={<CheckIcon />} onClick={() => saveEdit(applicant)} colorScheme="green" mr="0.5vh" />
                     <IconButton icon={<CloseIcon />} onClick={cancelEdit} colorScheme="red" />
                   </>
                 ) : (
@@ -153,8 +213,8 @@ const ManageApplicants = ({applicants, setApplicants, setSelectedApplicant, setC
       <DeleteApplicantModal
         isOpen={isOpen}
         onClose={onClose}
-        onDelete={() => deleteApplicant(applicantToDelete.id)}
-        applicant={applicantToDelete?.name}
+        onDelete={() => deleteApplicant(applicantToDelete)}
+        applicant={applicantToDelete}
       />
     </Box>
   );
