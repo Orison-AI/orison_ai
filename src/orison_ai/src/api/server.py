@@ -19,6 +19,7 @@ import asyncio
 import streamlit as st
 from orison_ai.src.api.informatics import GoogleScholarApp
 from orison_ai.src.api.story_builder import StoryBuilderApp
+from orison_ai.src.api.screening import ScreeningApp
 
 # Set page background color
 st.markdown(
@@ -49,8 +50,8 @@ st.markdown(
 class OrisonApp:
     def __init__(self):
         self._logged_in = None
-        self._user_id = ""
-        self._attorney_id = "demo_v2"
+        self._applicant_id = "rmalhan0112@gmail.com"
+        self._user_id = "demo_v2"
         self._google_scholar = None
         self._story_builder_screening = None
         self._story_builder_detailed = None
@@ -76,17 +77,17 @@ class OrisonApp:
 
         if not self._google_scholar:
             self._google_scholar = GoogleScholarApp(
-                self._attorney_id, self._user_id, self._sidebar
+                self._user_id, self._applicant_id, self._sidebar
             )
         if not self._story_builder_screening:
             if self._sidebar == "Screening":
-                self._story_builder_screening = StoryBuilderApp(
-                    self._attorney_id, self._user_id, self._sidebar
+                self._story_builder_screening = ScreeningApp(
+                    self._user_id, self._applicant_id, self._sidebar
                 )
         if not self._story_builder_detailed:
             if self._sidebar == "StoryBuilder":
                 self._story_builder_detailed = StoryBuilderApp(
-                    self._attorney_id, self._user_id, self._sidebar
+                    self._user_id, self._applicant_id, self._sidebar
                 )
         await asyncio.gather(
             self._google_scholar.run() if self._google_scholar else self.dummy_task(),
@@ -109,7 +110,7 @@ class OrisonApp:
             self._logged_in = False
 
         if st.session_state.logged_in:
-            self._user_id = st.session_state.user_id
+            self._applicant_id = st.session_state.applicant_id
             self._logged_in = True
             if not self._pages:
                 await self._initialize_pages()
@@ -120,21 +121,15 @@ class OrisonApp:
                 st.rerun()
         else:
             # User login interface
-            user_id = st.text_input("Enter your user ID to log in", "")
+            applicant_id = st.text_input("Enter your user ID to log in", "")
 
-            if st.button("Log in") and user_id:
+            if st.button("Log in") and applicant_id:
                 st.session_state.logged_in = True
-                st.session_state.user_id = user_id
+                st.session_state.applicant_id = applicant_id
                 st.rerun()
 
 
 if __name__ == "__main__":
     app = OrisonApp()
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    with ThreadPoolExecutor(5) as executor:
-        loop.set_default_executor(executor)
-        loop.run_until_complete(app.initialize())
-    executor.shutdown(wait=True)
-    loop.close()
+    asyncio.run(app.initialize())

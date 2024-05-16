@@ -18,8 +18,8 @@ import streamlit as st
 
 
 class Upload:
-    def __init__(self, user_id, side_bar):
-        self._user_id = user_id
+    def __init__(self, applicant_id, side_bar):
+        self._applicant_id = applicant_id
         self._sidebar = side_bar
         self._scholar_link = st.sidebar.text_input(
             label="#### Your Google Scholar Link 👇",

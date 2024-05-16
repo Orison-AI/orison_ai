@@ -17,7 +17,7 @@
 # External
 
 import logging
-from orison_ai.src.database.models import StoryBuilderDB
+from orison_ai.src.database.models import StoryBuilderDB, ScreeningDB
 from orison_ai.src.database.firebase import FirestoreClient
 
 logging.basicConfig(level=logging.INFO)
@@ -32,4 +32,15 @@ class StoryClient(FirestoreClient):
         """
         super(StoryClient, self).__init__()
         self._model = StoryBuilderDB
+        self._collection = self.client.collection(self._model.__name__)
+
+
+class ScreeningClient(FirestoreClient):
+    def __init__(self):
+        """
+        Initializes an instance of a StoryClient object, which can be used
+        to insert into or update a database collection given a file
+        """
+        super(ScreeningClient, self).__init__()
+        self._model = ScreeningDB
         self._collection = self.client.collection(self._model.__name__)

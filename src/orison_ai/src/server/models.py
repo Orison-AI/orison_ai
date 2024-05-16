@@ -24,14 +24,14 @@ class IngestRequest(BaseModel):
 
 
 class DownloadRequest(BaseModel):
-    attorney_id: str
     user_id: str
+    applicant_id: str
     database: str
     category: str
     parameters: dict
 
 
 class AnalysisRequest(BaseModel):
-    attorney_id: str
     user_id: str
+    applicant_id: str
     category: str

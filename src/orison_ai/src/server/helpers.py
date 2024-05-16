@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 async def download_scholar_helper(
-    attorney_id: str, user_id: str, database: str, category: str, parameters: dict
+    user_id: str, applicant_id: str, database: str, category: str, parameters: dict
 ):
     client = GoogleScholarClient()
     scholar_link = parameters.get("scholar_link")
@@ -43,7 +43,9 @@ async def download_scholar_helper(
     if scholar_link != "":
         try:
             scholar_info = await get_google_scholar_info(
-                attorney_id=attorney_id, user_id=user_id, scholar_link=scholar_link
+                user_id=user_id,
+                applicant_id=applicant_id,
+                scholar_link=scholar_link,
             )
         except Exception as e:
             logger.error(
@@ -75,10 +77,12 @@ async def ingest_helper(category: str):
         raise e
 
 
-async def analysis_helper(attorney_id: str, user_id: str, type_of_story: str):
+async def analysis_helper(user_id: str, applicant_id: str, type_of_story: str):
     try:
         await analyze_documents(
-            attorney_id=attorney_id, user_id=user_id, type_of_story=type_of_story
+            user_id=user_id,
+            applicant_id=applicant_id,
+            type_of_story=type_of_story,
         )
     except Exception as e:
         logger.error(f"Failed to analyze documents. Error: {traceback.format_exc(e)}")

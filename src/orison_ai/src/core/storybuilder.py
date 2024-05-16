@@ -67,11 +67,11 @@ def ingest_documents(path: Path):
     )
 
 
-async def analyze_documents(attorney_id: str, user_id: str, type_of_story: str):
+async def analyze_documents(user_id: str, applicant_id: str, type_of_story: str):
     """
     Analyze the documents and generate a story
-    :param attorney_id: the business id
-    :param user_id: the user id
+    :param user_id: the business id
+    :param applicant_id: the user id
     :param type_of_story: the type of story
     :return: None
     """
@@ -150,8 +150,8 @@ async def analyze_documents(attorney_id: str, user_id: str, type_of_story: str):
         return story
 
     story = await get_story(questions, detail_number)
-    story.attorney_id = attorney_id
     story.user_id = user_id
+    story.applicant_id = applicant_id
     story.type_of_story = type_of_story
     await story_client.insert(story)
 

@@ -30,6 +30,9 @@ from mongoengine import (
 
 
 class BaseModel(Document):
+    name = StringField()
+    user_id = StringField(required=True)
+    applicant_id = StringField(required=True)
     date_created = DateTimeField(required=True, default=datetime.utcnow())
     meta = {"allow_inheritance": True}
 
@@ -74,8 +77,6 @@ class GoogleScholarDB(BaseModel):
     MongoDB document class for Google scholar details of the applicant
     """
 
-    attorney_id = StringField(required=True)
-    user_id = StringField(required=True)
     author = EmbeddedDocumentField(Author)
     co_authors = ListField(EmbeddedDocumentField(Author))
     keywords = ListField(StringField())
@@ -94,9 +95,14 @@ class StoryBuilderDB(BaseModel):
     MongoDB document class for Story of the applicant
     """
 
-    attorney_id = StringField(required=True)
-    user_id = StringField(required=True)
-    type_of_story = StringField()  # Preliminary or Detailed
+    summary = ListField(EmbeddedDocumentField(QandA), default=[])
+
+
+class ScreeningDB(BaseModel):
+    """
+    MongoDB document class for Screening of the applicant
+    """
+
     summary = ListField(EmbeddedDocumentField(QandA), default=[])
 
 
@@ -105,7 +111,6 @@ class PersonalData(BaseModel):
     MongoDB document class for Meta details of the applicant
     """
 
-    name = StringField(required=True)
     email = StringField(required=True)
     phone = StringField()
     address = StringField()

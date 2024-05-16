@@ -42,12 +42,12 @@ async def extract_user(url: str):
 
     match = re.search(r"user=([a-zA-Z0-9]+)", url)
     if match:
-        user_id = match.group(1)
-        return user_id
+        applicant_id = match.group(1)
+        return applicant_id
     return None
 
 
-async def get_google_scholar_info(attorney_id: str, user_id: str, scholar_link: str):
+async def get_google_scholar_info(user_id: str, applicant_id: str, scholar_link: str):
     """
     Extract information from a Google Scholar profile.
     :param scholar_link: The link to the Google Scholar profile
@@ -130,8 +130,8 @@ async def get_google_scholar_info(attorney_id: str, user_id: str, scholar_link: 
         )
 
     return GoogleScholarDB(
-        attorney_id=attorney_id,
         user_id=user_id,
+        applicant_id=applicant_id,
         author=Author(
             profile_link=scholar_link,
             scholar_id=scholar_id,
@@ -151,8 +151,8 @@ async def get_google_scholar_info(attorney_id: str, user_id: str, scholar_link: 
 
 
 if __name__ == "__main__":
-    user_id = "rmalhan"
-    attorney_id = "demo_v2"
+    applicant_id = "rmalhan"
+    user_id = "demo_v2"
     client = GoogleScholarClient()
     scholar_link = "https://scholar.google.com/citations?user=QW93AM0AAAAJ&hl=en&oi=ao"
 
@@ -160,7 +160,9 @@ if __name__ == "__main__":
         try:
             scholar_info = asyncio.run(
                 get_google_scholar_info(
-                    user_id=user_id, attorney_id=attorney_id, scholar_link=scholar_link
+                    applicant_id=applicant_id,
+                    user_id=user_id,
+                    scholar_link=scholar_link,
                 )
             )
         except Exception as e:

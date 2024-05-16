@@ -17,15 +17,15 @@
 import asyncio
 import logging
 import streamlit as st
-from orison_ai.src.database.story_client import StoryClient
+from orison_ai.src.database.story_client import ScreeningClient
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
-client = StoryClient()
+client = ScreeningClient()
 
 
-class StoryBuilderApp:
+class ScreeningApp:
     def __init__(self, user_id, applicant_id, side_bar):
         self._user_id = user_id
         self._applicant_id = applicant_id
@@ -83,7 +83,7 @@ class StoryBuilderApp:
         """
         Fetches the story data from the database and displays it on the Streamlit app
         """
-        if self._sidebar == "StoryBuilder":
+        if self._sidebar == "Screening":
             story = await client.find_top(
                 user_id=self._user_id,
                 applicant_id=self._applicant_id,
@@ -94,13 +94,12 @@ class StoryBuilderApp:
                 response.append(qanda.question)
                 response.append(qanda.answer)
                 response.append(qanda.source)
-
             st.title(self._sidebar)
             self._display_qa_pairs(response)
 
 
 # if __name__ == "__main__":
-#     story_app_detailed = StoryBuilderApp(
-#         user_id="demo_v2", applicant_id="rmalhan0112@gmail.com", side_bar="StoryBuilder"
+#     story_app_screening = ScreeningApp(
+#         user_id="demo_v2", applicant_id="rmalhan0112@gmail.com", side_bar="Screening"
 #     )
-#     asyncio.run(story_app_detailed.run())
+#     asyncio.run(story_app_screening.run())

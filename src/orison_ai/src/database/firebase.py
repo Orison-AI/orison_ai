@@ -61,8 +61,8 @@ class FirestoreClient(FireStoreDB):
 
     async def find_top(
         self,
-        attorney_id: str,
         user_id: str,
+        applicant_id: str,
         filters: Optional[dict] = {},
         order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
     ) -> Union[EmbeddedDocument, Document, None]:
@@ -70,19 +70,19 @@ class FirestoreClient(FireStoreDB):
         Finds a firestore Document item from the collection and converts it to a mongo object
         Order is either ASCENDING or DESCENDING
 
-        :param attorney_id: the business id of the document to find
-        :param user_id: the user id of the document to find
+        :param user_id: the business id of the document to find
+        :param applicant_id: the user id of the document to find
         :param order: the order in which to sort the documents
         :return: the entry found in firestore db for the requesting model class instance
                 converted to a mongo object
         """
-        result = await self.find_top_k(attorney_id, user_id, filters, 1, order)
+        result = await self.find_top_k(user_id, applicant_id, filters, 1, order)
         return result[0]
 
     async def find_top_k(
         self,
-        attorney_id: str,
         user_id: str,
+        applicant_id: str,
         filters: Optional[dict] = {},
         k: int = 1,
         order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
@@ -92,8 +92,8 @@ class FirestoreClient(FireStoreDB):
         and converts them to mongo objects
         Order is either ASCENDING or DESCENDING
 
-        :param attorney_id: the business id of the document to find
-        :param user_id: the user id of the document to find
+        :param user_id: the business id of the document to find
+        :param applicant_id: the user id of the document to find
         :param k: the number of documents to find
         :param order: the order in which to sort the documents
         :return: entries found in firestore converted to list of mongo objects
@@ -118,7 +118,7 @@ class FirestoreClient(FireStoreDB):
             raise ValueError("Number of documents k must be greater than 0")
 
         # Apply filters
-        filters = {"attorney_id": attorney_id, "user_id": user_id} | filters
+        filters = {"user_id": user_id, "applicant_id": applicant_id} | filters
         composite_filter = BaseCompositeFilter(
             operator=StructuredQuery.CompositeFilter.Operator.AND,
             filters=[
@@ -148,8 +148,8 @@ class FirestoreClient(FireStoreDB):
         """
         Inserts a mongo doc object into the firestore
 
-        :param attorney_id: the business id of the document to insert
-        :param user_id: the user id of the document to insert
+        :param user_id: the business id of the document to insert
+        :param applicant_id: the user id of the document to insert
         :param doc: the object to insert into the database
 
         :return: the inserted firestore id
