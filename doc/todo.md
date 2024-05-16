@@ -23,6 +23,11 @@
 - Deploy a REST API to Google App Engine
 - Implement Google Scholar fetching command
 
+## Screening
+
+- Create page for generating and viewing screening results
+- Implement screening fetching command
+
 ## LinkedIn
 
 - Create page for LinkedIn fetching and review
