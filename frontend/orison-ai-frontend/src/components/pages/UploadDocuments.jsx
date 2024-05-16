@@ -6,11 +6,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
 import {
-  getStorage, ref, uploadBytes, getDownloadURL, deleteObject,
+  deleteObject, getStorage, listAll, ref, uploadBytes,
 } from 'firebase/storage';
-import {
-  collection, doc, setDoc, getDocs, deleteDoc
-} from 'firebase/firestore';
 
 // Chakra
 import {
@@ -24,7 +21,7 @@ import { CloseIcon } from '@chakra-ui/icons';
 import { useDropzone } from 'react-dropzone';
 
 // Internal
-import { db, auth } from '../../firebaseConfig';
+import { auth } from '../../firebaseConfig';
 
 const UploadDocuments = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
@@ -33,10 +30,17 @@ const UploadDocuments = ({ selectedApplicant }) => {
 
   const fetchDocuments = useCallback(async () => {
     if (user && selectedApplicant) {
-      const applicantsCollection = collection(db, 'attorneys', user.uid, 'applicants', selectedApplicant.id, 'files');
-      const querySnapshot = await getDocs(applicantsCollection);
-      const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setDocuments(docs);
+      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/`;
+      const storage = getStorage();
+      const listRef = ref(storage, filePath);
+      
+      try {
+        const res = await listAll(listRef);
+        const docs = res.items.map(itemRef => (itemRef.name));
+        setDocuments(docs);
+      } catch (error) {
+        console.error("Error fetching documents:", error);
+      }
     }
   }, [user, selectedApplicant]);
 
@@ -46,18 +50,17 @@ const UploadDocuments = ({ selectedApplicant }) => {
 
   const onDrop = async (acceptedFiles) => {
     const storage = getStorage();
-
+  
     acceptedFiles.forEach(async (file) => {
       const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${file.name}`;
       const storageRef = ref(storage, filePath);
-      let downloadURL = null;
   
       try {
         // Upload the file to Firebase Storage
-        const fileSnapshot = await uploadBytes(storageRef, file);
-  
-        // Get the URL of the uploaded file
-        downloadURL = await getDownloadURL(fileSnapshot.ref);
+        await uploadBytes(storageRef, file);
+
+        // Fetch updated documents
+        fetchDocuments();
       } catch (error) {
         console.error(`Error uploading file: ${error.message}`);
         toast({
@@ -69,50 +72,18 @@ const UploadDocuments = ({ selectedApplicant }) => {
         });
         return;
       }
-  
-      try {
-        // Save the file reference in Firestore
-        const applicantsCollection = collection(db, "attorneys", user.uid, "applicants");
-        const fileRef = doc(applicantsCollection, selectedApplicant.id, "files", file.name);
-        await setDoc(fileRef, { url: downloadURL }, { merge: true });
-  
-        toast({
-          title: 'File Metadata Updated',
-          description: `File ${file.name} URL saved to database.`,
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-
-        // Fetch updated documents
-        fetchDocuments();
-      } catch (error) {
-        console.error(`Error saving metadata for file: ${error.message}`);
-        toast({
-          title: 'Error Uploading File',
-          description: error.message,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
-      }
     });
   };
 
-  const deleteFile = async (fileName, fileUrl) => {
+  const deleteFile = async (fileName) => {
     const storage = getStorage();
     const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${fileName}`;
     const storageRef = ref(storage, filePath);
-
+  
     try {
       // Delete the file from Firebase Storage
       await deleteObject(storageRef);
-
-      // Delete the file reference from Firestore
-      const applicantsCollection = collection(db, "attorneys", user.uid, "applicants");
-      const fileRef = doc(applicantsCollection, selectedApplicant.id, "files", fileName);
-      await deleteDoc(fileRef);
-
+  
       toast({
         title: 'File Deleted',
         description: `File ${fileName} deleted successfully.`,
@@ -120,7 +91,7 @@ const UploadDocuments = ({ selectedApplicant }) => {
         duration: 5000,
         isClosable: true,
       });
-
+  
       // Fetch updated documents
       fetchDocuments();
     } catch (error) {
@@ -162,15 +133,15 @@ const UploadDocuments = ({ selectedApplicant }) => {
           </Tr>
         </Thead>
         <Tbody fontSize="2vh">
-          {documents.map(doc => (
-            <Tr key={doc.id}>
-              <Td>{doc.id}</Td>
+          {documents.map(fileName => (
+            <Tr key={fileName}>
+              <Td>{fileName}</Td>
               <Td isNumeric>
                 <IconButton
                   icon={<CloseIcon />}
                   colorScheme="red"
                   variant="ghost"
-                  onClick={() => deleteFile(doc.id, doc.url)}
+                  onClick={() => deleteFile(fileName)}
                 />
               </Td>
             </Tr>

@@ -32,9 +32,8 @@
 
 ## Bugs
 
-- Make login inputs double-click selectable
+- Make applicant fields editable via single click
 - Deletion
-    - Make sure that deleted applicants are also deselected
     - When applicant is deleted, delete all of their documents from filestore
     - When account is deleted, delete all of their applicant's documents from filestore
 
