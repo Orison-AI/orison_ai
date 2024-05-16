@@ -99,8 +99,8 @@ class StoryBuilderApp:
             self._display_qa_pairs(response)
 
 
-# if __name__ == "__main__":
-#     story_app_detailed = StoryBuilderApp(
-#         attorney_id="demo_v2", applicant_id="rmalhan0112@gmail.com", side_bar="StoryBuilder"
-#     )
-#     asyncio.run(story_app_detailed.run())
+if __name__ == "__main__":
+    story_app_detailed = StoryBuilderApp(
+        attorney_id="demo_v2", applicant_id="rmalhan", side_bar="StoryBuilder"
+    )
+    asyncio.run(story_app_detailed.run())

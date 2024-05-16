@@ -50,7 +50,7 @@ st.markdown(
 class OrisonApp:
     def __init__(self):
         self._logged_in = None
-        self._applicant_id = "rmalhan0112@gmail.com"
+        self._applicant_id = "rmalhan"
         self._attorney_id = "demo_v2"
         self._google_scholar = None
         self._story_builder_screening = None

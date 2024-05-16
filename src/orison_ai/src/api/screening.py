@@ -98,8 +98,8 @@ class ScreeningApp:
             self._display_qa_pairs(response)
 
 
-# if __name__ == "__main__":
-#     story_app_screening = ScreeningApp(
-#         attorney_id="demo_v2", applicant_id="rmalhan0112@gmail.com", side_bar="Screening"
-#     )
-#     asyncio.run(story_app_screening.run())
+if __name__ == "__main__":
+    story_app_screening = ScreeningApp(
+        attorney_id="demo_v2", applicant_id="rmalhan", side_bar="Screening"
+    )
+    asyncio.run(story_app_screening.run())

@@ -31,9 +31,23 @@ from mongoengine import (
 
 class BaseModel(Document):
     name = StringField()
+    email = StringField()
     attorney_id = StringField(required=True)
     applicant_id = StringField(required=True)
     date_created = DateTimeField(required=True, default=datetime.utcnow())
+    phone = StringField()
+    address = StringField()
+    city = StringField()
+    state = StringField()
+    country = StringField()
+    zip_code = StringField()
+    googlescholar = StringField()
+    linkedin = StringField()
+    github = StringField()
+    twitter = StringField()
+    facebook = StringField()
+    instagram = StringField()
+    website = StringField()
     meta = {"allow_inheritance": True}
 
 
@@ -90,7 +104,7 @@ class GoogleScholarDB(BaseModel):
     other_details = DictField()
 
 
-class StoryBuilderDB(BaseModel):
+class StoryBuilder(BaseModel):
     """
     MongoDB document class for Story of the applicant
     """
@@ -98,34 +112,12 @@ class StoryBuilderDB(BaseModel):
     summary = ListField(EmbeddedDocumentField(QandA), default=[])
 
 
-class ScreeningDB(BaseModel):
+class ScreeningBuilder(BaseModel):
     """
     MongoDB document class for Screening of the applicant
     """
 
     summary = ListField(EmbeddedDocumentField(QandA), default=[])
-
-
-class PersonalData(BaseModel):
-    """
-    MongoDB document class for Meta details of the applicant
-    """
-
-    email = StringField(required=True)
-    phone = StringField()
-    address = StringField()
-    city = StringField()
-    state = StringField()
-    country = StringField()
-    zip_code = StringField()
-    googlescholar = StringField()
-    linkedin = StringField()
-    github = StringField()
-    twitter = StringField()
-    facebook = StringField()
-    instagram = StringField()
-    website = StringField()
-    other_details = StringField()
 
 
 class MetaExtract(BaseModel):

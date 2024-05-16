@@ -17,7 +17,7 @@
 from orison_ai.src.utils.constants import VAULT_PATH, ROLE
 from orison_ai.src.utils.ingest_utils import ingest_folder, Source
 from orison_ai.src.database.story_client import StoryClient
-from orison_ai.src.database.models import StoryBuilderDB, QandA
+from orison_ai.src.database.models import StoryBuilder, QandA
 from private_gpt.server.ingest.ingest_service import IngestService
 from private_gpt.components.llm.llm_component import LLMComponent
 from private_gpt.components.vector_store.vector_store_component import (
@@ -139,7 +139,7 @@ async def analyze_documents(attorney_id: str, applicant_id: str, type_of_story: 
         return q_and_a
 
     async def get_story(questions, detail_number):
-        story = StoryBuilderDB()
+        story = StoryBuilder()
         tasks = [
             asyncio.create_task(get_response(message, detail_number[i]))
             for i, message in enumerate(questions)

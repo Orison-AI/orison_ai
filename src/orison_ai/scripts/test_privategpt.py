@@ -61,7 +61,7 @@ if __name__ == "__main__":
     and research that it actually rated those chunks higher
     """
     logger.info("Initializing story teller")
-    story_teller = StoryBuilderDB()
+    story_teller = StoryBuilder()
     settings = global_injector.get(Settings)
     logger.info(f"Settings obtained: {settings}")
 

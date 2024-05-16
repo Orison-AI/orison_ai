@@ -53,8 +53,8 @@ class GoogleScholarApp:
             )
 
 
-# if __name__ == "__main__":
-#     scholar_app = GoogleScholarApp(
-#         attorney_id="demo_v2", applicant_id="rmalhan0112@gmail.com", side_bar="Informatics"
-#     )
-#     asyncio.run(scholar_app.run())
+if __name__ == "__main__":
+    scholar_app = GoogleScholarApp(
+        attorney_id="demo_v2", applicant_id="rmalhan", side_bar="Informatics"
+    )
+    asyncio.run(scholar_app.run())
