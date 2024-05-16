@@ -37,3 +37,14 @@
     - Make sure that deleted applicants are also deselected
     - When applicant is deleted, delete all of their documents from filestore
     - When account is deleted, delete all of their applicant's documents from filestore
+
+## Upload Info
+
+- Google scholar link
+- LinkedIn
+- Personal website
+- Multiple buckets of documentsßßßsß
+    - Awards
+    - Research
+    - Reviews
+    - Feedback

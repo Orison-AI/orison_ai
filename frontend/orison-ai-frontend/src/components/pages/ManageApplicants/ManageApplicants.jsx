@@ -6,7 +6,8 @@ import React, { useEffect, useState, useRef } from 'react';
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
 import {
-  addDoc, collection, deleteDoc, doc, onSnapshot, setDoc,
+  addDoc, collection, deleteDoc, doc,
+  onSnapshot, query, setDoc, where,
 } from "firebase/firestore";
 
 // Chakra
@@ -34,7 +35,7 @@ const ManageApplicants = ({
 
   // Refs for edit fields
   const nameRef = useRef();
-  const visaTypeRef = useRef();
+  const emailRef = useRef();
   const statusRef = useRef();
 
   // Set the applicants list
@@ -43,17 +44,21 @@ const ManageApplicants = ({
 
     async function fetchApplicants() {
       if (user) {
-        const applicantsCollection = collection(db, "attorneys", user.uid, "applicants");
+        const q = query(collection(db, "applicants"), where("user_id", "==", user.uid));
 
-        unsubscribe = onSnapshot(applicantsCollection, (snapshot) => {
-          const newApplicants = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          setApplicants(newApplicants);
-        }, (error) => {
-          console.error("Error fetching applicants:", error);
-        });
+        unsubscribe = onSnapshot(
+          q, (snapshot) => {
+            const newApplicants = snapshot.docs
+              .map(doc => ({
+                id: doc.id,
+                ...doc.data()
+              }));
+            setApplicants(newApplicants);
+          },
+          (error) => {
+            console.error("Error fetching applicants:", error);
+          }
+        );
       }
     }
   
@@ -67,11 +72,11 @@ const ManageApplicants = ({
   }, [user, setApplicants]);
 
   const addNewApplicant = async () => {
-    const applicantsCollection = collection(db, "attorneys", user.uid, "applicants");
     try {
-      const newDoc = await addDoc(applicantsCollection, {
+      const newDoc = await addDoc(collection(db, "applicants"), {
+        user_id: user.uid,
         name: "",
-        visaType: "",
+        email: "",
         status: "",
       });
       startEdit(newDoc.id);
@@ -83,27 +88,28 @@ const ManageApplicants = ({
   const startEdit = (id) => setEditId(id);
   const cancelEdit = () => setEditId(null);
 
-  const saveEdit = async (id) => {
-    const applicantsCollection = collection(db, "attorneys", user.uid, "applicants");
+  const saveEdit = async (applicant) => {
     try {
-      await setDoc(doc(applicantsCollection, id), {
-        name: nameRef.current.value,
-        visaType: visaTypeRef.current.value,
-        status: statusRef.current.value,
-      }, { merge: true });
+      if (user) {
+        await setDoc(doc(collection(db, "applicants"), applicant.id), {
+          user_id: user.uid,
+          name: nameRef.current.value || "",
+          email: emailRef.current.value || "",
+          status: statusRef.current.value || "",
+        }, { merge: true });
+      }
     } catch (error) {
       console.error("Failed to add new applicant:", error);
     }
     setEditId(null);
   };
 
-  const deleteApplicant = async (id) => {
-    const applicantsCollection = collection(db, "attorneys", user.uid, "applicants");
+  const deleteApplicant = async (applicant) => {
     try {
-      if (selectedApplicant.id === id) {
+      if (selectedApplicant && selectedApplicant.id === applicant.id) {
         setSelectedApplicant(null);
       }
-      await deleteDoc(doc(applicantsCollection, id));
+      await deleteDoc(doc(collection(db, "applicants"), applicant.id));
       onClose(); // Only close the modal if deletion is successful
     } catch (error) {
       console.error("Failed to delete applicant:", error);
@@ -115,9 +121,9 @@ const ManageApplicants = ({
     onOpen();
   };
 
-  const handleKeyDown = (e, id) => {
+  const handleKeyDown = (e, applicant) => {
     if (e.key === 'Enter') {
-      saveEdit(id);
+      saveEdit(applicant);
     }
   };
 
@@ -143,7 +149,7 @@ const ManageApplicants = ({
         <Thead>
           <Tr>
             <Th>Name</Th>
-            <Th>Visa Type</Th>
+            <Th>Email</Th>
             <Th>Status</Th>
             <Th>Actions</Th>
             <Th></Th>
@@ -157,32 +163,32 @@ const ManageApplicants = ({
                   <Input
                     defaultValue={applicant.name}
                     ref={nameRef}
-                    onKeyDown={(e) => handleKeyDown(e, applicant.id)}
+                    onKeyDown={(e) => handleKeyDown(e, applicant)}
                   />
                 ) : applicant.name}
               </Td>
               <Td minWidth="20vh">
                 {editId === applicant.id ? (
                   <Input
-                    defaultValue={applicant.visaType} 
-                    ref={visaTypeRef}
-                    onKeyDown={(e) => handleKeyDown(e, applicant.id)}
+                    defaultValue={applicant.email} 
+                    ref={emailRef}
+                    onKeyDown={(e) => handleKeyDown(e, applicant)}
                   />
-                ) : applicant.visaType}
+                ) : applicant.email}
               </Td>
               <Td minWidth="20vh">
                 {editId === applicant.id ? (
                   <Input
                     defaultValue={applicant.status}
                     ref={statusRef}
-                    onKeyDown={(e) => handleKeyDown(e, applicant.id)}
+                    onKeyDown={(e) => handleKeyDown(e, applicant)}
                   />
                 ) : applicant.status}
               </Td>
               <Td minWidth="35vh">
                 {editId === applicant.id ? (
                   <>
-                    <IconButton icon={<CheckIcon />} onClick={() => saveEdit(applicant.id)} colorScheme="green" mr="0.5vh" />
+                    <IconButton icon={<CheckIcon />} onClick={() => saveEdit(applicant)} colorScheme="green" mr="0.5vh" />
                     <IconButton icon={<CloseIcon />} onClick={cancelEdit} colorScheme="red" />
                   </>
                 ) : (
@@ -207,8 +213,8 @@ const ManageApplicants = ({
       <DeleteApplicantModal
         isOpen={isOpen}
         onClose={onClose}
-        onDelete={() => deleteApplicant(applicantToDelete.id)}
-        applicant={applicantToDelete?.name}
+        onDelete={() => deleteApplicant(applicantToDelete)}
+        applicant={applicantToDelete}
       />
     </Box>
   );
