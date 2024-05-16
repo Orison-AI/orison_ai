@@ -18,33 +18,31 @@ import streamlit as st
 import asyncio
 import logging
 import traceback
-from orison_ai.src.utils.constants import DB_NAME
 from orison_ai.src.database.google_scholar_client import GoogleScholarClient
+from orison_ai.src.database.models import GoogleScholarDB
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
+client = GoogleScholarClient()
+
 
 class GoogleScholarApp:
-    def __init__(self, business_id, user_id, side_bar):
+    def __init__(self, user_id, applicant_id, side_bar):
+        self._applicant_id = applicant_id
         self._user_id = user_id
-        self._business_id = business_id
         self._sidebar = side_bar
-        self._mongo_client = GoogleScholarClient(db_name=DB_NAME)
-        self.run()
 
-    def run(self):
+    async def run(self):
         if not self._sidebar == "Informatics":
             return
 
         try:
             _logger.info("Fetching google scholar data.")
-            scholar_info = asyncio.run(
-                self._mongo_client.find_top(
-                    business_id=self._business_id, user_id=self._user_id
-                )
+            scholar_info = await client.find_top(
+                user_id=self._user_id, applicant_id=self._applicant_id
             )
-            _logger.info(f"Obtained google scholar data:\n {scholar_info}")
+            _logger.info(f"Obtained google scholar data:\n {scholar_info.to_json()}")
             if scholar_info is not None:
                 st.json(scholar_info.to_json())
             else:
@@ -55,5 +53,8 @@ class GoogleScholarApp:
             )
 
 
-if __name__ == "__main__":
-    GoogleScholarApp(business_id="demo_v2", user_id="rmalhan", side_bar="Informatics")
+# if __name__ == "__main__":
+#     scholar_app = GoogleScholarApp(
+#         user_id="demo_v2", applicant_id="rmalhan0112@gmail.com", side_bar="Informatics"
+#     )
+#     asyncio.run(scholar_app.run())

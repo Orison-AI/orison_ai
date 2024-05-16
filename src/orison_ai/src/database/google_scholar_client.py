@@ -18,27 +18,18 @@
 
 import logging
 from orison_ai.src.database.models import GoogleScholarDB
-from orison_ai.src.database.client import DBClient
-from orison_ai.src.utils.constants import DB_NAME
-from bson.objectid import ObjectId
+from orison_ai.src.database.firebase import FirestoreClient
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 
-class GoogleScholarClient(DBClient):
-    def __init__(
-        self,
-        db_name: str = DB_NAME,
-        db_path: str = "mongodb://mongodb:27017/",
-    ):
+class GoogleScholarClient(FirestoreClient):
+    def __init__(self):
         """
-        Initializes an instance of a DatabaseModifier object, which can be used
+        Initializes an instance of a GoogleScholarClient object, which can be used
         to insert into or update a database collection given a file
-
-        :param db_name: the name of the database to insert into
-        :param db_path: the path to the database
         """
-        super(GoogleScholarClient, self).__init__(db_name, db_path)
+        super(GoogleScholarClient, self).__init__()
         self._model = GoogleScholarDB
-        self._collection = self._db[self._model.__name__]
+        self._collection = self.client.collection(self._model.__name__)

@@ -27,7 +27,7 @@ from pathlib import Path
 
 from orison_ai.src.utils.constants import VAULT_PATH
 from orison_ai.src.core.google_scholar import get_google_scholar_info
-from orison_ai.src.core.storyteller import ingest_documents, analyze_documents
+from orison_ai.src.core.storybuilder import ingest_documents, analyze_documents
 from orison_ai.src.database.google_scholar_client import GoogleScholarClient
 
 logging.basicConfig(level=logging.INFO)
@@ -35,15 +35,17 @@ logger = logging.getLogger(__name__)
 
 
 async def download_scholar_helper(
-    business_id: str, user_id: str, database: str, category: str, parameters: dict
+    user_id: str, applicant_id: str, database: str, category: str, parameters: dict
 ):
-    client = GoogleScholarClient(db_name=database)
+    client = GoogleScholarClient()
     scholar_link = parameters.get("scholar_link")
     folder_path = os.path.join(VAULT_PATH, category)  # Where would we fetch this from?
     if scholar_link != "":
         try:
             scholar_info = await get_google_scholar_info(
-                business_id=business_id, user_id=user_id, scholar_link=scholar_link
+                user_id=user_id,
+                applicant_id=applicant_id,
+                scholar_link=scholar_link,
             )
         except Exception as e:
             logger.error(
@@ -75,10 +77,12 @@ async def ingest_helper(category: str):
         raise e
 
 
-async def analysis_helper(business_id: str, user_id: str, type_of_story: str):
+async def analysis_helper(user_id: str, applicant_id: str, type_of_story: str):
     try:
         await analyze_documents(
-            business_id=business_id, user_id=user_id, type_of_story=type_of_story
+            user_id=user_id,
+            applicant_id=applicant_id,
+            type_of_story=type_of_story,
         )
     except Exception as e:
         logger.error(f"Failed to analyze documents. Error: {traceback.format_exc(e)}")

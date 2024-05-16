@@ -15,78 +15,69 @@
 # ==========================================================================
 
 # External
-from motor.motor_asyncio import AsyncIOMotorClient
-from bson.objectid import ObjectId
 import logging
+import datetime
+from google.cloud.firestore_v1.base_query import FieldFilter, BaseCompositeFilter
+from google.cloud.firestore_v1.types import StructuredQuery
+from firebase_admin import firestore
+import firebase_admin
+from bson import ObjectId
+from firebase_admin import credentials
+from firebase_admin import firestore_async
 from typing import Optional
 from mongoengine import Document, EmbeddedDocument
 from typing import List, Union
 from pymongo import DESCENDING, ASCENDING
 
+
 # Internal
-from orison_ai.src.utils.constants import DB_NAME
-from orison_ai.src.database import models
+from orison_ai.src.utils.constants import FIREBASE_CREDENTIALS
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 
-class InsertionError(Exception):
-    pass
-
-
-class DBInitializer:
-    def __init__(
-        self, db_name: str = DB_NAME, db_path: str = "mongodb://mongodb:27017/"
-    ):
+class FireStoreDB:
+    def __init__(self):
         """
-        Initializes an instance of a MongoDB object, which can be used to
-        connect to a MongoDB database
-        DB_NAME is the law firm database name
-        Collection names are specific to applicant profiles
-
-        :param db_name: the name of the database to connect to
-        :param db_path: the path to the database
+        Initializes an instance of a FireStoreDB object, which can be used to
+        connect to a FireStoreDB database
         """
-        self.client = AsyncIOMotorClient(db_path)
-        self._db = self.client[db_name]
-        self._collection = None
+        cred = credentials.Certificate(FIREBASE_CREDENTIALS)
+        try:
+            app = firebase_admin.get_app()
+        except:
+            app = firebase_admin.initialize_app(cred)
+        self.client = firestore_async.client(app)
 
 
-class DBClient(DBInitializer):
-    def __init__(
-        self,
-        db_name: str = DB_NAME,
-        db_path: str = "mongodb://mongodb:27017/",
-    ):
-        # ToDo: Do we want to maintain unique collections
+class FirestoreClient(FireStoreDB):
+    def __init__(self):
         """
-        Initializes an instance of a DatabaseModifier object, which can be used
-        to insert into or update a database collection given a file
-
-        :param db_name: the name of the database to insert into
-        :param db_path: the path to the database
+        Initializes an instance of a FirestoreClient object, which can be used
+        to insert into or update a Firestore collection given a file
         """
-        super(DBClient, self).__init__(db_name, db_path)
+        super(FirestoreClient, self).__init__()
 
     async def find_top(
         self,
         user_id: str,
         applicant_id: str,
         filters: Optional[dict] = {},
-        order: [1, -1] = DESCENDING,
+        order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
     ) -> Union[EmbeddedDocument, Document, None]:
         """
-        Finds a mongoengine Document item from the collection and converts it to a mongo object
+        Finds a firestore Document item from the collection and converts it to a mongo object
         Order is either ASCENDING or DESCENDING
 
         :param user_id: the business id of the document to find
         :param applicant_id: the user id of the document to find
         :param order: the order in which to sort the documents
-        :return: the entry found in mongo db for the requesting model class instance
+        :return: the entry found in firestore db for the requesting model class instance
                 converted to a mongo object
         """
-        return await self.find_top_k(user_id, applicant_id, filters, 1, order)
+        result = await self.find_top_k(user_id, applicant_id, filters, 1, order)
+        return result[0]
 
     async def find_top_k(
         self,
@@ -97,14 +88,15 @@ class DBClient(DBInitializer):
         order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
     ) -> Union[List[EmbeddedDocument], List[Document], None]:
         """
-        Finds many document items given a limit k from the collection and converts them to mongo objects
+        Finds top K firestore document items given a limit k from the collection
+        and converts them to mongo objects
         Order is either ASCENDING or DESCENDING
 
         :param user_id: the business id of the document to find
         :param applicant_id: the user id of the document to find
         :param k: the number of documents to find
         :param order: the order in which to sort the documents
-        :return: entries found in mongo converted to list of mongo objects
+        :return: entries found in firestore converted to list of mongo objects
         """
         _logger.debug(f"Database operation: find {k} documents by order: {order}")
 
@@ -117,28 +109,50 @@ class DBClient(DBInitializer):
             raise ValueError(
                 f'Expected parameter "order" as 1 or -1. Instead, ' f"got {order}"
             )
+        order = (
+            firestore.Query.ASCENDING
+            if order == ASCENDING
+            else firestore.Query.DESCENDING
+        )
         if k < 1:
             raise ValueError("Number of documents k must be greater than 0")
 
-        return [
-            self._model(**{k: v for k, v in item.items() if k != "_id"})
-            async for item in self._collection.find(
-                {"user_id": user_id, "applicant_id": applicant_id} | filters
+        # Apply filters
+        filters = {"user_id": user_id, "applicant_id": applicant_id} | filters
+        composite_filter = BaseCompositeFilter(
+            operator=StructuredQuery.CompositeFilter.Operator.AND,
+            filters=[
+                FieldFilter(field, "==", value) for field, value in filters.items()
+            ],
+        )
+
+        if ASCENDING:
+            query = (
+                self._collection.where(filter=composite_filter)
+                .order_by("date_created", direction=firestore.Query.ASCENDING)
+                .limit(k)
             )
-            .sort("date_created", order)
-            .limit(k)
-            .next()
+        else:
+            query = (
+                self._collection.where(filter=composite_filter)
+                .order_by("date_created", direction=firestore.Query.DESCENDING)
+                .limit(k)
+            )
+
+        return [
+            self._model(**{k: v for k, v in item.to_dict().items() if k != "id"})
+            async for item in query.stream()
         ]
 
     async def insert(self, doc: Union[EmbeddedDocument, Document]) -> ObjectId:
         """
-        Inserts a mongo doc object into the mongo database
+        Inserts a mongo doc object into the firestore
 
         :param user_id: the business id of the document to insert
         :param applicant_id: the user id of the document to insert
         :param doc: the object to insert into the database
 
-        :return: the inserted mongo id
+        :return: the inserted firestore id
         """
         _logger.debug(f"Database operation: inserting document: {doc}")
 
@@ -147,8 +161,8 @@ class DBClient(DBInitializer):
                 f"The mongo doc provided {doc} of type {type(doc)} "
                 f"needs to be type {self._model}"
             )
+        doc.date_created = datetime.datetime.now()
+        _, doc_ref = await self._collection.add(doc.to_mongo().to_dict())
+        _logger.info(f"Document inserted. Firestore id: {doc_ref.id}")
 
-        result = await self._collection.insert_one(doc.to_mongo().to_dict())
-        _logger.info(f"Document inserted. Mongo _id: {result.inserted_id}")
-
-        return result.inserted_id
+        return doc_ref.id

@@ -8,7 +8,11 @@
 
 ## IP
 
-- Storyteller/storybuilder
+- StoryBuilder/storybuilder
     - Used by attorneys to upload applicant documentation and view data about the applicant.
 - Where do I stand?
     - Used by visa applicants to check how they stack up against other applicants.
+
+## Firebase Admin VS FireStore
+- Firebase admin is to be used with backend SDK whereas firestore is suitable for web client
+- Firebase admin uses service account key that needs to be created after changing organization permissions

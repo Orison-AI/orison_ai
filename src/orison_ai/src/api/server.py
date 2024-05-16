@@ -14,14 +14,12 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-import os
-import sys
-
+from concurrent.futures import ThreadPoolExecutor
+import asyncio
 import streamlit as st
-from collections import defaultdict
 from orison_ai.src.api.informatics import GoogleScholarApp
 from orison_ai.src.api.story_builder import StoryBuilderApp
-from orison_ai.src.api.upload import Upload
+from orison_ai.src.api.screening import ScreeningApp
 
 # Set page background color
 st.markdown(
@@ -52,16 +50,19 @@ st.markdown(
 class OrisonApp:
     def __init__(self):
         self._logged_in = None
-        self._user_id = ""
-        self._business_id = "demo_v2"
-        self._mongo_client = None
+        self._applicant_id = "rmalhan0112@gmail.com"
+        self._user_id = "demo_v2"
         self._google_scholar = None
+        self._story_builder_screening = None
+        self._story_builder_detailed = None
         self._informatics = None
         self._pages = False
         self._sidebar = None
-        self._initialize()
 
-    def _initialize_pages(self):
+    async def dummy_task(self):
+        return
+
+    async def _initialize_pages(self):
         pages = [
             "Dashboard",
             "Upload",
@@ -74,15 +75,34 @@ class OrisonApp:
         # Create sidebar with tabs
         self._sidebar = st.sidebar.radio("Navigation", pages)
 
-        self._google_scholar = GoogleScholarApp(
-            self._business_id, self._user_id, self._sidebar
-        )
-        self._story_builder = StoryBuilderApp(
-            self._business_id, self._user_id, self._sidebar
+        if not self._google_scholar:
+            self._google_scholar = GoogleScholarApp(
+                self._user_id, self._applicant_id, self._sidebar
+            )
+        if not self._story_builder_screening:
+            if self._sidebar == "Screening":
+                self._story_builder_screening = ScreeningApp(
+                    self._user_id, self._applicant_id, self._sidebar
+                )
+        if not self._story_builder_detailed:
+            if self._sidebar == "StoryBuilder":
+                self._story_builder_detailed = StoryBuilderApp(
+                    self._user_id, self._applicant_id, self._sidebar
+                )
+        await asyncio.gather(
+            self._google_scholar.run() if self._google_scholar else self.dummy_task(),
+            asyncio.sleep(0.1),
+            self._story_builder_screening.run()
+            if self._story_builder_screening
+            else self.dummy_task(),
+            asyncio.sleep(0.1),
+            self._story_builder_detailed.run()
+            if self._story_builder_detailed
+            else self.dummy_task(),
         )
         self._pages = True
 
-    def _initialize(self):
+    async def initialize(self):
         st.title("Orison AI")
 
         if "logged_in" not in st.session_state:
@@ -90,10 +110,10 @@ class OrisonApp:
             self._logged_in = False
 
         if st.session_state.logged_in:
-            self._user_id = st.session_state.user_id
+            self._applicant_id = st.session_state.applicant_id
             self._logged_in = True
             if not self._pages:
-                self._initialize_pages()
+                await self._initialize_pages()
 
             if st.button("Log out"):
                 st.session_state.logged_in = False
@@ -101,13 +121,15 @@ class OrisonApp:
                 st.rerun()
         else:
             # User login interface
-            user_id = st.text_input("Enter your user ID to log in", "")
+            applicant_id = st.text_input("Enter your user ID to log in", "")
 
-            if st.button("Log in") and user_id:
+            if st.button("Log in") and applicant_id:
                 st.session_state.logged_in = True
-                st.session_state.user_id = user_id
+                st.session_state.applicant_id = applicant_id
                 st.rerun()
 
 
 if __name__ == "__main__":
     app = OrisonApp()
+
+    asyncio.run(app.initialize())
