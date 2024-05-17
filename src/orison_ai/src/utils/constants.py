@@ -21,6 +21,7 @@ PROJECT_ROOT_PATH = Path("/app/")
 VAULT_PATH = Path(os.path.join(PROJECT_ROOT_PATH, "vault"))
 CATEGORIES = ["research"]
 FIREBASE_CREDENTIALS = VAULT_PATH / "credentials/firebase.json"
+FIREBASE_STORAGE = "gs://orison-ai-visa-apply.appspot.com"
 DB_NAME = "orison_ai"
 REVISION = "1"
 ROLE = """
@@ -29,3 +30,15 @@ ROLE = """
     Do not speculate or make up information.
     Please describe the contribution to the field in words that someone with no technical background will understand. Use simple terms to express what makes the contribution so important or innovative and provide examples where applicable.
 """
+
+
+def remove_protocol(url: str) -> str:
+    """Remove the protocol from a Firebase Storage URL
+
+    Args:
+        url (str): A URL. Example: gs://orison-ai-visa-apply.appspot.com
+
+    Returns:
+        str: The URL without the protocol. Example: orison-ai-visa-apply.appspot.com
+    """
+    return url.split("://")[1]
