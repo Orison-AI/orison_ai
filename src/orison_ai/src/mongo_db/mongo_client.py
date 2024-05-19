@@ -25,7 +25,7 @@ from pymongo import DESCENDING, ASCENDING
 
 # Internal
 from orison_ai.src.utils.constants import DB_NAME
-from orison_ai.src.database import models
+from orison_store.database import models
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
