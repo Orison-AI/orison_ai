@@ -14,7 +14,6 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-
 # External
 import os
 import json
@@ -32,9 +31,6 @@ from mongoengine import Document, EmbeddedDocument
 from typing import List, Union
 from pymongo import DESCENDING, ASCENDING
 
-
-# Internal
-from web_retriever.models import GoogleScholarDB
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
@@ -171,14 +167,3 @@ class FirestoreClient(FireStoreDB):
         _logger.info(f"Document inserted. Firestore id: {doc_ref.id}")
 
         return doc_ref.id
-
-
-class GoogleScholarClient(FirestoreClient):
-    def __init__(self):
-        """
-        Initializes an instance of a GoogleScholarClient object, which can be used
-        to insert into or update a database collection given a file
-        """
-        super(GoogleScholarClient, self).__init__()
-        self._model = GoogleScholarDB
-        self._collection = self.client.collection("google_scholar")

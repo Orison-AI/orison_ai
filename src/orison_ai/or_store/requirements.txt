@@ -1,0 +1,4 @@
+firebase_admin==6.5.0
+google-cloud-firestore==2.16.0
+mongoengine==0.28.2
+dataclasses==0.6

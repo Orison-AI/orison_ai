@@ -25,7 +25,7 @@ from scholarly import scholarly
 
 # Internal
 
-from web_retriever.models import GoogleScholarDB, Publication, Author
+from or_store.models import GoogleScholarDB, Publication, Author
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

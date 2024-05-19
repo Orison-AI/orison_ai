@@ -16,15 +16,16 @@
 
 # External
 
+import traceback
 import logging
 import asyncio
 from functions_framework import create_app, http
 
 # Internal
 
-from web_retriever.helpers import fetch_scholar_helper
-from web_retriever.models import GoogleScholarRequest
-from web_retriever.client import GoogleScholarClient
+from or_retriever.helpers import fetch_scholar_helper
+from or_store.models import GoogleScholarRequest
+from or_store.google_scholar_client import GoogleScholarClient
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -50,7 +51,9 @@ async def handle_request(request):
             "status": "200",
         }
     except Exception as e:
-        message = f"Failed to download Google Scholar page. Error: {e}"
+        message = (
+            f"Failed to download Google Scholar page. Error: {traceback.format_exc(e)}"
+        )
         logger.error(message)
         return {"message": f"Internal Server Error: {message}", "status": 500}
 

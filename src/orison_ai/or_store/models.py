@@ -14,8 +14,6 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-# External
-
 from dataclasses import dataclass
 from datetime import datetime
 from mongoengine import (
@@ -27,6 +25,7 @@ from mongoengine import (
     EmbeddedDocumentField,
     FloatField,
     DateTimeField,
+    BooleanField,
     DictField,
 )
 
@@ -64,6 +63,16 @@ class BaseModel(Document):
     instagram = StringField()
     website = StringField()
     meta = {"allow_inheritance": True}
+
+
+class QandA(EmbeddedDocument):
+    """
+    MongoDB document class for QandA details of the applicant
+    """
+
+    question = StringField(required=True)
+    answer = StringField(required=True)
+    source = StringField()
 
 
 class Author(EmbeddedDocument):
@@ -107,3 +116,38 @@ class GoogleScholarDB(BaseModel):
     publications = ListField(EmbeddedDocumentField(Publication))
     homepage = StringField()
     other_details = DictField()
+
+
+class StoryBuilder(BaseModel):
+    """
+    MongoDB document class for Story of the applicant
+    """
+
+    summary = ListField(EmbeddedDocumentField(QandA), default=[])
+
+
+class ScreeningBuilder(BaseModel):
+    """
+    MongoDB document class for Screening of the applicant
+    """
+
+    summary = ListField(EmbeddedDocumentField(QandA), default=[])
+
+
+class MetaExtract(BaseModel):
+    """
+    MongoDB document class for Meta details of the applicant
+    The details get extracted from accepted or rejected historical profiles
+    """
+
+    field_keywords = ListField(StringField())
+    designation = StringField()
+    total_citations = IntField()
+    total_publications = IntField()
+    journal_names = ListField(StringField())
+    conference_names = ListField(StringField())
+    number_patents = IntField()
+    number_awards = IntField()
+    media_names = ListField(StringField())
+    acceptance_status = BooleanField()
+    story = StringField()
