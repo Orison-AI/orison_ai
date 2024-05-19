@@ -24,6 +24,7 @@ from functions_framework import create_app, http
 
 from web_retriever.helpers import fetch_scholar_helper
 from web_retriever.models import GoogleScholarRequest
+from web_retriever.client import GoogleScholarClient
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -42,7 +43,12 @@ async def handle_request(request):
     # Download the Google Scholar page
     try:
         scholar_info = await fetch_scholar_helper(user_request)
-        return {"message": scholar_info, "status": "200"}
+        client = GoogleScholarClient()
+        id = await client.insert(scholar_info)
+        return {
+            "message": f"Scholar info:\n{scholar_info.to_json()} \nsaved with ID: {id}.",
+            "status": "200",
+        }
     except Exception as e:
         message = f"Failed to download Google Scholar page. Error: {e}"
         logger.error(message)

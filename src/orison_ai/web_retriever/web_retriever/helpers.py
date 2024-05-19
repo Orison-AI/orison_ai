@@ -42,8 +42,8 @@ async def fetch_scholar_helper(user_request: GoogleScholarRequest):
         raise e
     try:
         if scholar_info is not None:
-            logger.info("Google scholar data saved to json file")
-            return scholar_info.to_json()
+            logger.info("Google scholar data class initialized")
+            return scholar_info
     except Exception as e:
         logger.error(
             f"Failed to insert google scholar data. Error: {traceback.format_exc(e)}"
