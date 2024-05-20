@@ -36,4 +36,5 @@ BackendServer-- > VectorDB: Accesses
 Database --> BackendServer: Returns data
 BackendServer --> HTTPLayer: Sends response
 HTTPLayer --> UserInterface: Returns data
+VectorDB --> Backend: Returns data
 ```
