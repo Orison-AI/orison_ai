@@ -23,12 +23,35 @@ from functions_framework import create_app, http
 
 # Internal
 
-from or_retriever.helpers import fetch_scholar_helper
 from or_store.models import GoogleScholarRequest
 from or_store.google_scholar_client import GoogleScholarClient
+from or_retriever.google_scholar import get_google_scholar_info
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+async def fetch_scholar_helper(user_request: GoogleScholarRequest):
+    try:
+        scholar_info = await get_google_scholar_info(
+            attorney_id=user_request.attorney_id,
+            applicant_id=user_request.applicant_id,
+            scholar_link=user_request.scholar_link,
+        )
+    except Exception as e:
+        logger.error(
+            f"Failed to generate google scholar database. Error: {traceback.format_exc(e)}"
+        )
+        raise e
+    try:
+        if scholar_info is not None:
+            logger.info("Google scholar data class initialized")
+            return scholar_info
+    except Exception as e:
+        logger.error(
+            f"Failed to insert google scholar data. Error: {traceback.format_exc(e)}"
+        )
+        raise e
 
 
 async def handle_request(request):
@@ -41,14 +64,21 @@ async def handle_request(request):
     else:
         return {"message": "Bad Request", "status": 400}
 
+    # Attempt connection to the database
+    try:
+        client = GoogleScholarClient()
+    except Exception as e:
+        message = f"Failed to connect to the database. Error: {traceback.format_exc(e)}"
+        logger.error(message)
+        return {"message": f"Internal Server Error: {message}", "status": 500}
+
     # Download the Google Scholar page
     try:
         scholar_info = await fetch_scholar_helper(user_request)
-        client = GoogleScholarClient()
         id = await client.insert(scholar_info)
         return {
             "message": f"Scholar info:\n{scholar_info.to_json()} \nsaved with ID: {id}.",
-            "status": "200",
+            "status": 200,
         }
     except Exception as e:
         message = (

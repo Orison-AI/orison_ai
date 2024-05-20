@@ -95,26 +95,3 @@ async def extract_user(url: str):
         applicant_id = match.group(1)
         return applicant_id
     return None
-
-
-async def fetch_scholar_helper(user_request: GoogleScholarRequest):
-    try:
-        scholar_info = await get_google_scholar_info(
-            attorney_id=user_request.attorney_id,
-            applicant_id=user_request.applicant_id,
-            scholar_link=user_request.scholar_link,
-        )
-    except Exception as e:
-        logger.error(
-            f"Failed to generate google scholar database. Error: {traceback.format_exc(e)}"
-        )
-        raise e
-    try:
-        if scholar_info is not None:
-            logger.info("Google scholar data class initialized")
-            return scholar_info
-    except Exception as e:
-        logger.error(
-            f"Failed to insert google scholar data. Error: {traceback.format_exc(e)}"
-        )
-        raise e
