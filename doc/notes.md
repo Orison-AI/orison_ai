@@ -30,7 +30,16 @@ becomes tricky because now pip needs github path to install the package
 - However ssh is better and procedure is outlined in:
 https://cloud.google.com/build/docs/access-github-from-build
 - ssh keys are added and cloudbuild.yaml created
-- Use the command: gcloud builds submit --config=cloudbuild.yaml .
+- Use the command: gcloud builds submit --config=cloudbuild.yaml
+- Gave up on ssh
+
+## Cloud Secret Manager
+- Uploaded firebase_credentials.json to secret manager and gave permissions to project
+- Ran this on command line to grant access to gcloud
+gcloud secrets add-iam-policy-binding firebase_credentials \
+    --role roles/secretmanager.secretAccessor \
+    --member serviceAccount:orison-ai-visa-apply@appspot.gserviceaccount.com
+- The credentials can be accessed using google cloud secret manager
 
 ## Testing gcloud
 - functions-framework --target=func_name --debug

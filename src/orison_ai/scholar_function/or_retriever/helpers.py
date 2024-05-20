@@ -22,10 +22,6 @@ import requests
 import traceback
 import logging
 
-# Internal
-
-from or_retriever.google_scholar import get_google_scholar_info
-from or_store.models import GoogleScholarRequest
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
