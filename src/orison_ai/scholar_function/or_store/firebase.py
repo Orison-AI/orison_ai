@@ -21,6 +21,7 @@ import logging
 import datetime
 from google.cloud.firestore_v1.base_query import FieldFilter, BaseCompositeFilter
 from google.cloud.firestore_v1.types import StructuredQuery
+from google.cloud.secretmanager_v1 import SecretManagerServiceClient
 from firebase_admin import firestore
 import firebase_admin
 from bson import ObjectId
@@ -36,6 +37,36 @@ logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 
+class CREDENTIALS_NOT_FOUND(ValueError):
+    def __init__(self, message="Invalid Credentials"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class INVALID_CREDENTIALS(Exception):
+    def __init__(self, message="Invalid Credentials"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class FIRESTORE_CONNECTION_FAILED(Exception):
+    def __init__(self, message="Failed to connect to Firestore"):
+        self.message = message
+        super().__init__(self.message)
+
+
+def load_firebase_creds():
+    # Create the Secret Manager client.
+    client = SecretManagerServiceClient()
+    # Build the resource name of the secret version.
+    name = f"projects/685108028813/secrets/firebase_credentials/versions/latest"
+    # Access the secret version.
+    response = client.access_secret_version(request={"name": name})
+    # Get the payload as a JSON string.
+    payload = response.payload.data.decode("UTF-8")
+    return json.loads(payload)
+
+
 class FireStoreDB:
     def __init__(self):
         """
@@ -44,19 +75,32 @@ class FireStoreDB:
         """
         cred_str = os.getenv("FIREBASE_CREDENTIALS")
         if cred_str is None:
-            raise ValueError("Missing FIREBASE_CREDENTIALS environment variable")
+            _logger.info(
+                "Missing FIREBASE_CREDENTIALS in environment variable. Attempting secret manager"
+            )
+            try:
+                cred_dict = load_firebase_creds()
+            except Exception as e:
+                raise CREDENTIALS_NOT_FOUND(
+                    "FIREBASE_CREDENTIALS not found in environment variable or secret manager"
+                )
+        else:
+            try:
+                cred_dict = json.loads(cred_str)
+            except json.JSONDecodeError:
+                raise INVALID_CREDENTIALS("Invalid JSON in FIREBASE_CREDENTIALS")
 
-        # Step 2: Convert the string to a JSON object
-        try:
-            cred_dict = json.loads(cred_str)
-        except json.JSONDecodeError:
-            raise ValueError("Invalid JSON in FIREBASE_CREDENTIALS")
         # Convert string back to JSON
         cred = credentials.Certificate(cred_dict)
         try:
+            _logger.info("Getting existing Firestore client")
             app = firebase_admin.get_app()
-        except:
+        except ValueError as e:
+            _logger.info("No existing client found. Creating new Firestore client")
             app = firebase_admin.initialize_app(cred)
+        except Exception as e:
+            raise FIRESTORE_CONNECTION_FAILED("Failed to connect to Firestore")
+
         self.client = firestore_async.client(app)
 
 
