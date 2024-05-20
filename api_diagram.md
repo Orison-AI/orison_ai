@@ -2,20 +2,24 @@
 classDiagram
 class UserInterface {
         +process_scholar(scholar_link)
-        +process_upload(attorney_id, applicant_id,file_id,category)
+        +process_upload(attorney_id, applicant_id,file_id,file_category)
+        +request_screening(attorney_id, applicant_id)
+        +display_screening(attorney_id, applicant_id,visa_category)
         +display_informatics(scholar_data)
     }
 
 class HTTPLayer {
         +fetch_scholar(attorney_id, applicant_id, scholar_link)
         +get_scholar_data(attorney_id, applicant_id, field)
-        +ingest_file(attorney_id, applicant_id, file_id,category)
+        +ingest_file(attorney_id, applicant_id, file_id,file_category)
+        +request_screening(attorney_id,applicant_id,visa_category)
     }
 
 class BackendServer {
         +fetch_scholar(attorney_id, applicant_id, scholar_link)
-        +ingest_files(attorney_id, applicant_id,file_id,category)
-        +insertVector(attorney_id, applicant_id,category)
+        +ingest_files(attorney_id, applicant_id,file_id,file_category)
+        +submit_screening(attorney_id, applicant_id,visa_category)
+        +insertVector(attorney_id, applicant_id,file_category)
         +queryDatabase(query)
         +insertData(data)
     }
@@ -26,7 +30,7 @@ class Database {
     }
 
 class VectorDB {
-    +store(attorney_id, applicant_id,category)
+    +store(attorney_id, applicant_id,file_category)
 }
 
 UserInterface-- > HTTPLayer: Uses
