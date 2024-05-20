@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.10
+#! /usr/bin/env python3.9
 
 # ==========================================================================
 #  Copyright (c) Orison AI, 2024.
@@ -17,19 +17,30 @@
 # External
 
 import logging
-from orison_ai.src.database.models import GoogleScholarDB
-from orison_ai.src.database.firebase import FirestoreClient
+from or_store.models import StoryBuilder, ScreeningBuilder
+from or_store.firebase import FirestoreClient
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 
-class GoogleScholarClient(FirestoreClient):
+class StoryClient(FirestoreClient):
     def __init__(self):
         """
-        Initializes an instance of a GoogleScholarClient object, which can be used
+        Initializes an instance of a StoryClient object, which can be used
         to insert into or update a database collection given a file
         """
-        super(GoogleScholarClient, self).__init__()
-        self._model = GoogleScholarDB
-        self._collection = self.client.collection("google_scholar")
+        super(StoryClient, self).__init__()
+        self._model = StoryBuilder
+        self._collection = self.client.collection("story_builder")
+
+
+class ScreeningClient(FirestoreClient):
+    def __init__(self):
+        """
+        Initializes an instance of a StoryClient object, which can be used
+        to insert into or update a database collection given a file
+        """
+        super(ScreeningClient, self).__init__()
+        self._model = ScreeningBuilder
+        self._collection = self.client.collection("screening_builder")

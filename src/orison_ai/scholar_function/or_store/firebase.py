@@ -15,10 +15,13 @@
 # ==========================================================================
 
 # External
+import os
+import json
 import logging
 import datetime
 from google.cloud.firestore_v1.base_query import FieldFilter, BaseCompositeFilter
 from google.cloud.firestore_v1.types import StructuredQuery
+from google.cloud.secretmanager_v1 import SecretManagerServiceClient
 from firebase_admin import firestore
 import firebase_admin
 from bson import ObjectId
@@ -30,11 +33,38 @@ from typing import List, Union
 from pymongo import DESCENDING, ASCENDING
 
 
-# Internal
-from orison_ai.src.utils.constants import FIREBASE_CREDENTIALS
-
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
+
+
+class CREDENTIALS_NOT_FOUND(ValueError):
+    def __init__(self, message="Invalid Credentials"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class INVALID_CREDENTIALS(Exception):
+    def __init__(self, message="Invalid Credentials"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class FIRESTORE_CONNECTION_FAILED(Exception):
+    def __init__(self, message="Failed to connect to Firestore"):
+        self.message = message
+        super().__init__(self.message)
+
+
+def load_firebase_creds():
+    # Create the Secret Manager client.
+    client = SecretManagerServiceClient()
+    # Build the resource name of the secret version.
+    name = f"projects/685108028813/secrets/firebase_credentials/versions/latest"
+    # Access the secret version.
+    response = client.access_secret_version(request={"name": name})
+    # Get the payload as a JSON string.
+    payload = response.payload.data.decode("UTF-8")
+    return json.loads(payload)
 
 
 class FireStoreDB:
@@ -43,11 +73,34 @@ class FireStoreDB:
         Initializes an instance of a FireStoreDB object, which can be used to
         connect to a FireStoreDB database
         """
-        cred = credentials.Certificate(FIREBASE_CREDENTIALS)
+        cred_str = os.getenv("FIREBASE_CREDENTIALS")
+        if cred_str is None:
+            _logger.info(
+                "Missing FIREBASE_CREDENTIALS in environment variable. Attempting secret manager"
+            )
+            try:
+                cred_dict = load_firebase_creds()
+            except Exception as e:
+                raise CREDENTIALS_NOT_FOUND(
+                    "FIREBASE_CREDENTIALS not found in environment variable or secret manager"
+                )
+        else:
+            try:
+                cred_dict = json.loads(cred_str)
+            except json.JSONDecodeError:
+                raise INVALID_CREDENTIALS("Invalid JSON in FIREBASE_CREDENTIALS")
+
+        # Convert string back to JSON
+        cred = credentials.Certificate(cred_dict)
         try:
+            _logger.info("Getting existing Firestore client")
             app = firebase_admin.get_app()
-        except:
+        except ValueError as e:
+            _logger.info("No existing client found. Creating new Firestore client")
             app = firebase_admin.initialize_app(cred)
+        except Exception as e:
+            raise FIRESTORE_CONNECTION_FAILED("Failed to connect to Firestore")
+
         self.client = firestore_async.client(app)
 
 
@@ -61,7 +114,7 @@ class FirestoreClient(FireStoreDB):
 
     async def find_top(
         self,
-        attorney_id: str,
+        user_id: str,
         applicant_id: str,
         filters: Optional[dict] = {},
         order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
@@ -70,18 +123,18 @@ class FirestoreClient(FireStoreDB):
         Finds a firestore Document item from the collection and converts it to a mongo object
         Order is either ASCENDING or DESCENDING
 
-        :param attorney_id: the business id of the document to find
+        :param user_id: the business id of the document to find
         :param applicant_id: the user id of the document to find
         :param order: the order in which to sort the documents
         :return: the entry found in firestore db for the requesting model class instance
                 converted to a mongo object
         """
-        result = await self.find_top_k(attorney_id, applicant_id, filters, 1, order)
+        result = await self.find_top_k(user_id, applicant_id, filters, 1, order)
         return result[0]
 
     async def find_top_k(
         self,
-        attorney_id: str,
+        user_id: str,
         applicant_id: str,
         filters: Optional[dict] = {},
         k: int = 1,
@@ -92,7 +145,7 @@ class FirestoreClient(FireStoreDB):
         and converts them to mongo objects
         Order is either ASCENDING or DESCENDING
 
-        :param attorney_id: the business id of the document to find
+        :param user_id: the business id of the document to find
         :param applicant_id: the user id of the document to find
         :param k: the number of documents to find
         :param order: the order in which to sort the documents
@@ -118,7 +171,7 @@ class FirestoreClient(FireStoreDB):
             raise ValueError("Number of documents k must be greater than 0")
 
         # Apply filters
-        filters = {"attorney_id": attorney_id, "applicant_id": applicant_id} | filters
+        filters = {"user_id": user_id, "applicant_id": applicant_id} | filters
         composite_filter = BaseCompositeFilter(
             operator=StructuredQuery.CompositeFilter.Operator.AND,
             filters=[
@@ -148,7 +201,7 @@ class FirestoreClient(FireStoreDB):
         """
         Inserts a mongo doc object into the firestore
 
-        :param attorney_id: the business id of the document to insert
+        :param user_id: the business id of the document to insert
         :param applicant_id: the user id of the document to insert
         :param doc: the object to insert into the database
 
@@ -161,7 +214,7 @@ class FirestoreClient(FireStoreDB):
                 f"The mongo doc provided {doc} of type {type(doc)} "
                 f"needs to be type {self._model}"
             )
-        doc.date_created = datetime.datetime.now()
+        doc.date_created = datetime.datetime.utcnow()
         _, doc_ref = await self._collection.add(doc.to_mongo().to_dict())
         _logger.info(f"Document inserted. Firestore id: {doc_ref.id}")
 

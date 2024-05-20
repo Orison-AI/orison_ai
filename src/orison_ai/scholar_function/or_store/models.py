@@ -14,6 +14,7 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
+from dataclasses import dataclass
 from datetime import datetime
 from mongoengine import (
     Document,
@@ -27,6 +28,19 @@ from mongoengine import (
     BooleanField,
     DictField,
 )
+
+
+@dataclass
+class GoogleScholarRequest:
+    attorney_id: str
+    applicant_id: str
+    scholar_link: str
+
+
+@dataclass
+class GoogleScholarResponse:
+    message: str
+    status: int
 
 
 class BaseModel(Document):

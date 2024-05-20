@@ -16,3 +16,5 @@ motor
 scholarly
 fastapi
 firebase_admin
+functions-framework==3.5.0
+dataclasses==0.6
