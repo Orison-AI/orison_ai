@@ -1,3 +1,4 @@
+```mermaid
 classDiagram
 class UserInterface {
         +fetchUserData()
@@ -22,3 +23,4 @@ class Database {
 UserInterface-- > APILayer: Uses
 APILayer-- > BackendServer: Calls
 BackendServer-- > Database: Accesses
+```
