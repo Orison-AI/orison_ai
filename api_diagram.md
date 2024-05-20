@@ -33,8 +33,8 @@ UserInterface-- > HTTPLayer: Uses
 HTTPLayer-- > BackendServer: Calls
 BackendServer-- > Database: Accesses
 BackendServer-- > VectorDB: Accesses
+VectorDB --> BackendServer: Returns data
 Database --> BackendServer: Returns data
 BackendServer --> HTTPLayer: Sends response
 HTTPLayer --> UserInterface: Returns data
-VectorDB --> Backend: Returns data
 ```
