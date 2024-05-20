@@ -42,9 +42,17 @@ class FireStoreDB:
         Initializes an instance of a FireStoreDB object, which can be used to
         connect to a FireStoreDB database
         """
-        cred_json = os.environ.get("FIREBASE_CREDENTIALS")
+        cred_str = os.getenv("FIREBASE_CREDENTIALS")
+        if cred_str is None:
+            raise ValueError("Missing FIREBASE_CREDENTIALS environment variable")
+
+        # Step 2: Convert the string to a JSON object
+        try:
+            cred_dict = json.loads(cred_str)
+        except json.JSONDecodeError:
+            raise ValueError("Invalid JSON in FIREBASE_CREDENTIALS")
         # Convert string back to JSON
-        cred = credentials.Certificate(json.loads(cred_json))
+        cred = credentials.Certificate(cred_dict)
         try:
             app = firebase_admin.get_app()
         except:

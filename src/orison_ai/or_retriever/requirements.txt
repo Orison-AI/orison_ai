@@ -1,4 +1,0 @@
-git+ssh://git@github.com/rishimalhan/orison_ai.git@feature/google_scholar_function#egg=or_store
-scholarly==1.7.11
-functions-framework==3.5.0
-requests==2.31.0
