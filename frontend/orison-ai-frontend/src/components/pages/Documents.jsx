@@ -11,7 +11,7 @@ import {
 
 // Chakra
 import {
-  HStack, IconButton,
+  HStack, IconButton, Input, Button, FormControl, FormLabel, FormHelperText,
   Table, Thead, Tbody, Tr, Th, Td,
   Text, useToast, VStack,
 } from '@chakra-ui/react';
@@ -27,6 +27,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
   const toast = useToast();
   const [documents, setDocuments] = useState([]);
+  const [scholarLink, setScholarLink] = useState('');
 
   const fetchDocuments = useCallback(async () => {
     if (user && selectedApplicant) {
@@ -106,6 +107,16 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
     }
   };
 
+  const handleScholarSubmit = () => {
+    toast({
+      title: 'Google Scholar Link Submitted',
+      description: `Link: ${scholarLink}`,
+      status: 'success',
+      duration: 5000,
+      isClosable: true,
+    });
+  };
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   return (
@@ -117,6 +128,20 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
           {selectedApplicant ? selectedApplicant.name : "No applicant selected"}
         </Text>
       </HStack>
+      <FormControl width="50%">
+        <FormLabel>Google Scholar Link</FormLabel>
+        <HStack>
+          <Input 
+            placeholder="Enter Google Scholar URL" 
+            value={scholarLink}
+            onChange={(e) => setScholarLink(e.target.value)}
+          />
+          <Button colorScheme="blue" onClick={handleScholarSubmit}>
+            Submit
+          </Button>
+        </HStack>
+        <FormHelperText>Example: https://scholar.google.com/citations?user=XXXXX</FormHelperText>
+      </FormControl>
       <VStack {...getRootProps()} border="2px dashed gray" padding="20px" width="50%" marginTop="4vh">
         <input {...getInputProps()} />
         {
