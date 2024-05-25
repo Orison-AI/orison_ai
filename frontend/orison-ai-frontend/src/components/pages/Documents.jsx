@@ -11,7 +11,8 @@ import {
 
 // Chakra
 import {
-  HStack, IconButton, Input, Button, FormControl, FormLabel, FormHelperText,
+  Button, HStack, IconButton, Input,
+  FormControl, FormLabel, FormHelperText,
   Table, Thead, Tbody, Tr, Th, Td,
   Text, useToast, VStack,
 } from '@chakra-ui/react';
@@ -22,6 +23,7 @@ import { useDropzone } from 'react-dropzone';
 
 // Internal
 import { auth } from '../../firebaseConfig';
+import { processScholarLink } from '../../api/api';  // Import the new utility function
 
 const ApplicantDocuments = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
@@ -107,15 +109,28 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
     }
   };
 
-  const handleScholarSubmit = (event) => {
+  const handleScholarSubmit = async (event) => {
     event.preventDefault(); // Prevent the default form submission behavior
-    toast({
-      title: 'Google Scholar Link Submitted',
-      description: `Link: ${scholarLink}`,
-      status: 'success',
-      duration: 5000,
-      isClosable: true,
-    });
+    if (user && selectedApplicant) {
+      try {
+        const response = await processScholarLink(user.uid, selectedApplicant.id, scholarLink);
+        toast({
+          title: 'Google Scholar Link Submitted',
+          description: `Request ID: ${response.requestId}`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+      } catch (error) {
+        toast({
+          title: 'Submission Failed',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    }
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
