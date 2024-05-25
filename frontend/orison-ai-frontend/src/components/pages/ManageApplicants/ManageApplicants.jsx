@@ -140,67 +140,71 @@ const ManageApplicants = ({
   return (
     <Box width="100%">
       <Text fontSize="3vh" m="2vh" mb="4vh" color="gray.400">Manage Applicants</Text>
-      <Table variant="simple">
-        <Thead>
-          <Tr>
-            <Th>Name</Th>
-            <Th>Email</Th>
-            <Th>Status</Th>
-            <Th>Actions</Th>
-            <Th></Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {applicants.map(applicant => (
-            <Tr key={applicant.id}>
-              <Td minWidth="20vh">
-                {editId === applicant.id ? (
-                  <Input
-                    defaultValue={applicant.name}
-                    ref={nameRef}
-                    onKeyDown={(e) => handleKeyDown(e, applicant)}
-                  />
-                ) : applicant.name}
-              </Td>
-              <Td minWidth="20vh">
-                {editId === applicant.id ? (
-                  <Input
-                    defaultValue={applicant.email} 
-                    ref={emailRef}
-                    onKeyDown={(e) => handleKeyDown(e, applicant)}
-                  />
-                ) : applicant.email}
-              </Td>
-              <Td minWidth="20vh">
-                {editId === applicant.id ? (
-                  <Input
-                    defaultValue={applicant.status}
-                    ref={statusRef}
-                    onKeyDown={(e) => handleKeyDown(e, applicant)}
-                  />
-                ) : applicant.status}
-              </Td>
-              <Td minWidth="35vh">
-                {editId === applicant.id ? (
-                  <>
-                    <IconButton icon={<CheckIcon />} onClick={() => saveEdit(applicant)} colorScheme="green" mr="0.5vh" />
-                    <IconButton icon={<CloseIcon />} onClick={cancelEdit} colorScheme="red" />
-                  </>
-                ) : (
-                  <>
-                    <IconButton icon={<EditIcon />} onClick={() => startEdit(applicant.id)} colorScheme="blue" />
-                  </>
-                )}
-                <Button ml="1.0vh" onClick={() => viewDocs(applicant)}>Documents</Button>
-                <Button ml="0.5vh" onClick={() => viewInformatics(applicant)}>Informatics</Button>
-              </Td>
-              <Td isNumeric>
-                <IconButton icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />
-              </Td>
-            </Tr>
-          ))}
-        </Tbody>
-      </Table>
+      <Center>
+        <Box overflowX="auto" maxWidth="90%" border="1px" borderColor="gray.600" borderRadius="1vh">
+          <Table variant="simple">
+            <Thead>
+              <Tr>
+                <Th>Name</Th>
+                <Th>Email</Th>
+                <Th>Status</Th>
+                <Th>Actions</Th>
+                <Th></Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {applicants.map(applicant => (
+                <Tr key={applicant.id}>
+                  <Td minWidth="20vh">
+                    {editId === applicant.id ? (
+                      <Input
+                        defaultValue={applicant.name}
+                        ref={nameRef}
+                        onKeyDown={(e) => handleKeyDown(e, applicant)}
+                      />
+                    ) : applicant.name}
+                  </Td>
+                  <Td minWidth="20vh">
+                    {editId === applicant.id ? (
+                      <Input
+                        defaultValue={applicant.email} 
+                        ref={emailRef}
+                        onKeyDown={(e) => handleKeyDown(e, applicant)}
+                      />
+                    ) : applicant.email}
+                  </Td>
+                  <Td minWidth="20vh">
+                    {editId === applicant.id ? (
+                      <Input
+                        defaultValue={applicant.status}
+                        ref={statusRef}
+                        onKeyDown={(e) => handleKeyDown(e, applicant)}
+                      />
+                    ) : applicant.status}
+                  </Td>
+                  <Td minWidth="35vh">
+                    {editId === applicant.id ? (
+                      <>
+                        <IconButton icon={<CheckIcon />} onClick={() => saveEdit(applicant)} colorScheme="green" mr="0.5vh" />
+                        <IconButton icon={<CloseIcon />} onClick={cancelEdit} colorScheme="red" />
+                      </>
+                    ) : (
+                      <>
+                        <IconButton icon={<EditIcon />} onClick={() => startEdit(applicant.id)} colorScheme="blue" />
+                      </>
+                    )}
+                    <Button ml="1.0vh" onClick={() => viewDocs(applicant)}>Documents</Button>
+                    <Button ml="0.5vh" onClick={() => viewInformatics(applicant)}>Informatics</Button>
+                  </Td>
+                  <Td isNumeric>
+                    <IconButton icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </Box>
+      </Center>
       <Center>
         <Button mt="2vh" colorScheme="blue" onClick={addNewApplicant}>Add New Applicant</Button>
       </Center>

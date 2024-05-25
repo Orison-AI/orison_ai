@@ -11,7 +11,7 @@ import {
 
 // Chakra
 import {
-  Button, HStack, IconButton, Input,
+  Box, Button, HStack, IconButton, Input,
   FormControl, FormLabel, FormHelperText,
   Table, Thead, Tbody, Tr, Th, Td,
   Text, useToast, VStack,
@@ -138,10 +138,9 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
   return (
     <VStack height="100%" width="100%" padding="2vh" fontSize="4vh">
       <HStack width="100%">
-        <Text fontSize="3vh" m="2vh" mb="4vh" color="gray.400">Documents</Text>
-        {/* <Spacer /> */}
-        <Text fontSize="3vh" m="2vh" mb="4vh" color="green.300" as="strong">
-          {selectedApplicant ? selectedApplicant.name : "No applicant selected"}
+        <Text fontSize="3vh" ml="2vh" mb="4vh" color="gray.400">Documents &gt;</Text>
+        <Text fontSize="3vh" mb="4vh" color="green.300" as="strong">
+          {selectedApplicant ? selectedApplicant.name : "None"}
         </Text>
       </HStack>
       <FormControl width="50%">
@@ -168,29 +167,31 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
             <Text>Drag files here or click to select files</Text>
         }
       </VStack>
-      <Table variant="simple" width="50%" marginTop="4vh">
-        <Thead>
-          <Tr>
-            <Th>File Name</Th>
-            <Th></Th>
-          </Tr>
-        </Thead>
-        <Tbody fontSize="2vh">
-          {documents.map(fileName => (
-            <Tr key={fileName}>
-              <Td>{fileName}</Td>
-              <Td isNumeric>
-                <IconButton
-                  icon={<CloseIcon />}
-                  colorScheme="red"
-                  variant="ghost"
-                  onClick={() => deleteFile(fileName)}
-                />
-              </Td>
+      <Box mt="4vh" mb="4vh" height="100%" width="50%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
+        <Table variant="simple">
+          <Thead>
+            <Tr>
+              <Th>File Name</Th>
+              <Th></Th>
             </Tr>
-          ))}
-        </Tbody>
-      </Table>
+          </Thead>
+          <Tbody fontSize="2vh">
+            {documents.map(fileName => (
+              <Tr key={fileName}>
+                <Td>{fileName}</Td>
+                <Td isNumeric>
+                  <IconButton
+                    icon={<CloseIcon />}
+                    colorScheme="red"
+                    variant="ghost"
+                    onClick={() => deleteFile(fileName)}
+                  />
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </Box>
     </VStack>
   );
 }
