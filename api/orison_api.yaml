@@ -6,7 +6,7 @@ info:
     It also helps attorneys screen applicants, enabling them to focus on the most promising candidates.
   version: 0.1.0
 servers:
-  - url: https://api.orisonai.com/v1
+  - url: https://e8a524ae-2fa5-4447-b6b7-6c79a0bda346.mock.pstmn.io
 tags:
   - name: scholar
     description: Operations related to Google Scholar processing
