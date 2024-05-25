@@ -58,9 +58,8 @@ const MainMenu = ({
                 <option key={app.id} value={app.id}>{app.name}</option>
               ))}
             </Select>
-            <MenuButton label="Upload Documents" disabled={!selectedApplicant} onClick={() => changeView(Views.UPLOAD_DOCUMENTS)} />
-            <MenuButton label="Screening" disabled={!selectedApplicant} onClick={() => changeView(Views.SCREENING)} />
-            <MenuButton label="Story Builder" disabled={!selectedApplicant} onClick={() => changeView(Views.STORY_BUILDER)} />
+            <MenuButton label="Documents" disabled={!selectedApplicant} onClick={() => changeView(Views.APPLICANT_DOCUMENTS)} />
+            <MenuButton label="Informatics" disabled={!selectedApplicant} onClick={() => changeView(Views.APPLICANT_INFORMATICS)} />
           </VStack>
         </DrawerBody>
       </DrawerContent>

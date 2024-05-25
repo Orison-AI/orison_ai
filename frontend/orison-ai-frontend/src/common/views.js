@@ -2,9 +2,8 @@
 
 const Views = {
     MANAGE_APPLICANTS: 'manageApplicants',
-    UPLOAD_DOCUMENTS: 'uploadDocuments',
-    SCREENING: 'screening',
-    STORY_BUILDER: 'storyBuilder'
+    APPLICANT_DOCUMENTS: 'applicantDocuments',
+    APPLICANT_INFORMATICS: 'applicantInformatics',
   };
   
   export default Views;

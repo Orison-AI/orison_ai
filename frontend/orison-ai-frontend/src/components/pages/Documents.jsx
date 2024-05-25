@@ -1,4 +1,4 @@
-// ./components/pages/UploadDocuments.jsx
+// ./components/pages/Documents.jsx
 
 // React
 import React, { useCallback, useEffect, useState } from 'react';
@@ -11,7 +11,8 @@ import {
 
 // Chakra
 import {
-  HStack, IconButton,
+  Box, Button, HStack, IconButton, Input,
+  FormControl, FormLabel, FormHelperText,
   Table, Thead, Tbody, Tr, Th, Td,
   Text, useToast, VStack,
 } from '@chakra-ui/react';
@@ -22,11 +23,13 @@ import { useDropzone } from 'react-dropzone';
 
 // Internal
 import { auth } from '../../firebaseConfig';
+import { processScholarLink } from '../../api/api';  // Import the new utility function
 
-const UploadDocuments = ({ selectedApplicant }) => {
+const ApplicantDocuments = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
   const toast = useToast();
   const [documents, setDocuments] = useState([]);
+  const [scholarLink, setScholarLink] = useState('');
 
   const fetchDocuments = useCallback(async () => {
     if (user && selectedApplicant) {
@@ -106,17 +109,56 @@ const UploadDocuments = ({ selectedApplicant }) => {
     }
   };
 
+  const handleScholarSubmit = async (event) => {
+    event.preventDefault(); // Prevent the default form submission behavior
+    if (user && selectedApplicant) {
+      try {
+        const response = await processScholarLink(user.uid, selectedApplicant.id, scholarLink);
+        toast({
+          title: 'Google Scholar Link Submitted',
+          description: `Request ID: ${response.requestId}`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+      } catch (error) {
+        toast({
+          title: 'Submission Failed',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    }
+  };
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   return (
     <VStack height="100%" width="100%" padding="2vh" fontSize="4vh">
       <HStack width="100%">
-        <Text fontSize="3vh" m="2vh" mb="4vh" color="gray.400">Documents</Text>
-        {/* <Spacer /> */}
-        <Text fontSize="3vh" m="2vh" mb="4vh" color="green.300" as="strong">
-          {selectedApplicant ? selectedApplicant.name : "No applicant selected"}
+        <Text fontSize="3vh" ml="2vh" mb="4vh" color="gray.400">Documents &gt;</Text>
+        <Text fontSize="3vh" mb="4vh" color="green.300" as="strong">
+          {selectedApplicant ? selectedApplicant.name : "None"}
         </Text>
       </HStack>
+      <FormControl width="50%">
+        <FormLabel>Google Scholar Link</FormLabel>
+        <form onSubmit={handleScholarSubmit}>
+          <HStack>
+            <Input 
+              placeholder="Enter Google Scholar URL" 
+              value={scholarLink}
+              onChange={(e) => setScholarLink(e.target.value)}
+            />
+            <Button type="submit" colorScheme="blue">
+              Submit
+            </Button>
+          </HStack>
+        </form>
+        <FormHelperText>Example: https://scholar.google.com/citations?user=XXXXX</FormHelperText>
+      </FormControl>
       <VStack {...getRootProps()} border="2px dashed gray" padding="20px" width="50%" marginTop="4vh">
         <input {...getInputProps()} />
         {
@@ -125,31 +167,33 @@ const UploadDocuments = ({ selectedApplicant }) => {
             <Text>Drag files here or click to select files</Text>
         }
       </VStack>
-      <Table variant="simple" width="50%" marginTop="4vh">
-        <Thead>
-          <Tr>
-            <Th>File Name</Th>
-            <Th></Th>
-          </Tr>
-        </Thead>
-        <Tbody fontSize="2vh">
-          {documents.map(fileName => (
-            <Tr key={fileName}>
-              <Td>{fileName}</Td>
-              <Td isNumeric>
-                <IconButton
-                  icon={<CloseIcon />}
-                  colorScheme="red"
-                  variant="ghost"
-                  onClick={() => deleteFile(fileName)}
-                />
-              </Td>
+      <Box mt="4vh" mb="4vh" height="100%" width="50%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
+        <Table variant="simple">
+          <Thead>
+            <Tr>
+              <Th>File Name</Th>
+              <Th></Th>
             </Tr>
-          ))}
-        </Tbody>
-      </Table>
+          </Thead>
+          <Tbody fontSize="2vh">
+            {documents.map(fileName => (
+              <Tr key={fileName}>
+                <Td>{fileName}</Td>
+                <Td isNumeric>
+                  <IconButton
+                    icon={<CloseIcon />}
+                    colorScheme="red"
+                    variant="ghost"
+                    onClick={() => deleteFile(fileName)}
+                  />
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </Box>
     </VStack>
   );
 }
 
-export default UploadDocuments;
+export default ApplicantDocuments;
