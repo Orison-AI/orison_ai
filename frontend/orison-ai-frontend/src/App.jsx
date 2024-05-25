@@ -18,9 +18,8 @@ import MainMenu from './components/MainMenu';
 import Settings from './components/settings/Settings';
 import Auth from './components/auth/Auth';
 import ManageApplicants from './components/pages/ManageApplicants/ManageApplicants';
-import UploadDocuments from './components/pages/UploadDocuments';
-import Screening from './components/pages/Screening';
-import StoryBuilder from './components/pages/StoryBuilder';
+import ApplicantDocuments from './components/pages/Documents';
+import ApplicantInformatics from './components/pages/Informatics';
 
 const App = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
@@ -75,12 +74,10 @@ const App = () => {
           setSelectedApplicant={setSelectedApplicant}
           setCurrentView={setCurrentView}
         />;
-      case Views.UPLOAD_DOCUMENTS:
-        return <UploadDocuments selectedApplicant={selectedApplicant} />;
-      case Views.SCREENING:
-        return <Screening selectedApplicant={selectedApplicant} />;
-      case Views.STORY_BUILDER:
-        return <StoryBuilder selectedApplicant={selectedApplicant} />;
+      case Views.APPLICANT_DOCUMENTS:
+        return <ApplicantDocuments selectedApplicant={selectedApplicant} />;
+      case Views.APPLICANT_INFORMATICS:
+        return <ApplicantInformatics selectedApplicant={selectedApplicant} />;
       default:
         return <Text>Invalid View</Text>
     }

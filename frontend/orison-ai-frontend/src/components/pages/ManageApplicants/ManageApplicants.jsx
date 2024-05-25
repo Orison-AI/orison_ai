@@ -127,19 +127,14 @@ const ManageApplicants = ({
     }
   };
 
-  const uploadDocsForApplicant = (applicant) => {
+  const viewDocs = (applicant) => {
     setSelectedApplicant(applicant);
-    setCurrentView(Views.UPLOAD_DOCUMENTS);
+    setCurrentView(Views.APPLICANT_DOCUMENTS);
   }
 
-  const screenApplicant = (applicant) => {
+  const viewInformatics = (applicant) => {
     setSelectedApplicant(applicant);
-    setCurrentView(Views.SCREENING);
-  }
-
-  const reviewApplicant = (applicant) => {
-    setSelectedApplicant(applicant);
-    setCurrentView(Views.STORY_BUILDER);
+    setCurrentView(Views.APPLICANT_INFORMATICS);
   }
 
   return (
@@ -196,9 +191,8 @@ const ManageApplicants = ({
                     <IconButton icon={<EditIcon />} onClick={() => startEdit(applicant.id)} colorScheme="blue" />
                   </>
                 )}
-                <Button ml="1.0vh" onClick={() => uploadDocsForApplicant(applicant)}>Upload</Button>
-                <Button ml="0.5vh" onClick={() => screenApplicant(applicant)}>Screen</Button>
-                <Button ml="0.5vh" onClick={() => reviewApplicant(applicant)}>Review</Button>
+                <Button ml="1.0vh" onClick={() => viewDocs(applicant)}>Documents</Button>
+                <Button ml="0.5vh" onClick={() => viewInformatics(applicant)}>Informatics</Button>
               </Td>
               <Td isNumeric>
                 <IconButton icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />

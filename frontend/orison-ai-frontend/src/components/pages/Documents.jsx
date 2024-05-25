@@ -1,4 +1,4 @@
-// ./components/pages/UploadDocuments.jsx
+// ./components/pages/Documents.jsx
 
 // React
 import React, { useCallback, useEffect, useState } from 'react';
@@ -23,7 +23,7 @@ import { useDropzone } from 'react-dropzone';
 // Internal
 import { auth } from '../../firebaseConfig';
 
-const UploadDocuments = ({ selectedApplicant }) => {
+const ApplicantDocuments = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
   const toast = useToast();
   const [documents, setDocuments] = useState([]);
@@ -152,4 +152,4 @@ const UploadDocuments = ({ selectedApplicant }) => {
   );
 }
 
-export default UploadDocuments;
+export default ApplicantDocuments;
