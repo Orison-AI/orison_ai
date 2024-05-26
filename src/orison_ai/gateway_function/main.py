@@ -14,8 +14,9 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-import asyncio
+
 # External
+import asyncio
 import logging
 
 from functions_framework import create_app, http
@@ -26,7 +27,8 @@ from orison_ai.gateway_function.gateway import GatewayRequestType, router
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# These are the routes that the gateway can handle
+# These are the routes that the gateway can handle. The router function will use the GatewayRequestType to determine
+# which handler to use.
 routes = {GatewayRequestType.GOOGLE_SCHOLAR: fetch_scholar.handle_request}
 
 
