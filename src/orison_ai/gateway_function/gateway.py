@@ -1,4 +1,3 @@
-import dataclasses
 from dataclasses import dataclass
 from enum import Enum
 from typing import Callable
@@ -33,10 +32,7 @@ def router(routes: dict[GatewayRequestType, Callable[[dict], dict]], request) ->
     try:
         gateway_request = GatewayRequest(**request_json)
     except Exception as e:
-        return {
-            "message": f"Could not parse input to GatewayRequest: {e}",
-            "status": 400,
-        }
+        return {"message": f"Could not parse input to GatewayRequest: {e}", "status": 400, }
     if not gateway_request.or_request_type in routes:
         return {"message": "Requested route not implemented", "status": 400}
     return routes[gateway_request.or_request_type](gateway_request.or_request_payload)
