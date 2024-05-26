@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: OrisonAI API
+  description: |-
+    The OrisonAI API assists visa attorneys in helping applicants apply for visas based on their experience.
+    It also helps attorneys screen applicants, enabling them to focus on the most promising candidates.
+  version: 0.1.0
+servers:
+  - url: https://e8a524ae-2fa5-4447-b6b7-6c79a0bda346.mock.pstmn.io
+tags:
+  - name: scholar
+    description: Operations related to Google Scholar processing
+  - name: file
+    description: Operations related to file vectorization
+  - name: summarization
+    description: Operations related to summarization
+paths:
+  /process-scholar-link:
+    post:
+      tags:
+        - scholar
+      summary: Process a Google Scholar link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                attorneyId:
+                  $ref: '#/components/schemas/AttorneyId'
+                applicantId:
+                  $ref: '#/components/schemas/ApplicantId'
+                scholarLink:
+                  type: string
+                  example: "https://scholar.google.com/citations?user=..."
+      responses:
+        '202':
+          description: Processing started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    $ref: '#/components/schemas/RequestId'
+  /vectorize-files:
+    post:
+      tags:
+        - file
+      summary: Start vectorization of uploaded files
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                attorneyId:
+                  $ref: '#/components/schemas/AttorneyId'
+                applicantId:
+                  $ref: '#/components/schemas/ApplicantId'
+                fileIds:
+                  type: array
+                  items:
+                    type: string
+                    example: "file-12345"
+      responses:
+        '202':
+          description: Vectorization started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    $ref: '#/components/schemas/RequestId'
+  /summarize:
+    post:
+      tags:
+        - summarization
+      summary: Start summarization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                attorneyId:
+                  $ref: '#/components/schemas/AttorneyId'
+                applicantId:
+                  $ref: '#/components/schemas/ApplicantId'
+      responses:
+        '202':
+          description: Summarization started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    $ref: '#/components/schemas/RequestId'
+components:
+  schemas:
+    AttorneyId:
+      type: string
+      example: "attorney-12345"
+    ApplicantId:
+      type: string
+      example: "applicant-12345"
+    RequestId:
+      type: string
+      example: "request-12345"
