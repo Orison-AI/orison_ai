@@ -23,7 +23,7 @@ import { useDropzone } from 'react-dropzone';
 
 // Internal
 import { auth } from '../../firebaseConfig';
-import { processScholarLink } from '../../api/api';  // Import the new utility function
+import { processScholarLink } from '../../api/api';
 
 const ApplicantDocuments = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
@@ -133,6 +133,28 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
     }
   };
 
+  const vectorizeFile = async (fileName) => {
+    // Implement the vectorize file function
+    toast({
+      title: 'Vectorization Started',
+      description: `Vectorization for ${fileName} has started.`,
+      status: 'info',
+      duration: 5000,
+      isClosable: true,
+    });
+  };
+
+  const vectorizeAllFiles = async () => {
+    // Implement the vectorize all files function
+    toast({
+      title: 'Vectorization Started',
+      description: 'Vectorization for all files has started.',
+      status: 'info',
+      duration: 5000,
+      isClosable: true,
+    });
+  };
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   return (
@@ -167,7 +189,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
             <Text>Drag files here or click to select files</Text>
         }
       </VStack>
-      <Box mt="4vh" mb="4vh" height="100%" width="50%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
+      <Box mt="4vh" mb="2vh" width="50%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
         <Table variant="simple">
           <Thead>
             <Tr>
@@ -180,6 +202,9 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
               <Tr key={fileName}>
                 <Td>{fileName}</Td>
                 <Td isNumeric>
+                  <Button ml="2vh" mr="2vh" colorScheme="blue" onClick={() => vectorizeFile(fileName)}>
+                    Vectorize
+                  </Button>
                   <IconButton
                     icon={<CloseIcon />}
                     colorScheme="red"
@@ -192,6 +217,9 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
           </Tbody>
         </Table>
       </Box>
+      <Button mb="4vh" colorScheme="blue" onClick={vectorizeAllFiles}>
+        Vectorize All
+      </Button>
     </VStack>
   );
 }
