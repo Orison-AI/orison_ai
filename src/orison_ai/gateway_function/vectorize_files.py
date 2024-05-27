@@ -17,7 +17,7 @@
 # External
 
 import traceback
-from orison_ai.gateway_function.request_handler import (
+from request_handler import (
     RequestHandler,
     ErrorResponse,
     OKResponse,
@@ -28,7 +28,8 @@ from orison_ai.gateway_function.request_handler import (
 
 class VectorizeFiles(RequestHandler):
     def __init__(self):
-        super().__init__(type(self)._class_name)
+        super().__init__(str(self.__class__.__qualname__))
 
     async def handle_request(self, request_json):
+        self.logger.info(f"Handling vectorize files request: {request_json}")
         return OKResponse("Success!")
