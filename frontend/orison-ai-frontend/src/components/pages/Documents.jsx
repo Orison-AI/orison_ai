@@ -226,7 +226,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
                   {processedFiles.includes(fileName) ? (
                     <Badge colorScheme="green">Vectorized</Badge>
                   ) : (
-                    <Badge colorScheme="yellow">Not Vectorized</Badge>
+                    <Badge colorScheme="orange">Not Vectorized</Badge>
                   )}
                 </Td>
                 <Td isNumeric>
