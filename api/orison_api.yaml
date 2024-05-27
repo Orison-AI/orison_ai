@@ -25,15 +25,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                attorneyId:
-                  $ref: '#/components/schemas/AttorneyId'
-                applicantId:
-                  $ref: '#/components/schemas/ApplicantId'
-                scholarLink:
-                  type: string
-                  example: "https://scholar.google.com/citations?user=..."
+              $ref: '#/components/schemas/ScholarLinkRequest'
       responses:
         '202':
           description: Processing started
@@ -54,17 +46,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                attorneyId:
-                  $ref: '#/components/schemas/AttorneyId'
-                applicantId:
-                  $ref: '#/components/schemas/ApplicantId'
-                fileIds:
-                  type: array
-                  items:
-                    type: string
-                    example: "file-12345"
+              $ref: '#/components/schemas/VectorizeFilesRequest'
       responses:
         '202':
           description: Vectorization started
@@ -85,12 +67,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                attorneyId:
-                  $ref: '#/components/schemas/AttorneyId'
-                applicantId:
-                  $ref: '#/components/schemas/ApplicantId'
+              $ref: '#/components/schemas/SummarizationRequest'
       responses:
         '202':
           description: Summarization started
@@ -101,8 +78,79 @@ paths:
                 properties:
                   requestId:
                     $ref: '#/components/schemas/RequestId'
+  /gateway:
+    post:
+      tags:
+        - scholar
+        - file
+        - summarization
+      summary: Redirect request to the correct function
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                or_request_type:
+                  type: string
+                  enum: [process-scholar-link, vectorize-files, summarize]
+                  example: "process-scholar-link"
+                or_request_payload:
+                  oneOf:
+                    - $ref: '#/components/schemas/ScholarLinkRequest'
+                    - $ref: '#/components/schemas/VectorizeFilesRequest'
+                    - $ref: '#/components/schemas/SummarizationRequest'
+      responses:
+        '202':
+          description: Request received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    $ref: '#/components/schemas/RequestId'
 components:
   schemas:
+    ScholarLinkRequest:
+      type: object
+      properties:
+        attorneyId:
+          $ref: '#/components/schemas/AttorneyId'
+        applicantId:
+          $ref: '#/components/schemas/ApplicantId'
+        scholarLink:
+          type: string
+          example: "https://scholar.google.com/citations?user=..."
+      required:
+        - attorneyId
+        - applicantId
+    VectorizeFilesRequest:
+      type: object
+      properties:
+        attorneyId:
+          $ref: '#/components/schemas/AttorneyId'
+        applicantId:
+          $ref: '#/components/schemas/ApplicantId'
+        fileIds:
+          type: array
+          items:
+            type: string
+            example: "file-12345"
+      required:
+        - attorneyId
+        - applicantId
+    SummarizationRequest:
+      type: object
+      properties:
+        attorneyId:
+          $ref: '#/components/schemas/AttorneyId'
+        applicantId:
+          $ref: '#/components/schemas/ApplicantId'
+      required:
+        - attorneyId
+        - applicantId
     AttorneyId:
       type: string
       example: "attorney-12345"
