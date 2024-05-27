@@ -33,7 +33,14 @@ jobs:
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
 
-      # Runs a single command using the runners shell
-      - name: Deploy the function
-        working-directory: ./src/orison_ai
-        run: gcloud functions deploy gateway_function --trigger-http --runtime=python3.10 --allow-unauthenticated --no-gen2
+      - name: 'Deploy'
+        uses: 'google-github-actions/deploy-cloud-functions@v2'
+        with:
+          name: 'gateway_function'
+          source_dir: './src/orison_ai'
+          runtime: 'python310'
+
+      # # Runs a single command using the runners shell
+      # - name: Deploy the function
+      #   working-directory: ./src/orison_ai
+      #   run: gcloud functions deploy gateway_function --trigger-http --runtime=python310 --allow-unauthenticated --no-gen2
