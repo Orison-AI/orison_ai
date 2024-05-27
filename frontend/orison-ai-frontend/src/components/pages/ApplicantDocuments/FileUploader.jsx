@@ -72,6 +72,8 @@ const FileUploader = ({ selectedApplicant }) => {
     });
   };
 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+
   const deleteFile = async (fileName) => {
     const storage = getStorage();
     const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${fileName}`;
@@ -146,8 +148,6 @@ const FileUploader = ({ selectedApplicant }) => {
       }
     }
   };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   return (
     <>
