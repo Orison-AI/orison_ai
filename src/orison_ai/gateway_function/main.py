@@ -17,19 +17,22 @@
 
 # External
 import asyncio
-import logging
 
 from functions_framework import create_app, http
-# Internal
-from orison_ai.gateway_function.fetch_scholar import fetch_scholar
-from orison_ai.gateway_function.gateway import GatewayRequestType, router
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Internal
+from orison_ai.gateway_function.request_handler import RequestHandler
+from orison_ai.gateway_function.fetch_scholar import FetchScholar
+from orison_ai.gateway_function.vectorize_files import VectorizeFiles
+from orison_ai.gateway_function.gateway import GatewayRequestType, router
 
 # These are the routes that the gateway can handle. The router function will use the GatewayRequestType to determine
 # which handler to use.
-routes = {GatewayRequestType.GOOGLE_SCHOLAR: fetch_scholar.handle_request}
+routes: dict[GatewayRequestType, RequestHandler] = {
+    GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
+    GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
+    GatewayRequestType.SUMMARIZE: RequestHandler(),
+}
 
 
 @http
