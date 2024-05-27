@@ -1,11 +1,11 @@
 # This is a basic workflow to help you get started with Actions
-name: orison_staging
+name: orison_production_deploy
 
 # Controls when the action will run. 
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ PR/adding_gh_workflow ]
+    branches: [ prod ]
 
   # pull_request:
   #   branches: [ main ]
@@ -39,8 +39,3 @@ jobs:
           name: 'gateway_function'
           source_dir: './src/orison_ai/gateway_function'
           runtime: 'python310'
-
-      # # Runs a single command using the runners shell
-      # - name: Deploy the function
-      #   working-directory: ./src/orison_ai
-      #   run: gcloud functions deploy gateway_function --trigger-http --runtime=python310 --allow-unauthenticated --no-gen2
