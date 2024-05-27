@@ -3,20 +3,58 @@
 // React
 import React from 'react';
 
+// Firebase
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../../firebaseConfig';
+
 // Chakra
 import {
-  HStack, VStack, Text,
+  HStack, VStack, Text, Button, useToast,
 } from '@chakra-ui/react';
 
-const ApplicantInformatics = ({ selectedApplicant }) => (
-  <VStack height="100%" width="100%" padding="2vh" fontSize="4vh">
-    <HStack width="100%">
-      <Text fontSize="32px" ml="2vh" mb="4vh" color="gray.400">Informatics &gt;</Text>
-      <Text fontSize="32px" mb="4vh" color="green.300" as="strong">
-        {selectedApplicant ? selectedApplicant.name : "None"}
-      </Text>
-    </HStack>
-  </VStack>
-);
+// Orison
+import { summarize } from '../../api/api';
+
+const ApplicantInformatics = ({ selectedApplicant }) => {
+  const [user] = useAuthState(auth);
+  const toast = useToast();
+
+  const handleSummarize = async () => {
+    if (selectedApplicant) {
+      try {
+        const response = await summarize(user.uid, selectedApplicant.id);
+        toast({
+          title: 'Summarization Started',
+          description: `Summarization for ${selectedApplicant.name} has started. Request ID: ${response.requestId}`,
+          status: 'info',
+          duration: 5000,
+          isClosable: true,
+        });
+      } catch (error) {
+        toast({
+          title: 'Summarization Failed',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    }
+  };
+
+  return (
+    <VStack height="100%" width="100%" padding="2vh" fontSize="4vh">
+      <HStack width="100%" mb="4vh">
+        <Text fontSize="32px" ml="2vh" color="gray.400">Informatics &gt;</Text>
+        <Text fontSize="32px" color="green.300" as="strong">
+          {selectedApplicant ? selectedApplicant.name : "None"}
+        </Text>
+      </HStack>
+      <Button onClick={handleSummarize} colorScheme="green">
+        Summarize
+      </Button>
+    </VStack>
+  );
+};
 
 export default ApplicantInformatics;
