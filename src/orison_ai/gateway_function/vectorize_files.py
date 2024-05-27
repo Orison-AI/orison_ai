@@ -31,4 +31,4 @@ class VectorizeFiles(RequestHandler):
         super().__init__(type(self)._class_name)
 
     async def handle_request(self, request_json):
-        return OKResponse("Vectorize Files")
+        return OKResponse("Success!")
