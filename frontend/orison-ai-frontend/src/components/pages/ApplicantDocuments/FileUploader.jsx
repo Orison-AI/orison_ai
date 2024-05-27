@@ -22,6 +22,7 @@ import { CloseIcon, CheckCircleIcon, DownloadIcon } from '@chakra-ui/icons';
 
 // Orison
 import { vectorizeFiles } from '../../../api/api';
+import DeleteFileModal from './DeleteFileModal';
 import OverwriteFileModal from './OverwriteFileModal';
 
 const buckets = ["research", "reviews", "awards", "feedback"];
@@ -32,7 +33,9 @@ const FileUploader = ({ selectedApplicant }) => {
   const [processedFiles, setProcessedFiles] = useState([]);
   const [selectedBucket, setSelectedBucket] = useState(buckets[0]);
   const [fileToOverwrite, setFileToOverwrite] = useState(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isOverwriteModalOpen, onOpen: onOverwriteModalOpen, onClose: onOverwriteModalClose } = useDisclosure();
+  const [fileToDelete, setFileToDelete] = useState(null);
+  const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
   const toast = useToast();
 
   const fetchDocuments = useCallback(async () => {
@@ -64,7 +67,7 @@ const FileUploader = ({ selectedApplicant }) => {
   
       if (documents.includes(file.name)) {
         setFileToOverwrite(file);
-        onOpen();
+        onOverwriteModalOpen();
       } else {
         try {
           await uploadBytes(storageRef, file);
@@ -94,7 +97,7 @@ const FileUploader = ({ selectedApplicant }) => {
       await uploadBytes(storageRef, fileToOverwrite);
       setProcessedFiles(prevState => prevState.filter(fileName => fileName !== fileToOverwrite.name));
       fetchDocuments();
-      onClose();
+      onOverwriteModalClose();
       setFileToOverwrite(null);
     } catch (error) {
       console.error(`Error uploading file: ${error.message}`);
@@ -108,21 +111,28 @@ const FileUploader = ({ selectedApplicant }) => {
     }
   };
 
-  const deleteFile = async (fileName) => {
+  const deleteFile = (fileName) => {
+    setFileToDelete(fileName);
+    onDeleteModalOpen();
+  };
+  
+  const handleDeleteConfirm = async () => {
     const storage = getStorage();
-    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileName}`;
+    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileToDelete}`;
     const storageRef = ref(storage, filePath);
   
     try {
       await deleteObject(storageRef);
       toast({
         title: 'File Deleted',
-        description: `File ${fileName} deleted successfully.`,
+        description: `File ${fileToDelete} deleted successfully.`,
         status: 'success',
         duration: 5000,
         isClosable: true,
       });
       fetchDocuments();
+      onDeleteModalClose();
+      setFileToDelete(null);
     } catch (error) {
       console.error(`Error deleting file: ${error.message}`);
       toast({
@@ -133,7 +143,7 @@ const FileUploader = ({ selectedApplicant }) => {
         isClosable: true,
       });
     }
-  };
+  };  
 
   const vectorizeFile = async (fileName) => {
     if (user && selectedApplicant) {
@@ -228,10 +238,16 @@ const FileUploader = ({ selectedApplicant }) => {
         </VStack>
       </Box>
       <OverwriteFileModal
-        isOpen={isOpen}
-        onClose={onClose}
+        isOpen={isOverwriteModalOpen}
+        onClose={onOverwriteModalClose}
         onConfirm={handleOverwriteConfirm}
         fileName={fileToOverwrite?.name}
+      />
+      <DeleteFileModal
+        isOpen={isDeleteModalOpen}
+        onClose={onDeleteModalClose}
+        onConfirm={handleDeleteConfirm}
+        fileName={fileToDelete}
       />
     </VStack>
   );
