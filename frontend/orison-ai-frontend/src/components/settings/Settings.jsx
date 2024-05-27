@@ -14,7 +14,7 @@ import {
 } from '@chakra-ui/react';
 
 // Internal
-import { auth } from '../../firebaseConfig';
+import { auth } from '../../common/firebaseConfig';
 import ColorModeToggle from "../settings/ColorModeToggle";
 
 function Settings({ isOpen, onClose }) {

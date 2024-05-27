@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../../firebaseConfig';
+import { auth } from '../../../common/firebaseConfig';
 
 // Chakra
 import {

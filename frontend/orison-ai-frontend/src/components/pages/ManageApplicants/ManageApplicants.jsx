@@ -19,7 +19,7 @@ import {
 import { EditIcon, CloseIcon, CheckIcon } from '@chakra-ui/icons';
 
 // Internal
-import { db, auth } from '../../../firebaseConfig';
+import { db, auth } from '../../../common/firebaseConfig';
 import Views from '../../../common/views';
 import DeleteApplicantModal from './DeleteApplicantModal';
 
