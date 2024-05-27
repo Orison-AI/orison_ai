@@ -11,8 +11,8 @@ import {
 
 // Chakra
 import {
-  Box, Button, HStack, IconButton, Input,
-  FormControl, FormLabel, FormHelperText,
+  Box, Button, FormControl, FormLabel, FormHelperText,
+  HStack, IconButton, Input,
   Table, Thead, Tbody, Tr, Th, Td,
   Text, useToast, VStack, Badge,
   InputGroup, InputRightElement,
@@ -24,8 +24,8 @@ import { CloseIcon, CheckCircleIcon } from '@chakra-ui/icons';
 import { useDropzone } from 'react-dropzone';
 
 // Internal
-import { auth } from '../../firebaseConfig';
-import { processScholarLink, vectorizeFiles } from '../../api/api';
+import { auth } from '../../../firebaseConfig';
+import { processScholarLink, vectorizeFiles } from '../../../api/api';
 
 const ApplicantDocuments = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
@@ -198,7 +198,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
         </Text>
       </HStack>
       <FormControl width="50%">
-        <FormLabel>Google Scholar Link</FormLabel>
+        <FormLabel mb="2vh" >Google Scholar Link</FormLabel>
         <form onSubmit={handleScholarSubmit}>
           <HStack>
             <InputGroup>
@@ -220,15 +220,8 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
         </form>
         <FormHelperText>Example: https://scholar.google.com/citations?user=XXXXX</FormHelperText>
       </FormControl>
-      <VStack {...getRootProps()} border="2px dashed gray" padding="20px" width="50%" marginTop="4vh">
-        <input {...getInputProps()} />
-        {
-          isDragActive ?
-            <Text>Drop the files here...</Text> :
-            <Text>Drag files here or click to select files</Text>
-        }
-      </VStack>
-      <Box mt="4vh" mb="2vh" width="50%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
+      <FormLabel width="50%" mt="4vh" mb="2vh">Applicant Files</FormLabel>
+      <Box mb="2vh" width="50%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
         <Table variant="simple">
           <Thead>
             <Tr>
@@ -268,6 +261,14 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
             ))}
           </Tbody>
         </Table>
+      <VStack {...getRootProps()} border="2px dashed gray" padding="20px" width="100%">
+        <input {...getInputProps()} />
+        {
+          isDragActive ?
+            <Text>Drop the files here...</Text> :
+            <Text>Drag files here or click to select files</Text>
+        }
+      </VStack>
       </Box>
       <Button mb="4vh" colorScheme="blue" onClick={vectorizeAllFiles}>
         Vectorize All

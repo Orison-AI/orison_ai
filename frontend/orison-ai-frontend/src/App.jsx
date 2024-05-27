@@ -18,7 +18,7 @@ import MainMenu from './components/MainMenu';
 import Settings from './components/settings/Settings';
 import Auth from './components/auth/Auth';
 import ManageApplicants from './components/pages/ManageApplicants/ManageApplicants';
-import ApplicantDocuments from './components/pages/Documents';
+import ApplicantDocuments from './components/pages/Documents/Documents';
 import ApplicantInformatics from './components/pages/Informatics';
 
 const App = () => {
