@@ -133,7 +133,7 @@ const FileUploader = ({ selectedApplicant }) => {
     <VStack width="50%" mt="4vh">
       <HStack width="100%" mb="0.5vh" fontSize="24px">
         <Text width="100%">Applicant Files</Text>
-        <Box minWidth="20vh" fontSize="24px">
+        <Box minWidth="200px" fontSize="24px">
           <Select value={selectedBucket} onChange={(e) => setSelectedBucket(e.target.value)} color="blue.100">
             {buckets.map((bucket) => (
               <option key={bucket} value={bucket}>
