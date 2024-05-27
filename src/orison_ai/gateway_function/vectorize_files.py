@@ -17,7 +17,7 @@
 # External
 
 import traceback
-from orison_ai.gateway_function.request_handler import (
+from request_handler import (
     RequestHandler,
     ErrorResponse,
     OKResponse,

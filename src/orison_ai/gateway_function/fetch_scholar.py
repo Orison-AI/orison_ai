@@ -17,7 +17,7 @@
 # External
 
 import traceback
-from orison_ai.gateway_function.request_handler import (
+from request_handler import (
     RequestHandler,
     ErrorResponse,
     OKResponse,
@@ -25,11 +25,11 @@ from orison_ai.gateway_function.request_handler import (
 
 # Internal
 
-from orison_ai.gateway_function.or_store.models import GoogleScholarRequest
-from orison_ai.gateway_function.or_store.google_scholar_client import (
+from or_store.models import GoogleScholarRequest
+from or_store.google_scholar_client import (
     GoogleScholarClient,
 )
-from orison_ai.gateway_function.or_retriever.google_scholar import (
+from or_retriever.google_scholar import (
     get_google_scholar_info,
 )
 

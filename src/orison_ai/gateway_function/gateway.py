@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Callable
 
-from orison_ai.gateway_function.request_handler import (
+from request_handler import (
     RequestHandler,
     ErrorResponse,
     OKResponse,

@@ -21,10 +21,10 @@ import asyncio
 from functions_framework import create_app, http
 
 # Internal
-from orison_ai.gateway_function.request_handler import RequestHandler
-from orison_ai.gateway_function.fetch_scholar import FetchScholar
-from orison_ai.gateway_function.vectorize_files import VectorizeFiles
-from orison_ai.gateway_function.gateway import GatewayRequestType, router
+from request_handler import RequestHandler
+from fetch_scholar import FetchScholar
+from vectorize_files import VectorizeFiles
+from gateway import GatewayRequestType, router
 
 # These are the routes that the gateway can handle. The router function will use the GatewayRequestType to determine
 # which handler to use.
