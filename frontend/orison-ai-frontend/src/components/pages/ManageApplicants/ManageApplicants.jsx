@@ -148,7 +148,6 @@ const ManageApplicants = ({
                 <Th>Name</Th>
                 <Th>Email</Th>
                 <Th>Status</Th>
-                <Th>Actions</Th>
                 <Th></Th>
               </Tr>
             </Thead>
@@ -182,7 +181,7 @@ const ManageApplicants = ({
                       />
                     ) : applicant.status}
                   </Td>
-                  <Td minWidth="35vh">
+                  <Td isNumeric>
                     {editId === applicant.id ? (
                       <>
                         <IconButton icon={<CheckIcon />} onClick={() => saveEdit(applicant)} colorScheme="green" mr="0.5vh" />
@@ -195,8 +194,6 @@ const ManageApplicants = ({
                     )}
                     <Button ml="1.0vh" onClick={() => viewDocs(applicant)}>Documents</Button>
                     <Button ml="0.5vh" onClick={() => viewInformatics(applicant)}>Informatics</Button>
-                  </Td>
-                  <Td isNumeric>
                     <IconButton icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />
                   </Td>
                 </Tr>
