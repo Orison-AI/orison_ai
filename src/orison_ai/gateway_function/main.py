@@ -36,9 +36,9 @@ routes: dict[GatewayRequestType, RequestHandler] = {
 
 
 @http
-def gateway(request):
+def gateway_function(request):
     return asyncio.run(router(routes, request))
 
 
 if __name__ == "__main__":
-    app = create_app(gateway)
+    app = create_app(gateway_function)

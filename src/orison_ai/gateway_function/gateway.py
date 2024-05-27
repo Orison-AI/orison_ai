@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable
 
 from request_handler import (
     RequestHandler,
