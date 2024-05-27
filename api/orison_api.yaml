@@ -94,8 +94,8 @@ paths:
               properties:
                 or_request_type:
                   type: string
-                  enum: [scholar, file, summarization]
-                  example: "scholar"
+                  enum: [process-scholar-link, vectorize-files, summarize]
+                  example: "process-scholar-link"
                 or_request_payload:
                   oneOf:
                     - $ref: '#/components/schemas/ScholarLinkRequest'
