@@ -1,39 +1,32 @@
-// ./components/pages/Documents.jsx
+// ./components/pages/Documents/FileUploader.jsx
 
 // React
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
+import { useDropzone } from 'react-dropzone';
 
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../../../firebaseConfig';
 import {
   deleteObject, getStorage, listAll, ref, uploadBytes,
 } from 'firebase/storage';
 
 // Chakra
 import {
-  Box, Button, FormControl, FormLabel, FormHelperText,
-  HStack, IconButton, Input,
+  Box, Button, FormLabel, IconButton,
   Table, Thead, Tbody, Tr, Th, Td,
-  Text, useToast, VStack, Badge,
-  InputGroup, InputRightElement,
+  Text, VStack, Badge, useToast,
 } from '@chakra-ui/react';
 import { CloseIcon, CheckCircleIcon } from '@chakra-ui/icons';
-// Will use TimeIcon for in-progress processing
 
-// Dropzone
-import { useDropzone } from 'react-dropzone';
+// Orison
+import { vectorizeFiles } from '../../../api/api';
 
-// Internal
-import { auth } from '../../../firebaseConfig';
-import { processScholarLink, vectorizeFiles } from '../../../api/api';
-
-const ApplicantDocuments = ({ selectedApplicant }) => {
+const FileUploader = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
-  const toast = useToast();
   const [documents, setDocuments] = useState([]);
-  const [scholarLink, setScholarLink] = useState('');
   const [processedFiles, setProcessedFiles] = useState([]);
-  const [scholarLinkSubmitted, setScholarLinkSubmitted] = useState(false);
+  const toast = useToast();
 
   const fetchDocuments = useCallback(async () => {
     if (user && selectedApplicant) {
@@ -63,10 +56,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
       const storageRef = ref(storage, filePath);
   
       try {
-        // Upload the file to Firebase Storage
         await uploadBytes(storageRef, file);
-
-        // Fetch updated documents
         fetchDocuments();
       } catch (error) {
         console.error(`Error uploading file: ${error.message}`);
@@ -88,9 +78,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
     const storageRef = ref(storage, filePath);
   
     try {
-      // Delete the file from Firebase Storage
       await deleteObject(storageRef);
-  
       toast({
         title: 'File Deleted',
         description: `File ${fileName} deleted successfully.`,
@@ -98,8 +86,6 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
         duration: 5000,
         isClosable: true,
       });
-  
-      // Fetch updated documents
       fetchDocuments();
     } catch (error) {
       console.error(`Error deleting file: ${error.message}`);
@@ -110,32 +96,6 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
         duration: 5000,
         isClosable: true,
       });
-    }
-  };
-
-  const handleScholarSubmit = async (event) => {
-    event.preventDefault(); // Prevent the default form submission behavior
-    if (user && selectedApplicant) {
-      try {
-        const response = await processScholarLink(user.uid, selectedApplicant.id, scholarLink);
-        toast({
-          title: 'Google Scholar Link Submitted',
-          description: `Request ID: ${response.requestId}`,
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
-        setScholarLinkSubmitted(true);
-      } catch (error) {
-        toast({
-          title: 'Submission Failed',
-          description: error.message,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
-        setScholarLinkSubmitted(false);
-      }
     }
   };
 
@@ -190,36 +150,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   return (
-    <VStack height="100%" width="100%" padding="2vh" fontSize="4vh">
-      <HStack width="100%">
-        <Text fontSize="3vh" ml="2vh" mb="4vh" color="gray.400">Documents &gt;</Text>
-        <Text fontSize="3vh" mb="4vh" color="green.300" as="strong">
-          {selectedApplicant ? selectedApplicant.name : "None"}
-        </Text>
-      </HStack>
-      <FormControl width="50%">
-        <FormLabel mb="2vh" >Google Scholar Link</FormLabel>
-        <form onSubmit={handleScholarSubmit}>
-          <HStack>
-            <InputGroup>
-              <Input 
-                placeholder="Enter Google Scholar URL" 
-                value={scholarLink}
-                onChange={(e) => setScholarLink(e.target.value)}
-              />
-              <InputRightElement>
-                {scholarLinkSubmitted && (
-                  <CheckCircleIcon color="green.500" />
-                )}
-              </InputRightElement>
-            </InputGroup>
-            <Button type="submit" colorScheme="blue" ml="0.5vh">
-              Submit
-            </Button>
-          </HStack>
-        </form>
-        <FormHelperText>Example: https://scholar.google.com/citations?user=XXXXX</FormHelperText>
-      </FormControl>
+    <>
       <FormLabel width="50%" mt="4vh" mb="2vh">Applicant Files</FormLabel>
       <Box mb="2vh" width="50%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
         <Table variant="simple">
@@ -261,20 +192,20 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
             ))}
           </Tbody>
         </Table>
-      <VStack {...getRootProps()} border="2px dashed gray" padding="20px" width="100%">
-        <input {...getInputProps()} />
-        {
-          isDragActive ?
-            <Text>Drop the files here...</Text> :
-            <Text>Drag files here or click to select files</Text>
-        }
-      </VStack>
+        <VStack {...getRootProps()} border="2px dashed gray" padding="20px" width="100%">
+          <input {...getInputProps()} />
+          {
+            isDragActive ?
+              <Text>Drop the files here...</Text> :
+              <Text>Drag files here or click to select files</Text>
+          }
+        </VStack>
       </Box>
       <Button mb="4vh" colorScheme="blue" onClick={vectorizeAllFiles}>
         Vectorize All
       </Button>
-    </VStack>
+    </>
   );
-}
+};
 
-export default ApplicantDocuments;
+export default FileUploader;
