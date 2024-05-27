@@ -37,7 +37,7 @@ jobs:
         uses: 'google-github-actions/deploy-cloud-functions@v2'
         with:
           name: 'gateway_function'
-          source_dir: './src/orison_ai'
+          source_dir: './src/orison_ai/gateway_function'
           runtime: 'python310'
 
       # # Runs a single command using the runners shell
