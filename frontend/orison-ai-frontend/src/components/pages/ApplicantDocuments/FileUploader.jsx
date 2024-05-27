@@ -1,4 +1,4 @@
-// ./components/pages/Documents/FileUploader.jsx
+// ./components/pages/ApplicantDocuments/FileUploader.jsx
 
 // React
 import React, { useCallback, useState, useEffect } from 'react';
@@ -13,11 +13,12 @@ import {
 
 // Chakra
 import {
-  Box, Button, FormLabel, IconButton,
+  Box, Button, FormLabel, Icon, IconButton, Link,
   Table, Thead, Tbody, Tr, Th, Td,
   Text, VStack, Badge, useToast,
 } from '@chakra-ui/react';
-import { CloseIcon, CheckCircleIcon } from '@chakra-ui/icons';
+import { CloseIcon, CheckCircleIcon, DownloadIcon } from '@chakra-ui/icons';
+// Will use TimeIcon when processing is in-progress
 
 // Orison
 import { vectorizeFiles } from '../../../api/api';
@@ -72,7 +73,7 @@ const FileUploader = ({ selectedApplicant }) => {
     });
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({ onDrop });
 
   const deleteFile = async (fileName) => {
     const storage = getStorage();
@@ -113,30 +114,6 @@ const FileUploader = ({ selectedApplicant }) => {
           isClosable: true,
         });
         setProcessedFiles(prevState => [...prevState, fileName]);
-      } catch (error) {
-        toast({
-          title: 'Vectorization Failed',
-          description: error.message,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
-      }
-    }
-  };
-
-  const vectorizeAllFiles = async () => {
-    if (user && selectedApplicant) {
-      try {
-        const response = await vectorizeFiles(user.uid, selectedApplicant.id, documents);
-        toast({
-          title: 'Vectorization Started',
-          description: `Vectorization for all files has started. Request ID: ${response.requestId}`,
-          status: 'info',
-          duration: 5000,
-          isClosable: true,
-        });
-        setProcessedFiles(documents);
       } catch (error) {
         toast({
           title: 'Vectorization Failed',
@@ -192,18 +169,20 @@ const FileUploader = ({ selectedApplicant }) => {
             ))}
           </Tbody>
         </Table>
-        <VStack {...getRootProps()} border="2px dashed gray" padding="20px" width="100%">
+        <VStack
+          {...getRootProps()}
+          border="2px dashed gray"
+          p="2vh"
+          m="2vh"
+          backgroundColor={isDragActive ? 'gray.700' : 'transparent'}
+        >
           <input {...getInputProps()} />
-          {
-            isDragActive ?
-              <Text>Drop the files here...</Text> :
-              <Text>Drag files here or click to select files</Text>
-          }
+          <Icon as={DownloadIcon} w="4vh" h="4vh" color="gray.500" />
+            <Text fontSize="2vh">
+              <Link as="b" onClick={open} cursor="pointer">Choose a file</Link> or drag it here
+            </Text>
         </VStack>
       </Box>
-      <Button mb="4vh" colorScheme="blue" onClick={vectorizeAllFiles}>
-        Vectorize All
-      </Button>
     </>
   );
 };

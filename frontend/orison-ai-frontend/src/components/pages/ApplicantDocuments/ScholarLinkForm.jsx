@@ -14,6 +14,7 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { CheckCircleIcon } from '@chakra-ui/icons';
+// Will use TimeIcon when processing is in-progress
 
 // Orison
 import { processScholarLink } from '../../../api/api';
