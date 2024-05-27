@@ -36,7 +36,7 @@ from or_retriever.google_scholar import (
 
 class FetchScholar(RequestHandler):
     def __init__(self):
-        super().__init__(type(self)._class_name)
+        super().__init__(str(self.__class__.__qualname__))
 
     async def fetch_scholar_helper_(self, user_request: GoogleScholarRequest):
         try:
