@@ -172,7 +172,7 @@ const ManageApplicants = ({
                       />
                     ) : applicant.email}
                   </Td>
-                  <Td minWidth="20vh">
+                  <Td>
                     {editId === applicant.id ? (
                       <Input
                         defaultValue={applicant.status}
@@ -194,7 +194,7 @@ const ManageApplicants = ({
                     )}
                     <Button ml="1.0vh" onClick={() => viewDocs(applicant)}>Documents</Button>
                     <Button ml="0.5vh" onClick={() => viewInformatics(applicant)}>Informatics</Button>
-                    <IconButton icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />
+                    <IconButton ml="0.5vh" icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />
                   </Td>
                 </Tr>
               ))}

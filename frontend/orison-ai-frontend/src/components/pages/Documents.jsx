@@ -14,9 +14,9 @@ import {
   Box, Button, HStack, IconButton, Input,
   FormControl, FormLabel, FormHelperText,
   Table, Thead, Tbody, Tr, Th, Td,
-  Text, useToast, VStack,
+  Text, useToast, VStack, Badge,
 } from '@chakra-ui/react';
-import { CloseIcon } from '@chakra-ui/icons';
+import { CloseIcon, TimeIcon, CheckCircleIcon } from '@chakra-ui/icons';
 
 // Dropzone
 import { useDropzone } from 'react-dropzone';
@@ -30,6 +30,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
   const toast = useToast();
   const [documents, setDocuments] = useState([]);
   const [scholarLink, setScholarLink] = useState('');
+  const [processedFiles, setProcessedFiles] = useState([]);
 
   const fetchDocuments = useCallback(async () => {
     if (user && selectedApplicant) {
@@ -135,6 +136,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
 
   const vectorizeFile = async (fileName) => {
     // Implement the vectorize file function
+    setProcessedFiles(prevState => [...prevState, fileName]);
     toast({
       title: 'Vectorization Started',
       description: `Vectorization for ${fileName} has started.`,
@@ -146,6 +148,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
 
   const vectorizeAllFiles = async () => {
     // Implement the vectorize all files function
+    setProcessedFiles(documents);  // Assuming all documents will be processed
     toast({
       title: 'Vectorization Started',
       description: 'Vectorization for all files has started.',
@@ -194,13 +197,28 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
           <Thead>
             <Tr>
               <Th>File Name</Th>
+              <Th>Status</Th>
               <Th></Th>
             </Tr>
           </Thead>
           <Tbody fontSize="2vh">
             {documents.map(fileName => (
               <Tr key={fileName}>
-                <Td>{fileName}</Td>
+                <Td>
+                  {fileName} 
+                  {processedFiles.includes(fileName) ? (
+                    <CheckCircleIcon ml="2" color="green.500" />
+                  ) : (
+                    <TimeIcon ml="2" color="gray.500" />
+                  )}
+                </Td>
+                <Td>
+                  {processedFiles.includes(fileName) ? (
+                    <Badge colorScheme="green">Vectorized</Badge>
+                  ) : (
+                    <Badge colorScheme="yellow">Not Vectorized</Badge>
+                  )}
+                </Td>
                 <Td isNumeric>
                   <Button ml="2vh" mr="2vh" colorScheme="blue" onClick={() => vectorizeFile(fileName)}>
                     Vectorize
