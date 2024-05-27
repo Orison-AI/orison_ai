@@ -31,6 +31,7 @@ from orison_ai.gateway_function.gateway import GatewayRequestType, router
 routes: dict[GatewayRequestType, RequestHandler] = {
     GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
     GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
+    GatewayRequestType.SUMMARIZE: RequestHandler(),
 }
 
 
