@@ -13,15 +13,16 @@ import {
 
 // Chakra
 import {
-  Box, Button, HStack, Icon, IconButton, Link,
+  Badge, Box, Button, HStack, Icon, IconButton, Link, Select,
   Table, Thead, Tbody, Tr, Th, Td,
-  Text, VStack, Badge, useToast, Select,
+  Text, useDisclosure, useToast, VStack,
 } from '@chakra-ui/react';
 import { CloseIcon, CheckCircleIcon, DownloadIcon } from '@chakra-ui/icons';
 // Will use TimeIcon when processing is in-progress
 
 // Orison
 import { vectorizeFiles } from '../../../api/api';
+import OverwriteFileModal from './OverwriteFileModal';
 
 const buckets = ["research", "reviews", "awards", "feedback"];
 
@@ -30,6 +31,8 @@ const FileUploader = ({ selectedApplicant }) => {
   const [documents, setDocuments] = useState([]);
   const [processedFiles, setProcessedFiles] = useState([]);
   const [selectedBucket, setSelectedBucket] = useState(buckets[0]);
+  const [fileToOverwrite, setFileToOverwrite] = useState(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
 
   const fetchDocuments = useCallback(async () => {
@@ -55,28 +58,55 @@ const FileUploader = ({ selectedApplicant }) => {
   const onDrop = async (acceptedFiles) => {
     const storage = getStorage();
   
-    acceptedFiles.forEach(async (file) => {
+    for (const file of acceptedFiles) {
       const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${file.name}`;
       const storageRef = ref(storage, filePath);
   
-      try {
-        await uploadBytes(storageRef, file);
-        fetchDocuments();
-      } catch (error) {
-        console.error(`Error uploading file: ${error.message}`);
-        toast({
-          title: 'Error Uploading File',
-          description: error.message,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
-        return;
+      if (documents.includes(file.name)) {
+        setFileToOverwrite(file);
+        onOpen();
+      } else {
+        try {
+          await uploadBytes(storageRef, file);
+          fetchDocuments();
+        } catch (error) {
+          console.error(`Error uploading file: ${error.message}`);
+          toast({
+            title: 'Error Uploading File',
+            description: error.message,
+            status: 'error',
+            duration: 5000,
+            isClosable: true,
+          });
+        }
       }
-    });
+    }
   };
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({ onDrop });
+
+  const handleOverwriteConfirm = async () => {
+    const storage = getStorage();
+    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileToOverwrite.name}`;
+    const storageRef = ref(storage, filePath);
+  
+    try {
+      await uploadBytes(storageRef, fileToOverwrite);
+      setProcessedFiles(prevState => prevState.filter(fileName => fileName !== fileToOverwrite.name));
+      fetchDocuments();
+      onClose();
+      setFileToOverwrite(null);
+    } catch (error) {
+      console.error(`Error uploading file: ${error.message}`);
+      toast({
+        title: 'Error Uploading File',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
 
   const deleteFile = async (fileName) => {
     const storage = getStorage();
@@ -197,6 +227,12 @@ const FileUploader = ({ selectedApplicant }) => {
           </Text>
         </VStack>
       </Box>
+      <OverwriteFileModal
+        isOpen={isOpen}
+        onClose={onClose}
+        onConfirm={handleOverwriteConfirm}
+        fileName={fileToOverwrite?.name}
+      />
     </VStack>
   );
 };
