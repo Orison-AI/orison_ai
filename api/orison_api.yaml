@@ -101,6 +101,52 @@ paths:
                 properties:
                   requestId:
                     $ref: '#/components/schemas/RequestId'
+  /gateway:
+    post:
+      tags:
+        - scholar
+        - file
+        - summarization
+      summary: Redirect request to the correct function
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                or_request_type:
+                  type: string
+                  enum: [scholar, file, summarization]
+                  example: "scholar"
+                or_request_payload:
+                  type: object
+                  properties:
+                    attorneyId:
+                      $ref: '#/components/schemas/AttorneyId'
+                    applicantId:
+                      $ref: '#/components/schemas/ApplicantId'
+                    scholarLink:
+                      type: string
+                      example: "https://scholar.google.com/citations?user=..."
+                    fileIds:
+                      type: array
+                      items:
+                        type: string
+                        example: "file-12345"
+                  required:
+                    - attorneyId
+                    - applicantId
+      responses:
+        '202':
+          description: Request received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    $ref: '#/components/schemas/RequestId'
 components:
   schemas:
     AttorneyId:
