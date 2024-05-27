@@ -13,7 +13,11 @@ def _str_to_enum(enum_class, string):
 
 class GatewayRequestType(Enum):
     # Enum class for the different types of requests the gateway can handle
-    GOOGLE_SCHOLAR = "google_scholar"
+    # See api/orison_api.yaml for more information
+    # TODO: Violating DRY principle. This enum is also defined in the OpenAPI spec.
+    GOOGLE_SCHOLAR = "process-scholar-link"
+    VECTORIZE_FILES = "vectorize-files"
+    SUMMARIZE = "summarize"
 
 
 @dataclass
