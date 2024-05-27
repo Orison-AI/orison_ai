@@ -33,10 +33,3 @@ class VectorizeFiles(RequestHandler):
     async def handle_request(self, request_json):
         self.logger.info(f"Handling vectorize files request: {request_json}")
         return OKResponse("Success!")
-
-
-if __name__ == "__main__":
-    import asyncio
-
-    xx = VectorizeFiles()
-    asyncio.run(xx.handle_request("test"))
