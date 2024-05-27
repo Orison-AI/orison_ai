@@ -15,6 +15,7 @@ import {
   FormControl, FormLabel, FormHelperText,
   Table, Thead, Tbody, Tr, Th, Td,
   Text, useToast, VStack, Badge,
+  InputGroup, InputRightElement,
 } from '@chakra-ui/react';
 import { CloseIcon, TimeIcon, CheckCircleIcon } from '@chakra-ui/icons';
 
@@ -31,6 +32,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
   const [documents, setDocuments] = useState([]);
   const [scholarLink, setScholarLink] = useState('');
   const [processedFiles, setProcessedFiles] = useState([]);
+  const [scholarLinkSubmitted, setScholarLinkSubmitted] = useState(false);
 
   const fetchDocuments = useCallback(async () => {
     if (user && selectedApplicant) {
@@ -122,6 +124,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
           duration: 5000,
           isClosable: true,
         });
+        setScholarLinkSubmitted(true);
       } catch (error) {
         toast({
           title: 'Submission Failed',
@@ -130,6 +133,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
           duration: 5000,
           isClosable: true,
         });
+        setScholarLinkSubmitted(false);
       }
     }
   };
@@ -172,12 +176,21 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
         <FormLabel>Google Scholar Link</FormLabel>
         <form onSubmit={handleScholarSubmit}>
           <HStack>
-            <Input 
-              placeholder="Enter Google Scholar URL" 
-              value={scholarLink}
-              onChange={(e) => setScholarLink(e.target.value)}
-            />
-            <Button type="submit" colorScheme="blue">
+            <InputGroup>
+              <Input 
+                placeholder="Enter Google Scholar URL" 
+                value={scholarLink}
+                onChange={(e) => setScholarLink(e.target.value)}
+              />
+              <InputRightElement>
+                {scholarLinkSubmitted ? (
+                  <CheckCircleIcon color="green.500" />
+                ) : (
+                  <TimeIcon color="gray.500" />
+                )}
+              </InputRightElement>
+            </InputGroup>
+            <Button type="submit" colorScheme="blue" ml="0.5vh">
               Submit
             </Button>
           </HStack>
