@@ -22,7 +22,7 @@ function Header({ toggleMenu, onSettingsOpen }) {
         variant="outline" 
       />
       <Center width="100%">
-        <Box fontSize="3vh">orison.ai</Box>
+        <Box fontSize="32px">orison.ai</Box>
       </Center>
       <IconButton 
         aria-label="Open settings" 

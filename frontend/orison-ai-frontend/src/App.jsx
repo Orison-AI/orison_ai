@@ -18,8 +18,8 @@ import MainMenu from './components/MainMenu';
 import Settings from './components/settings/Settings';
 import Auth from './components/auth/Auth';
 import ManageApplicants from './components/pages/ManageApplicants/ManageApplicants';
-import ApplicantDocuments from './components/pages/Documents';
-import ApplicantInformatics from './components/pages/Informatics';
+import ApplicantDocuments from './components/pages/ApplicantDocuments/ApplicantDocuments';
+import ApplicantInformatics from './components/pages/ApplicantInformatics';
 
 const App = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
