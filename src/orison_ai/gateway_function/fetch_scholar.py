@@ -17,55 +17,74 @@
 # External
 
 import traceback
-import logging
+from orison_ai.gateway_function.request_handler import (
+    RequestHandler,
+    ErrorResponse,
+    OKResponse,
+)
 
 # Internal
 
 from orison_ai.gateway_function.or_store.models import GoogleScholarRequest
-from orison_ai.gateway_function.or_store.google_scholar_client import (GoogleScholarClient, )
-from orison_ai.gateway_function.or_retriever.google_scholar import (get_google_scholar_info, )
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-
-async def fetch_scholar_helper(user_request: GoogleScholarRequest):
-    try:
-        scholar_info = await get_google_scholar_info(attorney_id=user_request.attorney_id,
-            applicant_id=user_request.applicant_id, scholar_link=user_request.scholar_link, )
-    except Exception as e:
-        logger.error(f"Failed to generate google scholar database. Error: {traceback.format_exc(e)}")
-        raise e
-    try:
-        if scholar_info is not None:
-            logger.info("Google scholar data class initialized")
-            return scholar_info
-    except Exception as e:
-        logger.error(f"Failed to insert google scholar data. Error: {traceback.format_exc(e)}")
-        raise e
+from orison_ai.gateway_function.or_store.google_scholar_client import (
+    GoogleScholarClient,
+)
+from orison_ai.gateway_function.or_retriever.google_scholar import (
+    get_google_scholar_info,
+)
 
 
-async def handle_request(request_json):
-    # Convert JSON to UserRequest dataclass
-    if request_json:
-        user_request = GoogleScholarRequest(**request_json)
-    else:
-        return {"message": "Bad Request", "status": 400}
+class FetchScholar(RequestHandler):
+    def __init__(self):
+        super().__init__(type(self)._class_name)
 
-    # Attempt connection to the database
-    try:
-        client = GoogleScholarClient()
-    except Exception as e:
-        message = f"Failed to connect to the database. Error: {traceback.format_exc(e)}"
-        logger.error(message)
-        return {"message": f"Internal Server Error: {message}", "status": 500}
+    async def fetch_scholar_helper_(self, user_request: GoogleScholarRequest):
+        try:
+            scholar_info = await get_google_scholar_info(
+                attorney_id=user_request.attorney_id,
+                applicant_id=user_request.applicant_id,
+                scholar_link=user_request.scholar_link,
+            )
+        except Exception as e:
+            self.logger.error(
+                f"Failed to generate google scholar database. Error: {traceback.format_exc(e)}"
+            )
+            raise e
+        try:
+            if scholar_info is not None:
+                self.logger.info("Google scholar data class initialized")
+                return scholar_info
+        except Exception as e:
+            self.logger.error(
+                f"Failed to insert google scholar data. Error: {traceback.format_exc(e)}"
+            )
+            raise e
 
-    # Download the Google Scholar page
-    try:
-        scholar_info = await fetch_scholar_helper(user_request)
-        id = await client.insert(scholar_info)
-        return {"message": f"Scholar info:\n{scholar_info.to_json()} \nsaved with ID: {id}.", "status": 200, }
-    except Exception as e:
-        message = (f"Failed to download Google Scholar page. Error: {traceback.format_exc(e)}")
-        logger.error(message)
-        return {"message": f"Internal Server Error: {message}", "status": 500}
+    async def handle_request(self, request_json):
+        # Convert JSON to UserRequest dataclass
+        if request_json:
+            user_request = GoogleScholarRequest(**request_json)
+        else:
+            return ErrorResponse("Could not parse input to JSON")
+
+        # Attempt connection to the database
+        try:
+            client = GoogleScholarClient()
+        except Exception as e:
+            message = (
+                f"Failed to connect to the database. Error: {traceback.format_exc(e)}"
+            )
+            self.logger.error(message)
+            return ErrorResponse(f"Internal Server Error: {message}")
+
+        # Download the Google Scholar page
+        try:
+            scholar_info = await self.fetch_scholar_helper_(user_request)
+            id = await client.insert(scholar_info)
+            return OKResponse(
+                f"Scholar info:\n{scholar_info.to_json()} \nsaved with ID: {id}."
+            )
+        except Exception as e:
+            message = f"Failed to download Google Scholar page. Error: {traceback.format_exc(e)}"
+            self.logger.error(message)
+            return ErrorResponse(f"Internal Server Error: {message}", 500)

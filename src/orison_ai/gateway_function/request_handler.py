@@ -1,9 +1,19 @@
 import logging
 
+logging.basicConfig(level=logging.INFO)
+
+
+def OKResponse(message, status_code=200):
+    return {"message": f"{message}", "status": status_code}
+
+
+def ErrorResponse(message, status_code=400):
+    return {"message": f"{message}", "status": status_code}
+
 
 class RequestHandler:
-    def __init__(self):
-        self._logger = logging.getLogger(__name__)
+    def __init__(self, request_type):
+        self.logger = logging.getLogger(request_type)
 
-    def handle_request(self, request):
-        return {"message": f"Internal Server Error: {message}", "status": 500}
+    async def handle_request(self, request: dict):
+        return ErrorResponse("Not implemented")
