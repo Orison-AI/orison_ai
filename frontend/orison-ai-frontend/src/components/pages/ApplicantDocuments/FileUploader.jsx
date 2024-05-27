@@ -13,9 +13,9 @@ import {
 
 // Chakra
 import {
-  Box, Button, FormLabel, Icon, IconButton, Link,
+  Box, Button, HStack, Icon, IconButton, Link,
   Table, Thead, Tbody, Tr, Th, Td,
-  Text, VStack, Badge, useToast,
+  Text, VStack, Badge, useToast, Select,
 } from '@chakra-ui/react';
 import { CloseIcon, CheckCircleIcon, DownloadIcon } from '@chakra-ui/icons';
 // Will use TimeIcon when processing is in-progress
@@ -23,15 +23,18 @@ import { CloseIcon, CheckCircleIcon, DownloadIcon } from '@chakra-ui/icons';
 // Orison
 import { vectorizeFiles } from '../../../api/api';
 
+const buckets = ["research", "reviews", "awards", "feedback"];
+
 const FileUploader = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
   const [documents, setDocuments] = useState([]);
   const [processedFiles, setProcessedFiles] = useState([]);
+  const [selectedBucket, setSelectedBucket] = useState(buckets[0]);
   const toast = useToast();
 
   const fetchDocuments = useCallback(async () => {
     if (user && selectedApplicant) {
-      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/`;
+      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/`;
       const storage = getStorage();
       const listRef = ref(storage, filePath);
       
@@ -43,17 +46,17 @@ const FileUploader = ({ selectedApplicant }) => {
         console.error("Error fetching documents:", error);
       }
     }
-  }, [user, selectedApplicant]);
+  }, [user, selectedApplicant, selectedBucket]);
 
   useEffect(() => {
     fetchDocuments();
-  }, [fetchDocuments]);
+  }, [fetchDocuments, selectedBucket]);
 
   const onDrop = async (acceptedFiles) => {
     const storage = getStorage();
   
     acceptedFiles.forEach(async (file) => {
-      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${file.name}`;
+      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${file.name}`;
       const storageRef = ref(storage, filePath);
   
       try {
@@ -77,7 +80,7 @@ const FileUploader = ({ selectedApplicant }) => {
 
   const deleteFile = async (fileName) => {
     const storage = getStorage();
-    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${fileName}`;
+    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileName}`;
     const storageRef = ref(storage, filePath);
   
     try {
@@ -127,9 +130,20 @@ const FileUploader = ({ selectedApplicant }) => {
   };
 
   return (
-    <>
-      <FormLabel width="50%" mt="4vh" mb="2vh">Applicant Files</FormLabel>
-      <Box mb="2vh" width="50%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
+    <VStack width="50%" mt="4vh">
+      <HStack width="100%" mb="0.5vh" fontSize="24px">
+        <Text width="100%">Applicant Files</Text>
+        <Box minWidth="20vh" fontSize="24px">
+          <Select value={selectedBucket} onChange={(e) => setSelectedBucket(e.target.value)} color="blue.100">
+            {buckets.map((bucket) => (
+              <option key={bucket} value={bucket}>
+                {bucket.charAt(0).toUpperCase() + bucket.slice(1)}
+              </option>
+            ))}
+          </Select>
+        </Box>
+      </HStack>
+      <Box mb="20px" width="100%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
         <Table variant="simple">
           <Thead>
             <Tr>
@@ -138,7 +152,7 @@ const FileUploader = ({ selectedApplicant }) => {
               <Th></Th>
             </Tr>
           </Thead>
-          <Tbody fontSize="2vh">
+          <Tbody fontSize="20px">
             {documents.map(fileName => (
               <Tr key={fileName}>
                 <Td>
@@ -177,13 +191,13 @@ const FileUploader = ({ selectedApplicant }) => {
           backgroundColor={isDragActive ? 'gray.700' : 'transparent'}
         >
           <input {...getInputProps()} />
-          <Icon as={DownloadIcon} w="4vh" h="4vh" color="gray.500" />
-            <Text fontSize="2vh">
-              <Link as="b" onClick={open} cursor="pointer">Choose a file</Link> or drag it here
-            </Text>
+          <Icon as={DownloadIcon} w="4vh" h="4vh" mt="2vh" mb="2vh" color="gray.500" />
+          <Text fontSize="20px">
+            <Link as="b" onClick={open} cursor="pointer">Choose a file</Link> or drag it here
+          </Text>
         </VStack>
       </Box>
-    </>
+    </VStack>
   );
 };
 

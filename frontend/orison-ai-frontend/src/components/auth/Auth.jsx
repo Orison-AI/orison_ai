@@ -18,18 +18,18 @@ const Auth = () => {
   const headerColor = useColorModeValue("rgba(23, 25, 35, 0.10)", "rgba(23, 25, 35, 0.90)");
 
   return (
-    <VStack width="100%">
+    <VStack width="100%" height="100%">
       <HStack width="100%" bg={headerColor}>
         <Box width="20vh" />
         <Center width="100%">
-          <Box fontSize="3vh" p="1vh">orison.ai</Box>
+          <Box fontSize="32px" p="1vh">orison.ai</Box>
         </Center>
         <ColorModeToggle />
       </HStack>
-      <Center height="70vh">
-        <VStack>
-          <Text fontSize="3.5vh" mb="8vh">{isSignUp ? "Let's get started." : "Welcome back."}</Text>
-          <Box p="2vh" borderWidth="1px" borderRadius="10px" overflow="hidden" minW="30vh" maxW="50vh">
+      <Center height="100%">
+        <VStack maxHeight="90%">
+          <Text fontSize="36px" mb="8vh">{isSignUp ? "Let's get started." : "Welcome back."}</Text>
+          <Box p="2vh" borderWidth="1px" borderRadius="10px" overflow="hidden" minW="400px" maxW="90%">
             {isSignUp ? <SignUpForm /> : <LogInForm />}
           </Box>
           <Link variant="link" mt="2vh" onClick={() => setSignUp(!isSignUp)}>

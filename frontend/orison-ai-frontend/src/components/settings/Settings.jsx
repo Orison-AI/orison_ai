@@ -68,10 +68,10 @@ function Settings({ isOpen, onClose }) {
       <ModalContent>
         <Center width="100%" p="1vh">
           <VStack width="100%">
-            <Text fontSize="2vh">
+            <Text fontSize="20px">
               Settings
             </Text>
-            <Text fontSize="1vh" mb="4vh">
+            <Text fontSize="12px" mb="4vh">
               (in progress)
             </Text>
             <Box mb="1vh">

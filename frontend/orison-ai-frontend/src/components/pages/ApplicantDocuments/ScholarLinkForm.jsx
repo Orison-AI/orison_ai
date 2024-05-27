@@ -9,9 +9,9 @@ import { auth } from '../../../firebaseConfig';
 
 // Chakra
 import {
-  Button, FormControl, FormLabel, FormHelperText,
+  Button, FormControl, FormHelperText,
   HStack, Input, InputGroup, InputRightElement,
-  useToast,
+  Text, useToast,
 } from '@chakra-ui/react';
 import { CheckCircleIcon } from '@chakra-ui/icons';
 // Will use TimeIcon when processing is in-progress
@@ -53,7 +53,7 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
 
   return (
     <FormControl width="50%">
-      <FormLabel mb="2vh">Google Scholar Link</FormLabel>
+      <Text width="100%" mb="1vh" fontSize="24px">Google Scholar Link</Text>
       <form onSubmit={handleScholarSubmit}>
         <HStack>
           <InputGroup>

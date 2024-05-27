@@ -139,7 +139,7 @@ const ManageApplicants = ({
 
   return (
     <Box width="100%">
-      <Text fontSize="3vh" m="2vh" mb="4vh" color="gray.400">Manage Applicants</Text>
+      <Text fontSize="32px" m="2vh" mb="4vh" color="gray.400">Manage Applicants</Text>
       <Center>
         <Box overflowX="auto" minWidth="60%" maxWidth="90%" border="1px" borderColor="gray.600" borderRadius="1vh">
           <Table variant="simple">
