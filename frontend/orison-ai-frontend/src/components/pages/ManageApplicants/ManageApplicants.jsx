@@ -141,7 +141,7 @@ const ManageApplicants = ({
     <Box width="100%">
       <Text fontSize="3vh" m="2vh" mb="4vh" color="gray.400">Manage Applicants</Text>
       <Center>
-        <Box overflowX="auto" maxWidth="90%" border="1px" borderColor="gray.600" borderRadius="1vh">
+        <Box overflowX="auto" minWidth="60%" maxWidth="90%" border="1px" borderColor="gray.600" borderRadius="1vh">
           <Table variant="simple">
             <Thead>
               <Tr>
@@ -154,7 +154,7 @@ const ManageApplicants = ({
             <Tbody>
               {applicants.map(applicant => (
                 <Tr key={applicant.id}>
-                  <Td minWidth="20vh">
+                  <Td>
                     {editId === applicant.id ? (
                       <Input
                         defaultValue={applicant.name}
@@ -163,7 +163,7 @@ const ManageApplicants = ({
                       />
                     ) : applicant.name}
                   </Td>
-                  <Td minWidth="20vh">
+                  <Td>
                     {editId === applicant.id ? (
                       <Input
                         defaultValue={applicant.email} 
@@ -194,7 +194,7 @@ const ManageApplicants = ({
                     )}
                     <Button ml="1.0vh" onClick={() => viewDocs(applicant)}>Documents</Button>
                     <Button ml="0.5vh" onClick={() => viewInformatics(applicant)}>Informatics</Button>
-                    <IconButton ml="0.5vh" icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />
+                    <IconButton ml="1vh" icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />
                   </Td>
                 </Tr>
               ))}
