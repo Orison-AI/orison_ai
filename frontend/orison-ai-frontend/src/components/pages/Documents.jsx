@@ -25,7 +25,7 @@ import { useDropzone } from 'react-dropzone';
 
 // Internal
 import { auth } from '../../firebaseConfig';
-import { processScholarLink } from '../../api/api';
+import { processScholarLink, vectorizeFiles } from '../../api/api';
 
 const ApplicantDocuments = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
@@ -140,27 +140,51 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
   };
 
   const vectorizeFile = async (fileName) => {
-    // Implement the vectorize file function
-    setProcessedFiles(prevState => [...prevState, fileName]);
-    toast({
-      title: 'Vectorization Started',
-      description: `Vectorization for ${fileName} has started.`,
-      status: 'info',
-      duration: 5000,
-      isClosable: true,
-    });
+    if (user && selectedApplicant) {
+      try {
+        const response = await vectorizeFiles(user.uid, selectedApplicant.id, [fileName]);
+        toast({
+          title: 'Vectorization Started',
+          description: `Vectorization for ${fileName} has started. Request ID: ${response.requestId}`,
+          status: 'info',
+          duration: 5000,
+          isClosable: true,
+        });
+        setProcessedFiles(prevState => [...prevState, fileName]);
+      } catch (error) {
+        toast({
+          title: 'Vectorization Failed',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    }
   };
 
   const vectorizeAllFiles = async () => {
-    // Implement the vectorize all files function
-    setProcessedFiles(documents);  // Assuming all documents will be processed
-    toast({
-      title: 'Vectorization Started',
-      description: 'Vectorization for all files has started.',
-      status: 'info',
-      duration: 5000,
-      isClosable: true,
-    });
+    if (user && selectedApplicant) {
+      try {
+        const response = await vectorizeFiles(user.uid, selectedApplicant.id, documents);
+        toast({
+          title: 'Vectorization Started',
+          description: `Vectorization for all files has started. Request ID: ${response.requestId}`,
+          status: 'info',
+          duration: 5000,
+          isClosable: true,
+        });
+        setProcessedFiles(documents);
+      } catch (error) {
+        toast({
+          title: 'Vectorization Failed',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    }
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
