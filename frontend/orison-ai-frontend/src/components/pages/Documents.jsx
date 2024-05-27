@@ -17,7 +17,8 @@ import {
   Text, useToast, VStack, Badge,
   InputGroup, InputRightElement,
 } from '@chakra-ui/react';
-import { CloseIcon, TimeIcon, CheckCircleIcon } from '@chakra-ui/icons';
+import { CloseIcon, CheckCircleIcon } from '@chakra-ui/icons';
+// Will use TimeIcon for in-progress processing
 
 // Dropzone
 import { useDropzone } from 'react-dropzone';
@@ -183,10 +184,8 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
                 onChange={(e) => setScholarLink(e.target.value)}
               />
               <InputRightElement>
-                {scholarLinkSubmitted ? (
+                {scholarLinkSubmitted && (
                   <CheckCircleIcon color="green.500" />
-                ) : (
-                  <TimeIcon color="gray.500" />
                 )}
               </InputRightElement>
             </InputGroup>
@@ -219,10 +218,8 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
               <Tr key={fileName}>
                 <Td>
                   {fileName} 
-                  {processedFiles.includes(fileName) ? (
+                  {(processedFiles.includes(fileName)) && (
                     <CheckCircleIcon ml="2" color="green.500" />
-                  ) : (
-                    <TimeIcon ml="2" color="gray.500" />
                   )}
                 </Td>
                 <Td>
