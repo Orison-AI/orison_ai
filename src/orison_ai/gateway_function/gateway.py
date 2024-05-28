@@ -50,7 +50,7 @@ def router(
     if not request_json:
         return as_async(ErrorResponse("Could not parse input to JSON"))
     try:
-        gateway_request = GatewayRequest(**request_json)
+        gateway_request = GatewayRequest(**(request_json["data"]))
     except Exception as e:
         return as_async(ErrorResponse(f"Could not parse input to GatewayRequest: {e}"))
     if gateway_request.or_request_type not in routes:

@@ -17,7 +17,6 @@
 
 # External
 import asyncio
-
 from functions_framework import create_app, http
 
 # Internal
@@ -37,7 +36,37 @@ routes: dict[GatewayRequestType, RequestHandler] = {
 
 @http
 def gateway_function(request):
-    return asyncio.run(router(routes, request))
+
+    print(f"Received request: {request.method}")
+
+    # Set CORS headers for the preflight request
+    if request.method == "OPTIONS":
+        headers = {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            "Access-Control-Max-Age": "3600",
+        }
+        return ("", 204, headers)
+        
+    # Set CORS headers for main request
+    headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    }
+
+    try:
+        # Route the request and get the result
+        result = asyncio.run(router(routes, request))
+    
+        return ({"data": {"requestId": "request-12345", "status": result["status"]}}, result["status"], headers)
+
+    except Exception as e:
+
+        # Need to make sure we add the CORS headers to any error messages too.
+        print(f"ERROR: {e}")
+        return ({"error": str(e)}, 500, headers)
 
 
 if __name__ == "__main__":

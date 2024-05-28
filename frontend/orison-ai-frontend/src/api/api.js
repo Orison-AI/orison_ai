@@ -23,23 +23,17 @@ const gateway = async (orRequestType, orRequestPayload) => {
   console.log(`DEBUG: Fetching: ${serverUrl}/${endpoints.gateway}, orRequestType=${orRequestType}`);
 
   const gatewayFunction = httpsCallable(functions, endpoints.gateway);
-  const response = gatewayFunction({
+  const response = await gatewayFunction({
     "or_request_type": orRequestType,
     "or_request_payload": orRequestPayload,
   })
-  .then((result) => {
-    const data = result.data;
-    console.log(`DEBUG: data=${data}`);
-    const sanitizedMessage = data.text;
-    console.log(`DEBUG: sanitizedMessage=${sanitizedMessage}`);
-  })
   .catch((error) => {
-    console.error(`ERROR: error.code=${error.code}`);
-    console.error(`ERROR: error.message=${error.message}`);
-    console.error(`ERROR: error.details=${error.details}`);
+    console.error(`ERROR: gatewayFunction: code=${error.code}, message=${error.message}`);
   });
 
-  return await response;
+  console.log(`DEBUG: response=${JSON.stringify(response)}`);
+
+  return response;
 };
 
 export const processScholarLink = async (attorneyId, applicantId, scholarLink) => {
@@ -49,11 +43,11 @@ export const processScholarLink = async (attorneyId, applicantId, scholarLink) =
     scholarLink,
   });
 
-  if (!response.ok) {
+  if (response.data.status !== 200) {
     throw new Error('Failed to process Google Scholar link');
   }
 
-  return response.json();
+  return response.data;
 };
 
 export const vectorizeFiles = async (attorneyId, applicantId, fileIds) => {
@@ -63,11 +57,11 @@ export const vectorizeFiles = async (attorneyId, applicantId, fileIds) => {
     fileIds,
   });
 
-  if (!response.ok) {
+  if (response.data.status !== 200) {
     throw new Error('Failed to start file vectorization');
   }
 
-  return response.json();
+  return response.data;
 };
 
 export const summarize = async (attorneyId, applicantId) => {
@@ -76,9 +70,9 @@ export const summarize = async (attorneyId, applicantId) => {
     applicantId,
   });
 
-  if (!response.ok) {
+  if (response.data.status !== 200) {
     throw new Error('Failed to start summarization');
   }
 
-  return response.json();
+  return response.data;
 };
