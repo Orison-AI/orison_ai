@@ -57,7 +57,8 @@ def gateway_function(request):
     }
 
     try:
-        # Route the request and get the result
+        # TODO: Need to implement an authentication check of the Bearer token
+
         result = asyncio.run(router(routes, request))
     
         return ({"data": {"requestId": "request-12345", "status": result["status"]}}, result["status"], headers)
