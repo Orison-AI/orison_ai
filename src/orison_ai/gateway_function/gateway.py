@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable
+from typing import Any, Coroutine
 
-from orison_ai.gateway_function.request_handler import (
+from request_handler import (
     RequestHandler,
     ErrorResponse,
     OKResponse,
@@ -11,10 +11,10 @@ from orison_ai.gateway_function.request_handler import (
 
 def _str_to_enum(enum_class, string):
     # Helper function to convert a string to an enum member
-    try:
-        return enum_class[string]
-    except KeyError:
-        raise ValueError(f"'{string}' is not a valid member of {enum_class}")
+    for i in enum_class:
+        if i.value == string:
+            return i
+    raise ValueError(f"'{string}' is not a valid member of {enum_class}")
 
 
 class GatewayRequestType(Enum):
@@ -36,20 +36,25 @@ class GatewayRequest:
         self.or_request_type = _str_to_enum(GatewayRequestType, self.or_request_type)
 
 
-def router(routes: dict[GatewayRequestType, RequestHandler], request) -> dict:
+def router(
+    routes: dict[GatewayRequestType, RequestHandler], request
+) -> Coroutine[Any, Any, Any]:
     # Function to route the incoming request to the appropriate handler based the given routes
+
+    async def as_async(err):
+        return err
 
     # Parse the incoming JSON request data
     request_json = request.get_json()
 
     if not request_json:
-        return ErrorResponse("Could not parse input to JSON")
+        return as_async(ErrorResponse("Could not parse input to JSON"))
     try:
         gateway_request = GatewayRequest(**request_json)
     except Exception as e:
-        return ErrorResponse(f"Could not parse input to GatewayRequest: {e}")
+        return as_async(ErrorResponse(f"Could not parse input to GatewayRequest: {e}"))
     if gateway_request.or_request_type not in routes:
-        return ErrorResponse("Requested route not implemented")
+        return as_async(ErrorResponse("Requested route not implemented"))
     return routes[gateway_request.or_request_type].handle_request(
         gateway_request.or_request_payload
     )
