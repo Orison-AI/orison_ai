@@ -1,7 +1,6 @@
 // ./src/api/api.js
 
 // Firebase
-// import { auth } from '../common/firebaseConfig';
 import { functions } from '../common/firebaseConfig';
 import { httpsCallable } from "firebase/functions";
 
@@ -18,22 +17,25 @@ const endpoints = {
   vectorizeFiles: "vectorize-files",
   summarize: "summarize",
 }
-const gateway = async (orRequestType, orRequestPayload) => {
 
+
+const gateway = async (orRequestType, orRequestPayload) => {
   console.log(`DEBUG: Fetching: ${serverUrl}/${endpoints.gateway}, orRequestType=${orRequestType}`);
 
   const gatewayFunction = httpsCallable(functions, endpoints.gateway);
-  const response = await gatewayFunction({
-    "or_request_type": orRequestType,
-    "or_request_payload": orRequestPayload,
-  })
-  .catch((error) => {
+  try {
+    return await gatewayFunction({
+      "or_request_type": orRequestType,
+      "or_request_payload": orRequestPayload,
+    });
+  } catch (error) {
     console.error(`ERROR: gatewayFunction: code=${error.code}, message=${error.message}`);
-  });
-
-  console.log(`DEBUG: response=${JSON.stringify(response)}`);
-
-  return response;
+    return {
+      data: null,
+      code: error.code || 500,
+      message: error.message,
+    };
+  }
 };
 
 export const processScholarLink = async (attorneyId, applicantId, scholarLink) => {
@@ -43,7 +45,9 @@ export const processScholarLink = async (attorneyId, applicantId, scholarLink) =
     scholarLink,
   });
 
-  if (response.data.status !== 200) {
+  console.log(`INFO: processScholarLink: response=${JSON.stringify(response)}`);
+
+  if (!response.data) {
     throw new Error('Failed to process Google Scholar link');
   }
 
@@ -57,7 +61,9 @@ export const vectorizeFiles = async (attorneyId, applicantId, fileIds) => {
     fileIds,
   });
 
-  if (response.data.status !== 200) {
+  console.log(`DEBUG: vectorizeFiles: response=${JSON.stringify(response)}`);
+
+  if (!response.data) {
     throw new Error('Failed to start file vectorization');
   }
 
@@ -70,7 +76,9 @@ export const summarize = async (attorneyId, applicantId) => {
     applicantId,
   });
 
-  if (response.data.status !== 200) {
+  console.log(`DEBUG: summarize: response=${JSON.stringify(response)}`);
+
+  if (!response.data) {
     throw new Error('Failed to start summarization');
   }
 

@@ -22,6 +22,7 @@ from functions_framework import create_app, http
 # Internal
 from request_handler import RequestHandler
 from fetch_scholar import FetchScholar
+from summarize import Summarize
 from vectorize_files import VectorizeFiles
 from gateway import GatewayRequestType, router
 
@@ -30,7 +31,7 @@ from gateway import GatewayRequestType, router
 routes: dict[GatewayRequestType, RequestHandler] = {
     GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
     GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
-    GatewayRequestType.SUMMARIZE: RequestHandler("summarize"),
+    GatewayRequestType.SUMMARIZE: Summarize(),
 }
 
 
@@ -60,8 +61,13 @@ def gateway_function(request):
         # TODO: Need to implement an authentication check of the Bearer token
 
         result = asyncio.run(router(routes, request))
+        code = result["status"]
     
-        return ({"data": {"requestId": "request-12345", "status": result["status"]}}, result["status"], headers)
+        return (
+            { "data": {"requestId": "request-12345"} if code == 200 else {} },
+            code,
+            headers,
+        )
 
     except Exception as e:
 
