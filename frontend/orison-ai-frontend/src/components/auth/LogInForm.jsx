@@ -12,7 +12,7 @@ import {
 } from "@chakra-ui/react";
 
 // Internal
-import { auth } from '../../firebaseConfig';
+import { auth } from '../../common/firebaseConfig';
 
 const LogInForm = () => {
   const [email, setEmail] = useState('');

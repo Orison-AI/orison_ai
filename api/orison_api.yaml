@@ -32,10 +32,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  requestId:
-                    $ref: '#/components/schemas/RequestId'
+                $ref: '#/components/schemas/ResponseWithRequestId'
   /vectorize-files:
     post:
       tags:
@@ -53,10 +50,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  requestId:
-                    $ref: '#/components/schemas/RequestId'
+                $ref: '#/components/schemas/ResponseWithRequestId'
   /summarize:
     post:
       tags:
@@ -74,10 +68,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  requestId:
-                    $ref: '#/components/schemas/RequestId'
+                $ref: '#/components/schemas/ResponseWithRequestId'
   /gateway:
     post:
       tags:
@@ -107,10 +98,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  requestId:
-                    $ref: '#/components/schemas/RequestId'
+                $ref: '#/components/schemas/ResponseWithRequestId'
 components:
   schemas:
     ScholarLinkRequest:
@@ -160,3 +148,11 @@ components:
     RequestId:
       type: string
       example: "request-12345"
+    ResponseWithRequestId:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            requestId:
+              $ref: '#/components/schemas/RequestId'

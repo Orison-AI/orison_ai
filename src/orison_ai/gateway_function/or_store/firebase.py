@@ -66,6 +66,35 @@ def load_firebase_creds():
     payload = response.payload.data.decode("UTF-8")
     return json.loads(payload)
 
+def get_firebase_admin_app():
+    cred_str = os.getenv("FIREBASE_CREDENTIALS")
+    if cred_str is None:
+        _logger.info(
+            "Missing FIREBASE_CREDENTIALS in environment variable. Attempting secret manager"
+        )
+        try:
+            cred_dict = load_firebase_creds()
+        except Exception as e:
+            raise CREDENTIALS_NOT_FOUND(
+                "FIREBASE_CREDENTIALS not found in environment variable or secret manager"
+            )
+    else:
+        try:
+            cred_dict = json.loads(cred_str)
+        except json.JSONDecodeError:
+            raise INVALID_CREDENTIALS("Invalid JSON in FIREBASE_CREDENTIALS")
+
+    # Convert string back to JSON
+    cred = credentials.Certificate(cred_dict)
+    try:
+        _logger.info("Getting existing Firestore client")
+        return firebase_admin.get_app()
+    except ValueError as e:
+        _logger.info("No existing client found. Creating new Firestore client")
+        return firebase_admin.initialize_app(cred)
+    except Exception as e:
+        raise FIRESTORE_CONNECTION_FAILED("Failed to connect to Firestore")
+
 
 class FireStoreDB:
     def __init__(self):
@@ -73,34 +102,7 @@ class FireStoreDB:
         Initializes an instance of a FireStoreDB object, which can be used to
         connect to a FireStoreDB database
         """
-        cred_str = os.getenv("FIREBASE_CREDENTIALS")
-        if cred_str is None:
-            _logger.info(
-                "Missing FIREBASE_CREDENTIALS in environment variable. Attempting secret manager"
-            )
-            try:
-                cred_dict = load_firebase_creds()
-            except Exception as e:
-                raise CREDENTIALS_NOT_FOUND(
-                    "FIREBASE_CREDENTIALS not found in environment variable or secret manager"
-                )
-        else:
-            try:
-                cred_dict = json.loads(cred_str)
-            except json.JSONDecodeError:
-                raise INVALID_CREDENTIALS("Invalid JSON in FIREBASE_CREDENTIALS")
-
-        # Convert string back to JSON
-        cred = credentials.Certificate(cred_dict)
-        try:
-            _logger.info("Getting existing Firestore client")
-            app = firebase_admin.get_app()
-        except ValueError as e:
-            _logger.info("No existing client found. Creating new Firestore client")
-            app = firebase_admin.initialize_app(cred)
-        except Exception as e:
-            raise FIRESTORE_CONNECTION_FAILED("Failed to connect to Firestore")
-
+        app = get_firebase_admin_app()
         self.client = firestore_async.client(app)
 
 

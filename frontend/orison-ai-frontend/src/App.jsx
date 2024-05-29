@@ -11,7 +11,7 @@ import { Text, useDisclosure, VStack } from '@chakra-ui/react';
 
 // Internal
 
-import { auth } from './firebaseConfig';
+import { auth } from './common/firebaseConfig';
 import Views from './common/views';
 import Header from './components/Header';
 import MainMenu from './components/MainMenu';

@@ -63,7 +63,11 @@ class FetchScholar(RequestHandler):
     async def handle_request(self, request_json):
         # Convert JSON to UserRequest dataclass
         if request_json:
-            user_request = GoogleScholarRequest(**request_json)
+            user_request = GoogleScholarRequest(
+                attorney_id=request_json["attorneyId"],
+                applicant_id=request_json["applicantId"],
+                scholar_link=request_json["scholarLink"],
+            )
         else:
             return ErrorResponse("Could not parse input to JSON")
 

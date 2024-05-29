@@ -1,26 +1,41 @@
 // ./src/api/api.js
 
-const serverUrl = "https://0ce3b64f-175d-4856-abcf-073461b968bf.mock.pstmn.io";
+// Firebase
+import { functions } from '../common/firebaseConfig';
+import { httpsCallable } from "firebase/functions";
+
+// Postman mock server
+// const serverUrl = "https://0ce3b64f-175d-4856-abcf-073461b968bf.mock.pstmn.io";
+
+// Google cloud function
+const serverUrl = "https://us-central1-orison-ai-visa-apply.cloudfunctions.net";
 
 // Map function names to their endpoints
 const endpoints = {
-  gateway: "gateway",
+  gateway: "gateway_function",
   processScholarLink: "process-scholar-link",
   vectorizeFiles: "vectorize-files",
   summarize: "summarize",
 }
 
+
 const gateway = async (orRequestType, orRequestPayload) => {
-  return await fetch(`${serverUrl}/${endpoints.gateway}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
+  console.log(`DEBUG: Fetching: ${serverUrl}/${endpoints.gateway}, orRequestType=${orRequestType}`);
+
+  const gatewayFunction = httpsCallable(functions, endpoints.gateway);
+  try {
+    return await gatewayFunction({
       "or_request_type": orRequestType,
       "or_request_payload": orRequestPayload,
-    }),
-  });
+    });
+  } catch (error) {
+    console.error(`ERROR: gatewayFunction: code=${error.code}, message=${error.message}`);
+    return {
+      data: null,
+      code: error.code || 500,
+      message: error.message,
+    };
+  }
 };
 
 export const processScholarLink = async (attorneyId, applicantId, scholarLink) => {
@@ -30,11 +45,13 @@ export const processScholarLink = async (attorneyId, applicantId, scholarLink) =
     scholarLink,
   });
 
-  if (!response.ok) {
+  console.log(`INFO: processScholarLink: response=${JSON.stringify(response)}`);
+
+  if (!response.data) {
     throw new Error('Failed to process Google Scholar link');
   }
 
-  return response.json();
+  return response.data;
 };
 
 export const vectorizeFiles = async (attorneyId, applicantId, fileIds) => {
@@ -44,11 +61,13 @@ export const vectorizeFiles = async (attorneyId, applicantId, fileIds) => {
     fileIds,
   });
 
-  if (!response.ok) {
+  console.log(`DEBUG: vectorizeFiles: response=${JSON.stringify(response)}`);
+
+  if (!response.data) {
     throw new Error('Failed to start file vectorization');
   }
 
-  return response.json();
+  return response.data;
 };
 
 export const summarize = async (attorneyId, applicantId) => {
@@ -57,9 +76,11 @@ export const summarize = async (attorneyId, applicantId) => {
     applicantId,
   });
 
-  if (!response.ok) {
+  console.log(`DEBUG: summarize: response=${JSON.stringify(response)}`);
+
+  if (!response.data) {
     throw new Error('Failed to start summarization');
   }
 
-  return response.json();
+  return response.data;
 };
