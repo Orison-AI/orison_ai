@@ -22,16 +22,15 @@ import datetime
 from google.cloud.firestore_v1.base_query import FieldFilter, BaseCompositeFilter
 from google.cloud.firestore_v1.types import StructuredQuery
 from google.cloud.secretmanager_v1 import SecretManagerServiceClient
-from firebase_admin import firestore
 import firebase_admin
-from bson import ObjectId
+from firebase_admin import firestore
 from firebase_admin import credentials
 from firebase_admin import firestore_async
+from bson import ObjectId
 from typing import Optional
 from mongoengine import Document, EmbeddedDocument
 from typing import List, Union
 from pymongo import DESCENDING, ASCENDING
-
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
@@ -55,16 +54,23 @@ class FIRESTORE_CONNECTION_FAILED(Exception):
         super().__init__(self.message)
 
 
-def load_firebase_creds():
+PROJECT_PREFIX_FOR_SECRET_MANAGER = "projects/685108028813/secrets/"
+
+
+def build_secret_url(secret_name: str, project_prefix: str = PROJECT_PREFIX_FOR_SECRET_MANAGER):
+    return project_prefix + secret_name + "/versions/latest"
+
+
+def read_remote_secret_by_url(secret_url: str):
     # Create the Secret Manager client.
     client = SecretManagerServiceClient()
-    # Build the resource name of the secret version.
-    name = f"projects/685108028813/secrets/firebase_credentials/versions/latest"
     # Access the secret version.
-    response = client.access_secret_version(request={"name": name})
+    response = client.access_secret_version(request={"name": secret_url})
     # Get the payload as a JSON string.
     payload = response.payload.data.decode("UTF-8")
-    return json.loads(payload)
+    payload_dict = json.loads(payload)
+    return payload_dict
+
 
 def get_firebase_admin_app():
     cred_str = os.getenv("FIREBASE_CREDENTIALS")
@@ -73,7 +79,7 @@ def get_firebase_admin_app():
             "Missing FIREBASE_CREDENTIALS in environment variable. Attempting secret manager"
         )
         try:
-            cred_dict = load_firebase_creds()
+            cred_dict = read_remote_secret_by_url(build_secret_url("firebase_credentials"))
         except Exception as e:
             raise CREDENTIALS_NOT_FOUND(
                 "FIREBASE_CREDENTIALS not found in environment variable or secret manager"
@@ -86,12 +92,13 @@ def get_firebase_admin_app():
 
     # Convert string back to JSON
     cred = credentials.Certificate(cred_dict)
+    options = {"storageBucket": read_remote_secret_by_url(build_secret_url("bucket"))}
     try:
         _logger.info("Getting existing Firestore client")
         return firebase_admin.get_app()
     except ValueError as e:
         _logger.info("No existing client found. Creating new Firestore client")
-        return firebase_admin.initialize_app(cred)
+        return firebase_admin.initialize_app(cred, options)
     except Exception as e:
         raise FIRESTORE_CONNECTION_FAILED("Failed to connect to Firestore")
 
@@ -115,11 +122,11 @@ class FirestoreClient(FireStoreDB):
         super(FirestoreClient, self).__init__()
 
     async def find_top(
-        self,
-        user_id: str,
-        applicant_id: str,
-        filters: Optional[dict] = {},
-        order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
+            self,
+            user_id: str,
+            applicant_id: str,
+            filters: Optional[dict] = {},
+            order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
     ) -> Union[EmbeddedDocument, Document, None]:
         """
         Finds a firestore Document item from the collection and converts it to a mongo object
@@ -135,12 +142,12 @@ class FirestoreClient(FireStoreDB):
         return result[0]
 
     async def find_top_k(
-        self,
-        user_id: str,
-        applicant_id: str,
-        filters: Optional[dict] = {},
-        k: int = 1,
-        order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
+            self,
+            user_id: str,
+            applicant_id: str,
+            filters: Optional[dict] = {},
+            k: int = 1,
+            order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
     ) -> Union[List[EmbeddedDocument], List[Document], None]:
         """
         Finds top K firestore document items given a limit k from the collection
