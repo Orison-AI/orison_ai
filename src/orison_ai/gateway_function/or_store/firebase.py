@@ -66,6 +66,7 @@ def load_firebase_creds():
     payload = response.payload.data.decode("UTF-8")
     return json.loads(payload)
 
+
 def get_firebase_admin_app():
     cred_str = os.getenv("FIREBASE_CREDENTIALS")
     if cred_str is None:

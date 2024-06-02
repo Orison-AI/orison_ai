@@ -15,6 +15,7 @@
 # ==========================================================================
 
 # External
+import logging
 import asyncio
 from flask import Request
 
@@ -32,6 +33,8 @@ from summarize import Summarize
 from vectorize_files import VectorizeFiles
 from gateway import GatewayRequestType, router
 
+logger = logging.getLogger(__name__)
+
 # Initialize Firebase Admin SDK
 get_firebase_admin_app()
 
@@ -43,20 +46,21 @@ routes: dict[GatewayRequestType, RequestHandler] = {
     GatewayRequestType.SUMMARIZE: Summarize(),
 }
 
+
 def verify_bearer_token(request: Request):
     """Verifies the Bearer token from the Authorization header."""
-    auth_header = request.headers.get('Authorization')
+    auth_header = request.headers.get("Authorization")
     if not auth_header:
         raise ValueError("Authorization header missing")
-    
+
     token = auth_header.split(" ")[1]
     decoded_token = auth.verify_id_token(token)
     return decoded_token
 
+
 @http
 def gateway_function(request: Request):
-
-    print(f"Received request: {request.method}")
+    logging.info(f"Received request: {request.method}")
 
     # Set CORS headers for the preflight request
     if request.method == "OPTIONS":
@@ -67,7 +71,7 @@ def gateway_function(request: Request):
             "Access-Control-Max-Age": "3600",
         }
         return ("", 204, headers)
-        
+
     # Set CORS headers for main request
     headers = {
         "Access-Control-Allow-Origin": "*",
@@ -80,21 +84,21 @@ def gateway_function(request: Request):
 
         result = asyncio.run(router(routes, request))
         code = result["status"]
-    
+
         return (
-            { "data": {"requestId": "request-12345"} if code == 200 else {} },
+            {"data": {"requestId": "request-12345"} if code == 200 else {}},
             code,
             headers,
         )
 
     except ValueError as ve:
         # Handle token verification errors
-        print(f"Authentication error: {ve}")
+        logger.error(f"Authentication error: {ve}")
         return ({"error": "Unauthorized"}, 401, headers)
 
     except Exception as e:
         # Make sure we add the CORS headers to any error messages too.
-        print(f"ERROR: {e}")
+        logger.error(f"ERROR: {e}")
         return ({"error": str(e)}, 500, headers)
 
 
