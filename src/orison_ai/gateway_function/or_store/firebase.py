@@ -61,17 +61,14 @@ def build_secret_url(secret_name: str, project_prefix: str = PROJECT_PREFIX_FOR_
     return project_prefix + secret_name + "/versions/latest"
 
 
-def read_remote_secret_by_url(secret_url: str):
+def read_remote_secret_url_as_string(secret_url: str) -> str:
     # Create the Secret Manager client.
     client = SecretManagerServiceClient()
     # Access the secret version.
-    _logger.info(f"Secret: {secret_url}")
     response = client.access_secret_version(request={"name": secret_url})
     # Get the payload as a JSON string.
     payload = response.payload.data.decode("UTF-8")
-    _logger.info(f"Payload: {payload}")
-    payload_dict = json.loads(payload)
-    return payload_dict
+    return payload
 
 
 def get_firebase_admin_app():
@@ -81,7 +78,7 @@ def get_firebase_admin_app():
             "Missing FIREBASE_CREDENTIALS in environment variable. Attempting secret manager"
         )
         try:
-            cred_dict = read_remote_secret_by_url(build_secret_url("firebase_credentials"))
+            cred_dict = json.loads(read_remote_secret_url_as_string(build_secret_url("firebase_credentials")))
         except Exception as e:
             raise CREDENTIALS_NOT_FOUND(
                 "FIREBASE_CREDENTIALS not found in environment variable or secret manager"
@@ -94,7 +91,7 @@ def get_firebase_admin_app():
 
     # Convert string back to JSON
     cred = credentials.Certificate(cred_dict)
-    options = {"storageBucket": read_remote_secret_by_url(build_secret_url("bucket"))}
+    options = {"storageBucket": read_remote_secret_url_as_string(build_secret_url("bucket"))}
     try:
         _logger.info("Getting existing Firestore client")
         return firebase_admin.get_app()
