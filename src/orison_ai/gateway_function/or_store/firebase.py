@@ -65,9 +65,11 @@ def read_remote_secret_by_url(secret_url: str):
     # Create the Secret Manager client.
     client = SecretManagerServiceClient()
     # Access the secret version.
+    _logger.info(f"Secret: {secret_url}")
     response = client.access_secret_version(request={"name": secret_url})
     # Get the payload as a JSON string.
     payload = response.payload.data.decode("UTF-8")
+    _logger.info(f"Payload: {payload}")
     payload_dict = json.loads(payload)
     return payload_dict
 
