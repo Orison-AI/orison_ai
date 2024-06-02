@@ -22,6 +22,7 @@ from request_handler import (
     ErrorResponse,
     OKResponse,
 )
+import os
 
 # Internal
 from or_store.firebase_storage import FirebaseStorage
@@ -41,13 +42,17 @@ class VectorizeFiles(RequestHandler):
         file_path = "research/test.md"
 
         def _local_path(filepath):
-            return f"/app/vault/junk/{filepath}"
+            return f"/tmp/{filepath}"
 
         await FirebaseStorage.download_file(
             remote_file_path=VectorizeFiles._file_path_builder(attorney_id, applicant_id, file_path),
             local_file_path=_local_path(file_path))
-        with open(_local_path(file_path), "r") as file:
-            data = file.read()
-            self.logger.info(f"Readback: {data}")
+        if os.path.exists(_local_path(file_path)):
+            self.logger.info(f"File written to {_local_path(file_path)}")
+            with open(_local_path(file_path), "r") as file:
+                data = file.read()
+                self.logger.info(f"Readback: {data}")
+        else:
+            self.logger.error(f"File not found at {_local_path(file_path)}")
         self.logger.info(f"Handling vectorize files request: {request_json}")
         return OKResponse("Success!")
