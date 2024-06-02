@@ -25,6 +25,20 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'  # Specify the Python version you want to use
+
+      - name: Install dependencies
+        run: |
+          python3.10 -m pip install --upgrade pip
+          pip install black==24.4.2
+
+      - name: Check code formatting with black
+        run: |
+          black --check .
+
       - id: 'auth'
         uses: 'google-github-actions/auth@v2'
         with:
