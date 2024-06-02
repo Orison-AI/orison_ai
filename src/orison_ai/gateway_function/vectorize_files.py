@@ -42,7 +42,7 @@ class VectorizeFiles(RequestHandler):
         file_path = "research/test.md"
 
         def _local_path(filepath):
-            return f"/tmp/{filepath}"
+            return f"/tmp/junk.md"
 
         await FirebaseStorage.download_file(
             remote_file_path=VectorizeFiles._file_path_builder(attorney_id, applicant_id, file_path),
