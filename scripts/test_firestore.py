@@ -14,24 +14,6 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-# External
+from or_store.firebase import get_firebase_admin_app
 
-from pydantic import BaseModel
-
-
-class IngestRequest(BaseModel):
-    category: str
-
-
-class DownloadRequest(BaseModel):
-    attorney_id: str
-    applicant_id: str
-    database: str
-    category: str
-    parameters: dict
-
-
-class AnalysisRequest(BaseModel):
-    attorney_id: str
-    applicant_id: str
-    category: str
+get_firebase_admin_app()

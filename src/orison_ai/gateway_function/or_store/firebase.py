@@ -71,6 +71,7 @@ def read_remote_secret_url_as_string(secret_url: str) -> str:
     return payload
 
 
+
 def get_firebase_admin_app():
     cred_str = os.getenv("FIREBASE_CREDENTIALS")
     if cred_str is None:

@@ -15,6 +15,7 @@
 # ==========================================================================
 
 # External
+import logging
 import asyncio
 from flask import Request
 import logging
@@ -33,8 +34,10 @@ from summarize import Summarize
 from vectorize_files import VectorizeFiles
 from gateway import GatewayRequestType, router
 
+
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
+
 
 # Initialize Firebase Admin SDK
 get_firebase_admin_app()
@@ -47,19 +50,20 @@ routes: dict[GatewayRequestType, RequestHandler] = {
     GatewayRequestType.SUMMARIZE: Summarize(),
 }
 
+
 def verify_bearer_token(request: Request):
     """Verifies the Bearer token from the Authorization header."""
-    auth_header = request.headers.get('Authorization')
+    auth_header = request.headers.get("Authorization")
     if not auth_header:
         raise ValueError("Authorization header missing")
-    
+
     token = auth_header.split(" ")[1]
     decoded_token = auth.verify_id_token(token)
     return decoded_token
 
+
 @http
 def gateway_function(request: Request):
-
     _logger.debug(f"Received request: {request.method}")
 
     # Set CORS headers for the preflight request
@@ -71,7 +75,7 @@ def gateway_function(request: Request):
             "Access-Control-Max-Age": "3600",
         }
         return ("", 204, headers)
-        
+
     # Set CORS headers for main request
     headers = {
         "Access-Control-Allow-Origin": "*",
@@ -84,9 +88,9 @@ def gateway_function(request: Request):
 
         result = asyncio.run(router(routes, request))
         code = result["status"]
-    
+
         return (
-            { "data": {"requestId": "request-12345"} if code == 200 else {} },
+            {"data": {"requestId": "request-12345"} if code == 200 else {}},
             code,
             headers,
         )
