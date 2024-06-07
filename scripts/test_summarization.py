@@ -1,5 +1,27 @@
+#! /usr/bin/env python3.10
+
+# ==========================================================================
+#  Copyright (c) Orison AI, 2024.
+#
+#  All rights reserved. All hardware and software names used are registered
+#  trade names and/or registered trademarks of the respective manufacturers.
+#
+#  The user of this computer program acknowledges that the above copyright
+#  notice, which constitutes the Universal Copyright Convention, will be
+#  attached at the position in the function of the computer program which the
+#  author has deemed to sufficiently express the reservation of copyright.
+#  It is prohibited for customers, users and/or third parties to remove,
+#  modify or move this copyright notice.
+# ==========================================================================
+
+"""
+Setup these env vars before use
+OPENAI_API_KEY
+QDRANT_URL
+QDRANT_API_KEY
+"""
+
 from qdrant_client import QdrantClient
-from qdrant_client.http import models
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
@@ -8,6 +30,7 @@ from langchain.vectorstores import Qdrant
 # Set logging for the queries
 import logging
 import json
+import os
 
 logging.basicConfig()
 logging.getLogger("langchain.retrievers.multi_query").setLevel(logging.INFO)
@@ -21,11 +44,11 @@ ROLE = """\
     Do not speculate or make up information. \
     """
 
-client = OpenAI(api_key="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")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # Initialize Qdrant client
 qdrant_client = QdrantClient(
-    url="https://e3cab25a-ad09-4bdd-a2bd-720b5f920bf1.us-east4-0.gcp.cloud.qdrant.io",
-    api_key="av5ELn6DMe66WLg8wH8LYk4FDPxUTDrPf24FJ4WhurCu9vAVjRtLtA",
+    url=os.getenv("QDRANT_URL"),
+    api_key=os.getenv("QDRANT_API_KEY"),
 )
 
 # Define the name of the collection
@@ -33,6 +56,7 @@ collection_name = "orison_vdb"
 
 
 # Function to get embeddings from OpenAI
+# ToDo: We should evaluate langchain embeddings instead. They should be identical
 def get_openai_embedding(text):
     response = client.embeddings.create(
         input=[text], model="text-embedding-ada-002"
@@ -49,7 +73,9 @@ vectordb = Qdrant(
 )
 llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.2, max_tokens=4096)
 retriever = MultiQueryRetriever.from_llm(
-    retriever=vectordb.as_retriever(search_typ="mmr", search_kwargs={"k": 10}),
+    retriever=vectordb.as_retriever(
+        search_type="mmr", search_kwargs={"k": 10, "fetch_k": 50}
+    ),
     llm=llm,
     include_original=True,
 )
@@ -78,6 +104,7 @@ with open("/app/templates/eb1_a_questionnaire.json") as file:
 for i, message in enumerate(questions):
     retrieved_docs = retriever.invoke(message)
     context = "\n".join([doc.page_content for doc in retrieved_docs])
+    # ToDo: Check that context is within openAI limits and accordingly reduce it.
     prompt = [
         (
             "system",
@@ -89,6 +116,9 @@ for i, message in enumerate(questions):
         ),
     ]
     response = llm.invoke(prompt)
+    # We need mapping from source chunk to the response generated
+    # To begin with aggregate all sources from chunks
+    # All this gets dumped into or_store.models.ScreeningBuilder for screening
     print(response.content)
     print("\n\n")
 
@@ -96,19 +126,3 @@ for i, message in enumerate(questions):
 from IPython import embed
 
 embed()
-
-
-# vector_set = []
-# chunks = []
-# # Get embedding for the query
-# for query_text in queries:
-#     query_embedding = get_openai_embedding(query_text)
-#     # Search for the most relevant chunks
-#     search_results = qdrant_client.search(
-#         collection_name=collection_name,
-#         query_vector=query_embedding,
-#         limit=10,  # Number of top results to retrieve
-#     )
-#     # Display the results
-#     for result in search_results:
-#         print(f"Score: {result.score}, Chunk: {result.payload['page_content']}")

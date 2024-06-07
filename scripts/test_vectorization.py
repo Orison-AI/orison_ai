@@ -1,3 +1,26 @@
+#! /usr/bin/env python3.10
+
+# ==========================================================================
+#  Copyright (c) Orison AI, 2024.
+#
+#  All rights reserved. All hardware and software names used are registered
+#  trade names and/or registered trademarks of the respective manufacturers.
+#
+#  The user of this computer program acknowledges that the above copyright
+#  notice, which constitutes the Universal Copyright Convention, will be
+#  attached at the position in the function of the computer program which the
+#  author has deemed to sufficiently express the reservation of copyright.
+#  It is prohibited for customers, users and/or third parties to remove,
+#  modify or move this copyright notice.
+# ==========================================================================
+
+"""
+Setup these env vars before use
+OPENAI_API_KEY
+QDRANT_URL
+QDRANT_API_KEY
+"""
+
 # Standard Imports
 
 from typing import Optional, Union
@@ -25,13 +48,12 @@ from langchain_openai.embeddings import OpenAIEmbeddings
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 
-client = OpenAI(api_key="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")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # Initialize Qdrant client
 qdrant_client = QdrantClient(
-    url="https://e3cab25a-ad09-4bdd-a2bd-720b5f920bf1.us-east4-0.gcp.cloud.qdrant.io",
-    api_key="av5ELn6DMe66WLg8wH8LYk4FDPxUTDrPf24FJ4WhurCu9vAVjRtLtA",
+    url=os.getenv("QDRANT_URL"),
+    api_key=os.getenv("QDRANT_API_KEY"),
 )
-
 # Define the name of the collection
 collection_name = "orison_vdb"
 
