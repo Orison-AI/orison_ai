@@ -25,7 +25,7 @@ from qdrant_client import QdrantClient
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from langchain_openai import ChatOpenAI
 from langchain_openai import OpenAIEmbeddings
-from langchain.vectorstores import Qdrant
+from langchain_qdrant import Qdrant
 
 # Set logging for the queries
 import logging
@@ -73,9 +73,10 @@ vectordb = Qdrant(
 )
 llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.2, max_tokens=4096)
 retriever = MultiQueryRetriever.from_llm(
-    retriever=vectordb.as_retriever(
-        search_type="mmr", search_kwargs={"k": 10, "fetch_k": 50}
-    ),
+    # retriever=vectordb.as_retriever(
+    #     search_type="mmr", search_kwargs={"k": 10, "fetch_k": 50}
+    # ),
+    retriever=vectordb.as_retriever(search_kwargs={"k": 10}),
     llm=llm,
     include_original=True,
 )
