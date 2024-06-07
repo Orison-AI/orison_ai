@@ -4,6 +4,7 @@ nltk
 doc2text
 pypdf2
 ipython
+black==24.4.2
 numpy==1.26.4
 fastapi==0.111.0
 openai==1.30.1
