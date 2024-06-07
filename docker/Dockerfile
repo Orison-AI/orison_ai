@@ -30,9 +30,8 @@ RUN apt-get update && \
     rm get-pip.py
 RUN echo "alias python=python3.10" >> /root/.bashrc
 RUN echo "alias python3=python3.10" >> /root/.bashrc
-
-# ToDo: Add symlink for python3 to python3.10
-
+RUN rm /usr/bin/python3
+RUN ln -s /usr/bin/python3.10 /usr/bin/python3
 # Install any additional Python packages needed
 RUN python3.10 -m pip install --no-cache-dir -r packages-python3.txt
 
@@ -44,38 +43,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 RUN apt-get update && xargs -a packages-apt.txt apt-get install -y
 
-# Zip tools
-RUN apt-get install -y p7zip \
-    p7zip-full \
-    unace \
-    zip \
-    unzip \
-    xz-utils \
-    sharutils \
-    uudeview \
-    mpack \
-    arj \
-    cabextract \
-    file-roller \
-    && rm -rf /var/lib/apt/lists/*
-
-# Web Server
-RUN wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
-RUN unzip ngrok-stable-linux-amd64.zip
-RUN mv ngrok /usr/local/bin/
-RUN /usr/local/bin/ngrok authtoken 2cBmmOE6WVkuJp4uPCY6Sez2dqH_3eo7nNkBrM41Fh5vCAsXP
-
-RUN python3.10 -m pip install llama-index-core
-RUN python3.10 -m pip install llama-index-llms-openai
-RUN python3.10 -m pip install llama-index-llms-replicate
-RUN python3.10 -m pip install llama-index-embeddings-huggingface
-RUN python3.10 -m pip install llama-index-readers-file
-RUN python3.10 -m pip install llama-index-embeddings-openai
-RUN python3.10 -m pip install llama-index-vector-stores-qdrant
-
 RUN chmod 755 /app/docker/entrypoint.sh
 
 EXPOSE 5004
+EXPOSE 5005
+EXPOSE 3000
 
 RUN echo 'export PYTHONPATH="${PYTHONPATH}:/app/src/"' >> /root/.bashrc
 

@@ -2,39 +2,39 @@
     "prompt": {
         "research": {
             "question": [
-                "List the top few keywords that would describe the field in which the Rishi Malhan works",
-                "Define the Rishi Malhan's field or area of research and why it is important in layman’s terms",
-                "Break down the Rishi Malhan's contributions into 3-5+ distinct areas of achievement/novel contributions/discoveries. For each new contribution please describe: 1. What was the novel or original finding or contribution? 2. What did Rishi Malhan do, for instance, what experiments, clinical trials, software development etc. did he/she complete in order for this discovery to be made? 3. Why is this a significant contribution? How is his/her research unique or distinct from others in the field? 4. Has this new contribution been used or implemented in any way by others?",
-                "Overall, what impact does the Rishi Malhan's research/work have and why is it necessary in their field? For example, is there a problem you are trying to solve? Please provide facts and specific examples as applicable.",
+                "List the top few keywords that would describe the field in which the candidate works",
+                "Define the candidate's field or area of research and why it is important in layman’s terms",
+                "Break down the candidate's contributions into 3-5+ distinct areas of achievement/novel contributions/discoveries. For each new contribution please describe: 1. What was the novel or original finding or contribution? 2. What did candidate do, for instance, what experiments, clinical trials, software development etc. did he/she complete in order for this discovery to be made? 3. Why is this a significant contribution? How is his/her research unique or distinct from others in the field? 4. Has this new contribution been used or implemented in any way by others?",
+                "Overall, what impact does the candidate's research/work have and why is it necessary in their field? For example, is there a problem you are trying to solve? Please provide facts and specific examples as applicable.",
                 "Describe how your work or research is unique or distinct from others in the field.",
-                "How is the Rishi Malhan shaping the future of US?",
-                "Give a detailed summary of each research project done by the Rishi Malhan. Begin each summary with a title of the project. Cover all the projects."
+                "How is the candidate shaping the future of US?",
+                "Give a detailed summary of each research project done by the candidate. Begin each summary with a title of the project. Cover all the projects."
             ],
             "postscript": "",
             "index": "research",
-            "detail_number": [
-                8,
-                8,
-                40,
-                20,
-                8,
-                8,
-                40
+            "detail_level": [
+                "light detail",
+                "moderate detail",
+                "very heavy detail",
+                "great detail",
+                "light detail",
+                "light detail",
+                "very heavy detail"
             ]
         },
         "awards": {
             "question": [
-                "List in detail all the evidence or keypoints that the Rishi Malhan has receipt of lesser nationally or internationally recognized prizes or awards for excellence"
+                "List in detail all the evidence or keypoints that the candidate's has receipt of lesser nationally or internationally recognized prizes or awards for excellence"
             ],
             "postscript": "Consists of awards, prizes, certificates, medals, recognitions, and can be obtained in exhibitions, conferences, university, industry, etc.",
             "index": "awards"
         },
         "industry": {
             "question": [
-                "What companies has the Rishi Malhan worked in?",
-                "How has the Rishi Malhan's work at the companies impacted the future of US?",
-                "What are the industry renowned people saying about the Rishi Malhan's work?",
-                "What are the industry renowned people saying about the Rishi Malhan's character?"
+                "What companies has the candidate's worked in?",
+                "How has the candidate's's work at the companies impacted the future of US?",
+                "What are the industry renowned people saying about the candidate's's work?",
+                "What are the industry renowned people saying about the candidate's's character?"
             ],
             "postscript": "",
             "index": "research"
