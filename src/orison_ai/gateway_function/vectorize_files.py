@@ -37,7 +37,7 @@ from request_handler import (
     OKResponse,
 )
 from or_store.firebase_storage import FirebaseStorage
-from utils import raise_and_log_error, sanitize_path, file_extension
+from utils import raise_and_log_error, file_extension
 
 # Vectorization Imports
 import numpy as np
