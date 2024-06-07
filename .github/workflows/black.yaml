@@ -28,7 +28,7 @@ jobs:
         ref: ${{ github.head_ref }}
     - uses: actions/setup-python@v4
       with:
-        python-version: '3.10'  # Specify the Python version you want to use
+        python-version: '3.10.14'  # Specify the Python version you want to use
 
     # Runs a set of commands using the runners shell
     - name: Print vars
