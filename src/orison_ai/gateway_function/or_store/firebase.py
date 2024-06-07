@@ -57,7 +57,9 @@ class FIRESTORE_CONNECTION_FAILED(Exception):
 PROJECT_PREFIX_FOR_SECRET_MANAGER = "projects/685108028813/secrets/"
 
 
-def build_secret_url(secret_name: str, project_prefix: str = PROJECT_PREFIX_FOR_SECRET_MANAGER):
+def build_secret_url(
+    secret_name: str, project_prefix: str = PROJECT_PREFIX_FOR_SECRET_MANAGER
+):
     return project_prefix + secret_name + "/versions/latest"
 
 
@@ -71,7 +73,6 @@ def read_remote_secret_url_as_string(secret_url: str) -> str:
     return payload
 
 
-
 def get_firebase_admin_app():
     cred_str = os.getenv("FIREBASE_CREDENTIALS")
     if cred_str is None:
@@ -79,7 +80,11 @@ def get_firebase_admin_app():
             "Missing FIREBASE_CREDENTIALS in environment variable. Attempting secret manager"
         )
         try:
-            cred_dict = json.loads(read_remote_secret_url_as_string(build_secret_url("firebase_credentials")))
+            cred_dict = json.loads(
+                read_remote_secret_url_as_string(
+                    build_secret_url("firebase_credentials")
+                )
+            )
         except Exception as e:
             raise CREDENTIALS_NOT_FOUND(
                 "FIREBASE_CREDENTIALS not found in environment variable or secret manager"
@@ -92,7 +97,9 @@ def get_firebase_admin_app():
 
     # Convert string back to JSON
     cred = credentials.Certificate(cred_dict)
-    options = {"storageBucket": read_remote_secret_url_as_string(build_secret_url("bucket"))}
+    options = {
+        "storageBucket": read_remote_secret_url_as_string(build_secret_url("bucket"))
+    }
     try:
         _logger.info("Getting existing Firestore client")
         return firebase_admin.get_app()
@@ -122,39 +129,39 @@ class FirestoreClient(FireStoreDB):
         super(FirestoreClient, self).__init__()
 
     async def find_top(
-            self,
-            user_id: str,
-            applicant_id: str,
-            filters: Optional[dict] = {},
-            order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
+        self,
+        attorney_id: str,
+        applicant_id: str,
+        filters: Optional[dict] = {},
+        order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
     ) -> Union[EmbeddedDocument, Document, None]:
         """
         Finds a firestore Document item from the collection and converts it to a mongo object
         Order is either ASCENDING or DESCENDING
 
-        :param user_id: the business id of the document to find
+        :param attorney_id: the business id of the document to find
         :param applicant_id: the user id of the document to find
         :param order: the order in which to sort the documents
         :return: the entry found in firestore db for the requesting model class instance
                 converted to a mongo object
         """
-        result = await self.find_top_k(user_id, applicant_id, filters, 1, order)
+        result = await self.find_top_k(attorney_id, applicant_id, filters, 1, order)
         return result[0]
 
     async def find_top_k(
-            self,
-            user_id: str,
-            applicant_id: str,
-            filters: Optional[dict] = {},
-            k: int = 1,
-            order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
+        self,
+        attorney_id: str,
+        applicant_id: str,
+        filters: Optional[dict] = {},
+        k: int = 1,
+        order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
     ) -> Union[List[EmbeddedDocument], List[Document], None]:
         """
         Finds top K firestore document items given a limit k from the collection
         and converts them to mongo objects
         Order is either ASCENDING or DESCENDING
 
-        :param user_id: the business id of the document to find
+        :param attorney_id: the business id of the document to find
         :param applicant_id: the user id of the document to find
         :param k: the number of documents to find
         :param order: the order in which to sort the documents
@@ -180,7 +187,7 @@ class FirestoreClient(FireStoreDB):
             raise ValueError("Number of documents k must be greater than 0")
 
         # Apply filters
-        filters = {"user_id": user_id, "applicant_id": applicant_id} | filters
+        filters = {"attorney_id": attorney_id, "applicant_id": applicant_id} | filters
         composite_filter = BaseCompositeFilter(
             operator=StructuredQuery.CompositeFilter.Operator.AND,
             filters=[
@@ -210,7 +217,7 @@ class FirestoreClient(FireStoreDB):
         """
         Inserts a mongo doc object into the firestore
 
-        :param user_id: the business id of the document to insert
+        :param attorney_id: the business id of the document to insert
         :param applicant_id: the user id of the document to insert
         :param doc: the object to insert into the database
 
