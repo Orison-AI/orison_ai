@@ -18,6 +18,7 @@
 import logging
 import asyncio
 from flask import Request
+import logging
 
 # GCP
 from functions_framework import create_app, http
@@ -33,7 +34,10 @@ from summarize import Summarize
 from vectorize_files import VectorizeFiles
 from gateway import GatewayRequestType, router
 
-logger = logging.getLogger(__name__)
+
+logging.basicConfig(level=logging.INFO)
+_logger = logging.getLogger(__name__)
+
 
 # Initialize Firebase Admin SDK
 get_firebase_admin_app()
@@ -60,7 +64,7 @@ def verify_bearer_token(request: Request):
 
 @http
 def gateway_function(request: Request):
-    logging.info(f"Received request: {request.method}")
+    _logger.debug(f"Received request: {request.method}")
 
     # Set CORS headers for the preflight request
     if request.method == "OPTIONS":
@@ -93,12 +97,12 @@ def gateway_function(request: Request):
 
     except ValueError as ve:
         # Handle token verification errors
-        logger.error(f"Authentication error: {ve}")
+        _logger.error(f"Authentication error: {ve}")
         return ({"error": "Unauthorized"}, 401, headers)
 
     except Exception as e:
         # Make sure we add the CORS headers to any error messages too.
-        logger.error(f"ERROR: {e}")
+        _logger.error(f"ERROR: {e}")
         return ({"error": str(e)}, 500, headers)
 
 
