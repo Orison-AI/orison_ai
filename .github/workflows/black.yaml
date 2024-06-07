@@ -1,0 +1,55 @@
+# This is the Orison actions workflow for the Black Python code formatting checks
+# See: https://pypi.org/project/black
+
+name: Python Formatting Check
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the devel branch
+
+on:
+  # Triggers the workflow on push or pull request events
+  push:
+    branches: [ devel ]
+  pull_request:
+    branches: [ devel ]
+  push:
+    branches: [ staging ]
+  pull_request:
+    branches: [ staging ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref }}
+
+    # Runs a set of commands using the runners shell
+    - name: Print vars
+      run: |
+        echo "whoami: `whoami`"
+        echo "pwd: `pwd`"
+        echo "hostname: `hostname`"
+        echo "hostname IP: `hostname -I`"
+        echo "PWD is: \"${PWD}\""
+        echo "PATH is: \"${PATH}\""
+
+    - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'  # Specify the Python version you want to use
+
+    - name: Install dependencies
+      run: |
+        python3.10 -m pip install --upgrade pip
+        pip install black==24.4.2
+    - name: Check code formatting with black
+      run: |
+        black --check .

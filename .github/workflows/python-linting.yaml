@@ -1,0 +1,53 @@
+# Run python linting
+# Uses flakeheaven and reviewdog
+
+name: shared-python-linting-workflow
+
+on:
+  # Triggers the workflow on push or pull request events
+  push:
+    branches: [ devel ]
+  pull_request:
+    branches: [ devel ]
+  push:
+    branches: [ staging ]
+  pull_request:
+    branches: [ staging ]
+
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref }}
+
+    - name: python-lint-step
+      uses: sailingpalmtree/python-lint@latest
+      with:
+        # Change reviewdog reporter if you need [github-pr-check,github-check,github-pr-review].
+        reporter: github-check
+        # Change reporter level if you need. [info,warning,error]
+        level: error
+        # Whether to fail the operation if errors are found
+        fail_on_error: true
+        
+    - name: Clean up .flakeheaven_cache
+      run: |
+        # Removes root owned files/dirs to fix permission issues
+        echo "whoami: `whoami`"
+        echo "pwd: `pwd`"
+        echo "hostname: `hostname`"
+        # Some runners do not run as root, so they don't have permissions to remove
+        # the .flakeheaven_cache directory, so use sudo
+        if [[ "$(hostname)" = "jbs20" ]]; then
+          echo "Running sudo rm -rf .flakeheaven_cache" && sudo rm -rf .flakeheaven_cache
+        elif [[ "$(whoami)" = "root" ]]; then
+          echo "Running rm -rf .flakeheaven_cache" && rm -rf .flakeheaven_cache
+        fi
