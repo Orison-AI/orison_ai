@@ -52,6 +52,7 @@ routes: dict[GatewayRequestType, RequestHandler] = {
 
 LOCAL_TESTING = False
 
+
 def verify_bearer_token(request: Request):
     """Verifies the Bearer token from the Authorization header."""
     auth_header = request.headers.get("Authorization")
