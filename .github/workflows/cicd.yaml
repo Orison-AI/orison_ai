@@ -39,3 +39,4 @@ jobs:
           name: 'gateway_function'
           source_dir: './src/orison_ai/gateway_function'
           runtime: 'python310'
+          memory: '512M'
