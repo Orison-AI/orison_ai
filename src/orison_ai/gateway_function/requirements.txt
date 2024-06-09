@@ -15,3 +15,4 @@ langchain_experimental==0.0.60
 langchain_openai==0.1.8
 qdrant_client==1.9.1
 langchain_qdrant==0.1.0
+pypdf==4.2.0
