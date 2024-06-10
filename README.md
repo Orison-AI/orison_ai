@@ -24,3 +24,17 @@ https://app.diagrams.net/#G1XuFSqzs4L6TMyR-XOJId8UXAsaoEyrx4#%7B%22pageId%22%3A%
 pre-commit install
 pre-commit run --all-files
 ```
+
+## Running the system locally for testing
+Requires to kick off backend and frontend
+- Backend can be started using functions-framework package
+- We can use the port 5004 and localhost which is exposed by default in the docker container
+- Port and host are subject to change
+```
+functions-framework --source=path/to/gateway_function/main.py --target=gateway_function --port=XXXX --host=<HOSTNAME>
+```
+- Frontend can be emulated using curl request
+- Authentication ToDo
+```
+ToDo: Add curl format
+```
