@@ -18,7 +18,7 @@ COPY . .
 COPY ./docker/packages-python3.txt .
 COPY ./docker/packages-apt.txt .
 
-# Install Python 3.9 and pip
+# Install Python 3.10.14 and pip
 RUN apt-get update && \
     apt-get install -y software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa && \

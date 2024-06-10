@@ -4,12 +4,6 @@
 	"name": "orison_dev",
 	"dockerComposeFile": "../docker/docker-compose.yml",
 	"workspaceFolder": "/app",
-	"service": "orison-service",
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"ms-python.python"
-			]
-		}
-	}
+	"service": "orison",
+	"remoteUser": "vscode"
 }
