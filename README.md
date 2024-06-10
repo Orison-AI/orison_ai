@@ -17,3 +17,10 @@ LLM Powered Achievement Based Case Assistant
 
 ## UI Mockups
 https://app.diagrams.net/#G1XuFSqzs4L6TMyR-XOJId8UXAsaoEyrx4#%7B%22pageId%22%3A%22G5q3h0-aANIR-RvPyDPR%22%7D
+
+## Installing Hooks For Successful Push
+- In the directory containing pre-commit config use the following commands
+```
+pre-commit install
+pre-commit run --all-files
+```
