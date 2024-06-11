@@ -1,5 +1,4 @@
 tqdm
-wget
 nltk
 doc2text
 pypdf2

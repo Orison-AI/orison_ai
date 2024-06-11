@@ -16,10 +16,8 @@
 
 # External
 
-import traceback
 from request_handler import (
     RequestHandler,
-    ErrorResponse,
     OKResponse,
 )
 import os
@@ -34,19 +32,31 @@ class VectorizeFiles(RequestHandler):
 
     @staticmethod
     def _file_path_builder(attorney_id: str, applicant_id: str, file_path: str):
-        return "/".join(["documents", "attorneys", attorney_id, "applicants", applicant_id, file_path])
+        return "/".join(
+            [
+                "documents",
+                "attorneys",
+                attorney_id,
+                "applicants",
+                applicant_id,
+                file_path,
+            ]
+        )
 
     async def handle_request(self, request_json):
-        attorney_id = request_json['attorneyId']
-        applicant_id = request_json['applicantId']
+        attorney_id = request_json["attorneyId"]
+        applicant_id = request_json["applicantId"]
         file_path = "research/test.md"
 
         def _local_path(filepath):
             return f"/tmp/junk.md"
 
         await FirebaseStorage.download_file(
-            remote_file_path=VectorizeFiles._file_path_builder(attorney_id, applicant_id, file_path),
-            local_file_path=_local_path(file_path))
+            remote_file_path=VectorizeFiles._file_path_builder(
+                attorney_id, applicant_id, file_path
+            ),
+            local_file_path=_local_path(file_path),
+        )
         if os.path.exists(_local_path(file_path)):
             self.logger.info(f"File written to {_local_path(file_path)}")
             with open(_local_path(file_path), "r") as file:
