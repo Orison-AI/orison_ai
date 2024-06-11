@@ -1,7 +1,32 @@
-# orison_ai
-LLM Powered Visa Petitioner
+# Orison AI
+LLM Powered Achievement Based Case Assistant
 
-## Local Debugging
+## Navigating the repo
+- Structure of the repository is based on integratability with google cloud platform
+- Front end is react based hosted on google Firebase and located under /frontend
+- The user stories governing frontend application is located within doc
+- API details can be found under /api/orison_api.md. Front end sends one gateway request
+    to the backend which gets routed to corresponding business logic for processing.
+- Business logic is present under src/
+    Main is the entry point that checks for authentication and validity of the gateway request
+    Gateway function routes the request to corresponding business logic
+    API yaml is blueprint for structure of these requests and responses
+    The structure gets converted to python dataclasses by backend
+- Docker files run bare minimum dependencies required and are assigned package versions for consistency
+- devcontainer is recommend for using development IDEs like VScode
+
+## UI Mockups
+https://app.diagrams.net/#G1XuFSqzs4L6TMyR-XOJId8UXAsaoEyrx4#%7B%22pageId%22%3A%22G5q3h0-aANIR-RvPyDPR%22%7D
+
+## Installing Hooks For Successful Push
+- In the directory containing pre-commit config use the following commands
+```
+pre-commit install
+pre-commit run --all-files
+```
+
+## Running the system locally for testing
+
 Install the following packages:
 https://cloud.google.com/sdk/docs/install#deb
 
@@ -17,31 +42,16 @@ cd src/orison_ai/gateway_function
 functions-framework --target gateway_function --debug
 ```
 
-## Using the GUNICORN server and sending requests
-- Go the the directory that contains src/server/main.py and execute the following command
-gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:5004 --timeout 240
 
-- A server should sping up and from a different docker bash send requests like:
-
-1. Retrieving google scholar info:
+Requires to kick off backend and frontend
+- Backend can be started using functions-framework package
+- We can use the port 5004 and localhost which is exposed by default in the docker container
+- Port and host are subject to change
 ```
-curl -X POST "http://127.0.0.1:5004/download_scholar"      -H "Content-Type: application/json"      -d '{"attorney_id" : "demo_v2", "applicant_id": "rmalhan", "database" : "orison_ai", "category": "preliminary", "parameters" : {"scholar_link" : "https://scholar.google.com/citations?user=QW93AM0AAAAJ&hl=en&oi=ao", "file_name" : "scholar_profile"}}'
-
-2. Ingesting files (Currently folder paths are stored as constants under utils)
-curl -X POST "http://127.0.0.1:5004/ingest"      -H "Content-Type: application/json"      -d '{"category" : "preliminary"}'
-
-3. Asking for preliminary analysis on the ingested files
-curl -X POST "http://127.0.0.1:5004/analyze"      -H "Content-Type: application/json"      -d '{"attorney_id" : "demo_v2", "applicant_id" : "rmalhan", "category" : "preliminary"}'
+functions-framework --source=path/to/gateway_function/main.py --target=gateway_function --port=XXXX --host=<HOSTNAME>
 ```
-
-## Running Streamlit app
-- Command line argument to run streamlit
+- Frontend can be emulated using curl request
+- Authentication ToDo
 ```
-streamlit run path/to/api/server.py --server.port 5004
+ToDo: Add curl format
 ```
-
-- Enter "rmalhan" as user id and login.
-- Navigate to different radio buttons to see results pulled from mongo
-
-## UI Mocks
-https://app.diagrams.net/#G1aSTaQyNfZddZbYDaOraN6fZ3naUI6_or#%7B%22pageId%22%3A%22G5q3h0-aANIR-RvPyDPR%22%7D
