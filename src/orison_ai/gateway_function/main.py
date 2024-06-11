@@ -67,10 +67,6 @@ def verify_bearer_token(request: Request):
 @http
 def gateway_function(request: Request):
     _logger.info(f"Received request: {request.json}")
-    _logger.info(f"Request: {request.__dict__()}")
-    _logger.info(f"Authorization : {request.authorization.__dict__()}")
-    _logger.info(f"Authorization : {request.authorization}")
-    _logger.info(f"Authorization Token: {request.authorization.token}")
 
     # Set CORS headers for the preflight request
     if request.method == "OPTIONS":
