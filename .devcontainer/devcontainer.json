@@ -6,9 +6,35 @@
 	"workspaceFolder": "/app",
 	"service": "orison-service",
 	"customizations": {
+		"settings": {
+			"workbench.colorTheme": "Default Dark Modern",
+			"window.zoomLevel": 1,
+			"git.openRepositoryInParentFolders": "always",
+			"security.workspace.trust.untrustedFiles": "open",
+			"python.autoComplete.extraPaths": [
+				"/app/src/orison_ai/gateway_function"
+			],
+			"python.analysis.extraPaths": [
+				"/app/src/orison_ai/gateway_function"
+			],
+			"python.formatting.blackPath": "/usr/local/bin/black",
+			"python.formatting.provider": "black",
+			"git.mergeEditor": true,
+			"editor.formatOnSave": true,
+			"editor.multiCursorModifier": "ctrlCmd",
+			"[python]": {
+				"editor.formatOnType": true,
+				"editor.defaultFormatter": "ms-python.python"
+			},
+			"editor.unicodeHighlight.nonBasicASCII": false,
+			"extensions.autoUpdate": false,
+			"cmake.showOptionsMovedNotification": false,
+			"editor.inlineSuggest.enabled": true,
+		},
 		"vscode": {
 			"extensions": [
-				"ms-python.python"
+				"ms-python.python",
+				"ms-python.black-formatter"
 			]
 		}
 	}
