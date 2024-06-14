@@ -18,7 +18,6 @@
 import logging
 import asyncio
 from flask import Request
-import logging
 
 # GCP
 from functions_framework import create_app, http
@@ -50,7 +49,7 @@ routes: dict[GatewayRequestType, RequestHandler] = {
     GatewayRequestType.SUMMARIZE: Summarize(),
 }
 
-LOCAL_TESTING = False
+LOCAL_TESTING = True
 
 
 def verify_bearer_token(request: Request):
