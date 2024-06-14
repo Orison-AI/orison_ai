@@ -15,6 +15,7 @@
 # ==========================================================================
 
 # External
+import os
 from typing import Union
 from enum import Enum
 import logging
@@ -31,7 +32,11 @@ from request_handler import (
     RequestHandler,
     OKResponse,
 )
-from or_store.firebase import build_secret_url, read_remote_secret_url_as_string
+from or_store.firebase import (
+    build_secret_url,
+    read_remote_secret_url_as_string,
+    CREDENTIALS_NOT_FOUND,
+)
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
@@ -75,7 +80,7 @@ class OpenAIPostman(ChatOpenAI):
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
-        self.llm = super(self, OpenAIPostman).__init__(
+        self.llm = super().__init__(
             api_key=openai_api_key,
             model=model,
             temperature=temperature,
@@ -107,15 +112,25 @@ class OpenAIPostman(ChatOpenAI):
 
 class Summarize(RequestHandler):
     def __init__(self):
-        # Getting secrets
-        openai_api_key = read_remote_secret_url_as_string(
-            build_secret_url("openai_api_key")
-        )
+        openai_api_key = os.getenv("FIREBASE_CREDENTIALS")
+        if openai_api_key is None:
+            _logger.info(
+                "Missing OPENAI_API_KEY in environment variable. Attempting secret manager"
+            )
+            try:
+                # Getting secrets
+                openai_api_key = read_remote_secret_url_as_string(
+                    build_secret_url("openai_api_key")
+                )
+            except Exception as e:
+                raise CREDENTIALS_NOT_FOUND(
+                    "OPENAI_API_KEY not found in secret manager"
+                )
         try:
             self.open_ai = OpenAIPostman(openai_api_key=openai_api_key)
         except Exception as e:
             _logger.error(f"Error initializing OpenAIPostman: {e}")
-        super(self, Summarize).__init__(str(self.__class__.__qualname__))
+        super().__init__(str(self.__class__.__qualname__))
 
     async def handle_request(self, request_json):
         self.logger.info(f"Handling summarize request: {request_json}")

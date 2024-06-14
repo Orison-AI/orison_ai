@@ -26,7 +26,26 @@ pre-commit run --all-files
 ```
 
 ## Running the system locally for testing
+## Frontend
+- Docker build should start the frontend as part of orison-frontend service
+- Frontend initiates on port 3000 and can be accessed from a browser using:
+```
+localhost:3000
+```
 
+## Backend
+- Firing up the backend is feasible from exec ing into the container
+- docker exec -ti orison /bin/bash
+Now, you can run the following command to start the gateway function within the container:
+```
+cd src/orison_ai/gateway_function
+functions-framework --target gateway_function --port=3000 --debug
+OR
+functions-framework --source=path/gateway_function/main.py --target=gateway_function --port=3000 --debug
+```
+
+## GCloud Configuration
+- Make sure gcloud is installed and configured on HOST Machine
 Install the following packages:
 https://cloud.google.com/sdk/docs/install#deb
 
@@ -34,24 +53,16 @@ You should be able to run the following command:
 ```
 gcloud auth application-default login
 ```
+- Enter the orison standard email and password for admins
 The above command will authorize your local machine to access the google cloud services.
-
-Now, you can run the following command to start the gateway function:
+- Check the following:
 ```
-cd src/orison_ai/gateway_function
-functions-framework --target gateway_function --debug
-```
-
-
-Requires to kick off backend and frontend
-- Backend can be started using functions-framework package
-- We can use the port 5004 and localhost which is exposed by default in the docker container
-- Port and host are subject to change
-```
-functions-framework --source=path/to/gateway_function/main.py --target=gateway_function --port=XXXX --host=<HOSTNAME>
-```
-- Frontend can be emulated using curl request
-- Authentication ToDo
-```
-ToDo: Add curl format
+gcloud config get-value project # Should be orison project name
+gcloud auth list # Authorized service account should be correct
+                Credential JSON corresponding to service account should be FIREBASE_CREDENTIALS
+                environment variable within the container
+# If incorrect service account is present, change using following commands
+gcloud auth activate-service-account --key-file=/path_to_key_downloaded_from_service_account
+# Check again
+gcloud auth list
 ```

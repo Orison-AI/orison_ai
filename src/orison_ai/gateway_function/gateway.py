@@ -25,7 +25,6 @@ from typing import Any, Coroutine
 from request_handler import (
     RequestHandler,
     ErrorResponse,
-    OKResponse,
 )
 
 

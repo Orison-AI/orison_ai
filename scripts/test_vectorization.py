@@ -23,7 +23,6 @@ QDRANT_API_KEY
 
 # Standard Imports
 
-from typing import Optional, Union
 import os
 from IPython import embed
 import numpy as np
@@ -39,7 +38,6 @@ from langchain_community.document_loaders import (
     JSONLoader,
 )
 from langchain_experimental.text_splitter import SemanticChunker
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_openai.embeddings import OpenAIEmbeddings
 
 

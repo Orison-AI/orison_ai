@@ -85,27 +85,30 @@ def get_firebase_admin_app():
                     build_secret_url("firebase_credentials")
                 )
             )
+            bucket_str = read_remote_secret_url_as_string(build_secret_url("bucket"))
+            options = {"storageBucket": bucket_str}
         except Exception as e:
             raise CREDENTIALS_NOT_FOUND(
-                "FIREBASE_CREDENTIALS not found in environment variable or secret manager"
+                "FIREBASE_CREDENTIALS or BUCKET not found in secret manager"
             )
     else:
         try:
             cred_dict = json.loads(cred_str)
+            options = {}
         except json.JSONDecodeError:
             raise INVALID_CREDENTIALS("Invalid JSON in FIREBASE_CREDENTIALS")
 
     # Convert string back to JSON
     cred = credentials.Certificate(cred_dict)
-    options = {
-        "storageBucket": read_remote_secret_url_as_string(build_secret_url("bucket"))
-    }
+
     try:
         _logger.info("Getting existing Firestore client")
         return firebase_admin.get_app()
     except ValueError as e:
         _logger.info("No existing client found. Creating new Firestore client")
-        return firebase_admin.initialize_app(cred, options)
+        app = firebase_admin.initialize_app(cred, options)
+        _logger.info(f"Firestore client created with name: {app.name}")
+        return app
     except Exception as e:
         raise FIRESTORE_CONNECTION_FAILED("Failed to connect to Firestore")
 
@@ -133,7 +136,7 @@ class FirestoreClient(FireStoreDB):
         attorney_id: str,
         applicant_id: str,
         filters: Optional[dict] = {},
-        order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
+        order=DESCENDING,
     ) -> Union[EmbeddedDocument, Document, None]:
         """
         Finds a firestore Document item from the collection and converts it to a mongo object
@@ -154,7 +157,7 @@ class FirestoreClient(FireStoreDB):
         applicant_id: str,
         filters: Optional[dict] = {},
         k: int = 1,
-        order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
+        order=DESCENDING,
     ) -> Union[List[EmbeddedDocument], List[Document], None]:
         """
         Finds top K firestore document items given a limit k from the collection

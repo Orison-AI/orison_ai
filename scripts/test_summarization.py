@@ -35,7 +35,6 @@ import os
 logging.basicConfig()
 logging.getLogger("langchain.retrievers.multi_query").setLevel(logging.INFO)
 
-import numpy as np
 from openai import OpenAI
 
 ROLE = """\
