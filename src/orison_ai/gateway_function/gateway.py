@@ -56,7 +56,7 @@ class GatewayRequest:
         self.or_request_type = _str_to_enum(GatewayRequestType, self.or_request_type)
 
 
-def router(
+async def router(
     routes: dict[GatewayRequestType, RequestHandler], request
 ) -> Coroutine[Any, Any, Any]:
     # Function to route the incoming request to the appropriate handler based the given routes
@@ -68,13 +68,15 @@ def router(
     request_json = request.get_json()
 
     if not request_json:
-        return as_async(ErrorResponse("Could not parse input to JSON"))
+        return await as_async(ErrorResponse("Could not parse input to JSON"))
     try:
         gateway_request = GatewayRequest(**(request_json["data"]))
     except Exception as e:
-        return as_async(ErrorResponse(f"Could not parse input to GatewayRequest: {e}"))
+        return await as_async(
+            ErrorResponse(f"Could not parse input to GatewayRequest: {e}")
+        )
     if gateway_request.or_request_type not in routes:
-        return as_async(ErrorResponse("Requested route not implemented"))
-    return routes[gateway_request.or_request_type].handle_request(
+        return await as_async(ErrorResponse("Requested route not implemented"))
+    return await routes[gateway_request.or_request_type].handle_request(
         gateway_request.or_request_payload
     )

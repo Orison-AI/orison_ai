@@ -16,7 +16,7 @@
 
 # External
 
-import traceback
+import asyncio
 from request_handler import (
     RequestHandler,
     ErrorResponse,
@@ -46,18 +46,14 @@ class FetchScholar(RequestHandler):
                 scholar_link=user_request.scholar_link,
             )
         except Exception as e:
-            self.logger.error(
-                f"Failed to generate google scholar database. Error: {traceback.format_exc(e)}"
-            )
+            self.logger.error(f"Failed to generate google scholar database. Error: {e}")
             raise e
         try:
             if scholar_info is not None:
                 self.logger.info("Google scholar data class initialized")
                 return scholar_info
         except Exception as e:
-            self.logger.error(
-                f"Failed to insert google scholar data. Error: {traceback.format_exc(e)}"
-            )
+            self.logger.error(f"Failed to insert google scholar data. Error: {e}")
             raise e
 
     async def handle_request(self, request_json):
@@ -75,9 +71,7 @@ class FetchScholar(RequestHandler):
         try:
             client = GoogleScholarClient()
         except Exception as e:
-            message = (
-                f"Failed to connect to the database. Error: {traceback.format_exc(e)}"
-            )
+            message = f"Failed to connect to the database. Error: {e}"
             self.logger.error(message)
             return ErrorResponse(f"Internal Server Error: {message}")
 
@@ -89,6 +83,6 @@ class FetchScholar(RequestHandler):
                 f"Scholar info:\n{scholar_info.to_json()} \nsaved with ID: {id}."
             )
         except Exception as e:
-            message = f"Failed to download Google Scholar page. Error: {traceback.format_exc(e)}"
+            message = f"Failed to download Google Scholar page. Error: {e}"
             self.logger.error(message)
             return ErrorResponse(f"Internal Server Error: {message}", 500)

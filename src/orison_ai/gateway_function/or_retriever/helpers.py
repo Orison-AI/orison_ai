@@ -62,20 +62,18 @@ async def url_exists(url: str):
         requests.head(url, allow_redirects=True, timeout=5)
 
     except ValueError as e:
-        message = f"Invalid URL: {traceback.format_exc(e)}"
+        message = f"Invalid URL: {e}"
         logger.error(message)
         raise INVALID_URL(message)
 
     except requests.RequestException as e:
         # Handle possible exceptions, such as network problems
-        message = (
-            f"Request response timed-out while checking URL: {traceback.format_exc(e)}"
-        )
+        message = f"Request response timed-out while checking URL: {e}"
         logger.error(message)
         raise INVALID_URL(message)
 
     except Exception as e:
-        message = f"Unknown error checking URL: {traceback.format_exc(e)}"
+        message = f"Unknown error checking URL: {e}"
         logger.error(message)
         raise INVALID_URL(message)
 

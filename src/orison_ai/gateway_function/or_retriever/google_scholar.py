@@ -19,6 +19,7 @@
 import logging
 import asyncio
 from scholarly import scholarly
+from concurrent.futures import ThreadPoolExecutor
 
 # Internal
 
@@ -61,9 +62,9 @@ async def get_google_scholar_info(
         logger.info(f"User ID found: {scholar_id}")
 
     # Fetch data from the Google Scholar profile
-    author = await asyncio.to_thread(scholarly.search_author_id, scholar_id)
+    author = scholarly.search_author_id(scholar_id)
     # Fill the author object with more detailed information, including publications
-    author = await asyncio.to_thread(scholarly.fill, author)
+    author = scholarly.fill(author)
 
     co_authors = []
     for co_author in author.get("coauthors"):
@@ -75,50 +76,41 @@ async def get_google_scholar_info(
             )
         )
 
-    async def get_publication_details_async(publication):
-        loop = asyncio.get_running_loop()
-        # Run the synchronous function in a default executor (ThreadPoolExecutor)
-        detailed_publication = await loop.run_in_executor(
-            None, lambda x: scholarly.fill(x), publication
+    with ThreadPoolExecutor() as executor:
+        detailed_publications = executor.map(
+            lambda x: scholarly.fill(x), author.get("publications")
         )
-        return detailed_publication
 
-    tasks = [
-        asyncio.create_task(get_publication_details_async(publication))
-        for publication in author.get("publications")
-    ]
-    detailed_publications = await asyncio.gather(*tasks)
-
-    publications = []
-    for detailed_pub in detailed_publications:
-        type_of_paper = "Unknown"
-        if "journal" in [
-            detailed_pub.get("bib").get("citation"),
-            detailed_pub.get("bib").get("publisher"),
-        ]:
-            type_of_paper = "Journal"
-        elif "conference" in [
-            detailed_pub.get("bib").get("citation"),
-            detailed_pub.get("bib").get("publisher"),
-        ]:
-            type_of_paper = "Conference"
-        elif "article" in [
-            detailed_pub.get("bib").get("citation"),
-            detailed_pub.get("bib").get("publisher"),
-        ]:
-            type_of_paper = "Article"
-        publications.append(
-            Publication(
-                title=detailed_pub.get("bib").get("title"),
-                authors=detailed_pub.get("bib").get("author"),
-                abstract=detailed_pub.get("bib").get("abstract"),
-                cited_by=detailed_pub.get("num_citations"),
-                forum_name=detailed_pub.get("citation"),
-                year=detailed_pub.get("bib").get("pub_year"),
-                type_of_paper=type_of_paper,
-                peer_reviews=detailed_pub.get("bib").get("journal"),
+        publications = []
+        for detailed_pub in detailed_publications:
+            type_of_paper = "Unknown"
+            if "journal" in [
+                detailed_pub.get("bib").get("citation"),
+                detailed_pub.get("bib").get("publisher"),
+            ]:
+                type_of_paper = "Journal"
+            elif "conference" in [
+                detailed_pub.get("bib").get("citation"),
+                detailed_pub.get("bib").get("publisher"),
+            ]:
+                type_of_paper = "Conference"
+            elif "article" in [
+                detailed_pub.get("bib").get("citation"),
+                detailed_pub.get("bib").get("publisher"),
+            ]:
+                type_of_paper = "Article"
+            publications.append(
+                Publication(
+                    title=detailed_pub.get("bib").get("title"),
+                    authors=detailed_pub.get("bib").get("author"),
+                    abstract=detailed_pub.get("bib").get("abstract"),
+                    cited_by=detailed_pub.get("num_citations"),
+                    forum_name=detailed_pub.get("citation"),
+                    year=detailed_pub.get("bib").get("pub_year"),
+                    type_of_paper=type_of_paper,
+                    peer_reviews=detailed_pub.get("bib").get("journal"),
+                )
             )
-        )
 
     return GoogleScholarDB(
         attorney_id=attorney_id,

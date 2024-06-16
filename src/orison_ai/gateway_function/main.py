@@ -85,7 +85,6 @@ def gateway_function(request: Request):
 
     try:
         verify_bearer_token(request)
-
         result = asyncio.run(router(routes, request))
         code = result["status"]
 

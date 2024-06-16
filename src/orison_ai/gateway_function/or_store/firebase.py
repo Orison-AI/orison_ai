@@ -25,7 +25,7 @@ from google.cloud.secretmanager_v1 import SecretManagerServiceClient
 import firebase_admin
 from firebase_admin import firestore
 from firebase_admin import credentials
-from firebase_admin import firestore_async
+from firebase_admin import firestore_async, firestore
 from bson import ObjectId
 from typing import Optional
 from mongoengine import Document, EmbeddedDocument
@@ -117,7 +117,8 @@ class FireStoreDB:
         connect to a FireStoreDB database
         """
         app = get_firebase_admin_app()
-        self.client = firestore_async.client(app)
+        self.async_client = firestore_async.client(app)
+        self.client = firestore.client(app)
 
 
 class FirestoreClient(FireStoreDB):
@@ -133,7 +134,7 @@ class FirestoreClient(FireStoreDB):
         attorney_id: str,
         applicant_id: str,
         filters: Optional[dict] = {},
-        order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
+        order=DESCENDING,
     ) -> Union[EmbeddedDocument, Document, None]:
         """
         Finds a firestore Document item from the collection and converts it to a mongo object
@@ -154,7 +155,7 @@ class FirestoreClient(FireStoreDB):
         applicant_id: str,
         filters: Optional[dict] = {},
         k: int = 1,
-        order: [ASCENDING, DESCENDING, 1, -1] = DESCENDING,
+        order=DESCENDING,
     ) -> Union[List[EmbeddedDocument], List[Document], None]:
         """
         Finds top K firestore document items given a limit k from the collection
@@ -197,13 +198,13 @@ class FirestoreClient(FireStoreDB):
 
         if ASCENDING:
             query = (
-                self._collection.where(filter=composite_filter)
+                self._async_collection.where(filter=composite_filter)
                 .order_by("date_created", direction=firestore.Query.ASCENDING)
                 .limit(k)
             )
         else:
             query = (
-                self._collection.where(filter=composite_filter)
+                self._async_collection.where(filter=composite_filter)
                 .order_by("date_created", direction=firestore.Query.DESCENDING)
                 .limit(k)
             )
@@ -230,8 +231,11 @@ class FirestoreClient(FireStoreDB):
                 f"The mongo doc provided {doc} of type {type(doc)} "
                 f"needs to be type {self._model}"
             )
+        # ToDo: Change to unix timestamp
         doc.date_created = datetime.datetime.utcnow()
-        _, doc_ref = await self._collection.add(doc.to_mongo().to_dict())
+        # Tried async collection but it has issues with event loop closures.
+        # Switching to regular collection
+        _, doc_ref = self._collection.add(doc.to_mongo().to_dict())
         _logger.info(f"Document inserted. Firestore id: {doc_ref.id}")
 
         return doc_ref.id

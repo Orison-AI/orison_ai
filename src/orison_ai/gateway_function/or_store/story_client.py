@@ -32,6 +32,7 @@ class StoryClient(FirestoreClient):
         """
         super(StoryClient, self).__init__()
         self._model = StoryBuilder
+        self._async_collection = self.async_client.collection("story_builder")
         self._collection = self.client.collection("story_builder")
 
 
@@ -43,4 +44,5 @@ class ScreeningClient(FirestoreClient):
         """
         super(ScreeningClient, self).__init__()
         self._model = ScreeningBuilder
+        self._async_collection = self.async_client.collection("screening_builder")
         self._collection = self.client.collection("screening_builder")
