@@ -45,13 +45,15 @@ def send_curl_request(url, method, headers=None, data=None):
 
 if __name__ == "__main__":
     # Example usage
-    url = "0.0.0.0:3000"
+    url_default = "0.0.0.0:3000"
     method = "POST"
     headers = {"Content-Type": "application/json"}
 
     parser = ArgumentParser()
     parser.add_argument("--data", type=str, required=True)
+    parser.add_argument("--url", type=str, default=url_default)
     args = parser.parse_args()
     data = args.data
+    url = args.url
 
     send_curl_request(url, method, headers, data)
