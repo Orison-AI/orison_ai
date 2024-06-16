@@ -50,10 +50,13 @@ if __name__ == "__main__":
     headers = {"Content-Type": "application/json"}
 
     parser = ArgumentParser()
-    parser.add_argument("--data", type=str, required=True)
-    parser.add_argument("--url", type=str, default=url_default)
+    parser.add_argument("-d", "--data", type=str, required=True)
+    parser.add_argument("-u", "--url", type=str, default=url_default)
+    parser.add_argument("-a", "--authorization", type=str)
     args = parser.parse_args()
     data = args.data
     url = args.url
+    if args.authorization:
+        headers["Authorization"] = f"Bearer {args.authorization}"
 
     send_curl_request(url, method, headers, data)
