@@ -170,7 +170,7 @@ const FileUploader = ({ selectedApplicant }) => {
   };
 
   return (
-    <VStack width="50%" mt="4vh">
+    <VStack width="50%" height="50vh" mt="4vh">
       <HStack width="100%" mb="0.5vh" fontSize="24px">
         <Text width="100%">Applicant Files</Text>
         <Box minWidth="200px" fontSize="24px">
@@ -183,7 +183,7 @@ const FileUploader = ({ selectedApplicant }) => {
           </Select>
         </Box>
       </HStack>
-      <Box mb="20px" width="100%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
+      <Box mb="2vh" width="100%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
         <Table variant="simple">
           <Thead>
             <Tr>
@@ -223,20 +223,20 @@ const FileUploader = ({ selectedApplicant }) => {
             ))}
           </Tbody>
         </Table>
-        <VStack
-          {...getRootProps()}
-          border="2px dashed gray"
-          p="2vh"
-          m="2vh"
-          backgroundColor={isDragActive ? 'gray.700' : 'transparent'}
-        >
-          <input {...getInputProps()} />
-          <Icon as={DownloadIcon} w="4vh" h="4vh" mt="2vh" mb="2vh" color="gray.500" />
-          <Text fontSize="20px">
-            <Link as="b" onClick={open} cursor="pointer">Choose a file</Link> or drag it here
-          </Text>
-        </VStack>
       </Box>
+      <VStack
+        {...getRootProps()}
+        border="2px dashed gray"
+        p="2vh"
+        mb="2vh"
+        backgroundColor={isDragActive ? 'gray.700' : 'transparent'}
+      >
+        <input {...getInputProps()} />
+        <Icon as={DownloadIcon} w="4vh" h="4vh" mt="2vh" mb="2vh" color="gray.500" />
+        <Text fontSize="20px">
+          <Link as="b" onClick={open} cursor="pointer">Choose a file</Link> or drag it here
+        </Text>
+      </VStack>
       <OverwriteFileModal
         isOpen={isOverwriteModalOpen}
         onClose={onOverwriteModalClose}
