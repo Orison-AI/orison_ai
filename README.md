@@ -32,6 +32,20 @@ pre-commit run --all-files
 ```
 localhost:3000
 ```
+Frontend presently sends requests to the actual google cloud function
+
+## Emulated Frontend via Curl
+- Run the send_curl_request script with your payload. Below is an example:
+```
+python3 scripts/send_curl_request.py --data '{"data":{
+    "or_request_type": "summarize",
+    "or_request_payload": {
+      "attorneyId": "vnaFuo56thJBKJ2GiKo3wt80J03",
+      "applicantId": "HISMzbk1P8ATCyYqo6I",
+      "bucketName": "research"
+    }
+  }}' 
+```
 
 ## Backend
 - Firing up the backend is feasible from exec ing into the container

@@ -19,6 +19,11 @@ import os
 import json
 import logging
 import datetime
+from exceptions import (
+    CREDENTIALS_NOT_FOUND,
+    INVALID_CREDENTIALS,
+    FIRESTORE_CONNECTION_FAILED,
+)
 from google.cloud.firestore_v1.base_query import FieldFilter, BaseCompositeFilter
 from google.cloud.firestore_v1.types import StructuredQuery
 from google.cloud.secretmanager_v1 import SecretManagerServiceClient
@@ -36,25 +41,22 @@ logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 
-class CREDENTIALS_NOT_FOUND(ValueError):
-    def __init__(self, message="Invalid Credentials"):
-        self.message = message
-        super().__init__(self.message)
-
-
-class INVALID_CREDENTIALS(Exception):
-    def __init__(self, message="Invalid Credentials"):
-        self.message = message
-        super().__init__(self.message)
-
-
-class FIRESTORE_CONNECTION_FAILED(Exception):
-    def __init__(self, message="Failed to connect to Firestore"):
-        self.message = message
-        super().__init__(self.message)
-
-
 PROJECT_PREFIX_FOR_SECRET_MANAGER = "projects/685108028813/secrets/"
+
+
+def environment_or_secret(key: str):
+    value = os.getenv(key.upper())
+    if value is None:
+        _logger.info(
+            f"Missing {key.upper()} in environment variable. Attempting secret manager"
+        )
+        try:
+            # Getting secrets
+            value = read_remote_secret_url_as_string(build_secret_url(key.lower()))
+        except Exception as e:
+            message = f"{key.lower()} not found in secret manager. Error: {e}"
+            raise CREDENTIALS_NOT_FOUND(message=message)
+    return value
 
 
 def build_secret_url(
@@ -74,29 +76,26 @@ def read_remote_secret_url_as_string(secret_url: str) -> str:
 
 
 def get_firebase_admin_app():
-    cred_str = os.getenv("FIREBASE_CREDENTIALS")
-    if cred_str is None:
-        _logger.info(
-            "Missing FIREBASE_CREDENTIALS in environment variable. Attempting secret manager"
-        )
-        try:
-            cred_dict = json.loads(
-                read_remote_secret_url_as_string(
-                    build_secret_url("firebase_credentials")
-                )
-            )
-            bucket_str = read_remote_secret_url_as_string(build_secret_url("bucket"))
-            options = {"storageBucket": bucket_str}
-        except Exception as e:
-            raise CREDENTIALS_NOT_FOUND(
-                "FIREBASE_CREDENTIALS or BUCKET not found in secret manager"
-            )
-    else:
-        try:
-            cred_dict = json.loads(cred_str)
-            options = {}
-        except json.JSONDecodeError:
-            raise INVALID_CREDENTIALS("Invalid JSON in FIREBASE_CREDENTIALS")
+    try:
+        secret = environment_or_secret("FIREBASE_CREDENTIALS")
+        cred_dict = json.loads(secret)
+    except CREDENTIALS_NOT_FOUND as e:
+        raise e
+    except json.JSONDecodeError:
+        raise INVALID_CREDENTIALS("Invalid JSON in FIREBASE_CREDENTIALS")
+    except Exception as e:
+        _logger.error(f"Unknown error: {e}")
+        options = {}
+
+    try:
+        bucket_str = environment_or_secret("BUCKET")
+        options = {"storageBucket": bucket_str}
+    except CREDENTIALS_NOT_FOUND as e:
+        _logger.error(f"No bucket found in environment variables. Error: {e}")
+        options = {}
+    except Exception as e:
+        _logger.error(f"Unknown error: {e}")
+        options = {}
 
     # Convert string back to JSON
     cred = credentials.Certificate(cred_dict)
