@@ -15,6 +15,7 @@
 # ==========================================================================
 
 import os
+import asyncio
 
 
 def file_extension(file_path: str) -> str:
@@ -25,3 +26,13 @@ def file_extension(file_path: str) -> str:
 def raise_and_log_error(self, message: str, logger, exception=Exception):
     logger.error(message)
     raise exception(message)
+
+
+# Define an asynchronous generator function
+async def async_generator_from_list(data_list: list):
+    if not isinstance(data_list, list):
+        raise TypeError("data_list must be a list")
+    for item in data_list:
+        yield item
+        # Simulate some asynchronous operation
+        await asyncio.sleep(0.001)

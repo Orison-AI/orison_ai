@@ -18,7 +18,7 @@
 
 import os
 import json
-from typing import Union
+from typing import Union, List
 from enum import Enum
 import traceback
 import logging
@@ -31,7 +31,6 @@ from langchain.retrievers.multi_query import MultiQueryRetriever
 
 # Internal
 
-from or_store.firebase import environment_or_secret
 from request_handler import RequestHandler, OKResponse, ErrorResponse
 from exceptions import (
     LLM_INITIALIZATION_FAILED,
@@ -40,16 +39,18 @@ from exceptions import (
 )
 from or_store.models import ScreeningBuilder, QandA, StoryBuilder
 from or_store.story_client import ScreeningClient, StoryClient
+from or_store.firebase import OrisonSecrets
+from utils import async_generator_from_list
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 
 class DetailLevel(Enum):
-    LIGHT = "light details"
-    MODERATE = "moderate details"
-    LENGTHY = "lengthy details"
-    HEAVY = "very heavyily detailed"
+    LIGHT = "light detail"
+    MODERATE = "moderate detail"
+    LENGTHY = "lengthy detail"
+    HEAVY = "very heavy detail"
 
     def __str__(self):
         return self.value
@@ -113,27 +114,8 @@ class OpenAIPostman(ChatOpenAI):
 
 
 @dataclass
-class SummarizerSecrets:
-    openai_api_key: str
-    qdrant_url: str
-    qdrant_api_key: str
-    collection_name: str
-
-    @classmethod
-    def from_attorney_applicant(cls, attorney_id: str, applicant_id: str):
-        openai_api_key = environment_or_secret("OPENAI_API_KEY")
-        qdrant_url = environment_or_secret("QDRANT_URL")
-        qdrant_api_key = environment_or_secret("QDRANT_API_KEY")
-        # TODO: Need to sanitize the path to avoid path traversal attacks
-        collection_name = f"{attorney_id}_{applicant_id}_collection"
-        _logger.debug(
-            f"Processing file for attorney {attorney_id} and applicant {applicant_id}"
-        )
-
-
-@dataclass
-class Prompts:
-    questions: list
+class Prompt:
+    question: list
     detail_level: str
 
 
@@ -145,9 +127,7 @@ class Summarize(RequestHandler):
         try:
             self.postman = OpenAIPostman(api_key=secrets.openai_api_key)
         except Exception as e:
-            message = (
-                f"Error initializing OpenAIPostman. Error: {traceback.format_exc(e)}"
-            )
+            message = f"Error initializing OpenAIPostman. Error: {e}"
             _logger.error(message)
             raise LLM_INITIALIZATION_FAILED(message)
 
@@ -167,7 +147,7 @@ class Summarize(RequestHandler):
                 embeddings=embedding,
             )
         except Exception as e:
-            message = f"Error initializing Qdrant. Error: {traceback.format_exc(e)}"
+            message = f"Error initializing Qdrant. Error: {e}"
             _logger.error(message)
             raise QDrant_INITIALIZATION_FAILED(message)
 
@@ -178,22 +158,32 @@ class Summarize(RequestHandler):
                 include_original=True,
             )
         except Exception as e:
-            message = f"Error initializing Retriever. Error: {traceback.format_exc(e)}"
+            message = f"Error initializing Retriever. Error: {e}"
             _logger.error(message)
             raise Retriever_INITIALIZATION_FAILED(message)
         self._screening_client = ScreeningClient()
 
     @staticmethod
-    def prompts(file_path: str = "../templates/eb1_a_questionnaire.json"):
+    def prompts(
+        file_path: str = os.path.join(
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                )
+            ),
+            "templates",
+            "eb1_a_questionnaire.json",
+        ),
+    ):
         prompts = []
-        with open(file_path) as file:
+        with open(file=file_path, mode="r") as file:
             js = json.load(file)
             for question, detail_level in zip(
                 js["prompt"]["research"]["question"],
                 js["prompt"]["research"]["detail_level"],
             ):
                 prompts.append(
-                    Prompts(
+                    Prompt(
                         question=question,
                         detail_level=detail_level,
                     )
@@ -201,9 +191,9 @@ class Summarize(RequestHandler):
             file.close()
         return prompts
 
-    async def get_multi_query_screening(self, prompts: Prompts):
+    async def get_multi_query_screening(self, prompts: List[Prompt]):
         screening = ScreeningBuilder()
-        async for prompt in prompts:
+        async for prompt in async_generator_from_list(prompts):
             retrieved_docs = self.retriever.invoke(prompt.question)
             context = "\n".join([doc.page_content for doc in retrieved_docs])
             source = "\n".join(
@@ -215,9 +205,7 @@ class Summarize(RequestHandler):
             response = self.postman.request(
                 prompt.question, context, prompt.detail_level
             )
-            qna = QandA(
-                question=prompt.question, answer=response.content, source=source
-            )
+            qna = QandA(question=prompt.question, answer=response, source=source)
             screening.summary.append(qna)
         return screening
 
@@ -226,16 +214,17 @@ class Summarize(RequestHandler):
         attorney_id = request_json["attorneyId"]
         applicant_id = request_json["applicantId"]
         # ToDo: Use bucket with qdrant tag
-        bucket = request_json["bucketName"]
+        bucket_name = request_json["bucketName"]
         try:
-            secrets = SummarizerSecrets.from_attorney_applicant(
-                attorney_id, applicant_id
-            )
+            secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             _logger.info("Initializing summarizer with secrets")
             self.initialize(secrets)
             prompts = self.prompts()
             _logger.info("Initializing summarizer with secrets...done")
             screening = await self.get_multi_query_screening(prompts)
+            screening.attorney_id = attorney_id
+            screening.applicant_id = applicant_id
+            screening.bucket_name = bucket_name
             _logger.info("Storing screening in Firestore")
             id = await self._screening_client.insert(screening)
             _logger.info(f"Screening stored in Firestore with ID: {id}")

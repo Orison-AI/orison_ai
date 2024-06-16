@@ -18,6 +18,7 @@
 import os
 import json
 import logging
+from dataclasses import dataclass
 import datetime
 from exceptions import (
     CREDENTIALS_NOT_FOUND,
@@ -42,6 +43,27 @@ _logger = logging.getLogger(__name__)
 
 
 PROJECT_PREFIX_FOR_SECRET_MANAGER = "projects/685108028813/secrets/"
+
+
+@dataclass
+class OrisonSecrets:
+    openai_api_key: str
+    qdrant_url: str
+    qdrant_api_key: str
+    collection_name: str
+
+    @classmethod
+    def from_attorney_applicant(cls, attorney_id: str, applicant_id: str):
+        _logger.debug(
+            f"Processing file for attorney {attorney_id} and applicant {applicant_id}"
+        )
+        return cls(
+            openai_api_key=environment_or_secret("OPENAI_API_KEY"),
+            qdrant_url=environment_or_secret("QDRANT_URL"),
+            qdrant_api_key=environment_or_secret("QDRANT_API_KEY"),
+            # TODO: Need to sanitize the path to avoid path traversal attacks
+            collection_name=f"{attorney_id}_{applicant_id}_collection",
+        )
 
 
 def environment_or_secret(key: str):
@@ -85,17 +107,14 @@ def get_firebase_admin_app():
         raise INVALID_CREDENTIALS("Invalid JSON in FIREBASE_CREDENTIALS")
     except Exception as e:
         _logger.error(f"Unknown error: {e}")
-        options = {}
-
+    options = {}
     try:
         bucket_str = environment_or_secret("BUCKET")
         options = {"storageBucket": bucket_str}
     except CREDENTIALS_NOT_FOUND as e:
         _logger.error(f"No bucket found in environment variables. Error: {e}")
-        options = {}
     except Exception as e:
         _logger.error(f"Unknown error: {e}")
-        options = {}
 
     # Convert string back to JSON
     cred = credentials.Certificate(cred_dict)
