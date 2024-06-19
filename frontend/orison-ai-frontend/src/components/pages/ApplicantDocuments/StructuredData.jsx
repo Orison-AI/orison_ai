@@ -88,7 +88,7 @@ const StructuredData = ({ data, keys }) => {
   };
 
   return (
-    <VStack align="start">
+    <VStack align="start" fontFamily="monospace">
       {renderData(data, keys)}
     </VStack>
   );
