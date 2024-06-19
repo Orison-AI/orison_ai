@@ -1,11 +1,12 @@
 // ./components/pages/Documents/ScholarLinkForm.jsx
 
 // React
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../../common/firebaseConfig';
+import { auth, db } from '../../../common/firebaseConfig';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 // Chakra
 import {
@@ -25,10 +26,27 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
   const [scholarLinkSubmitted, setScholarLinkSubmitted] = useState(false);
   const toast = useToast();
 
+  useEffect(() => {
+    const fetchScholarLink = async () => {
+      if (user && selectedApplicant) {
+        const docRef = doc(db, "applicants", selectedApplicant.id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setScholarLink(docSnap.data().scholarLink || '');
+        }
+      }
+    };
+
+    fetchScholarLink();
+  }, [user, selectedApplicant]);
+
   const handleScholarSubmit = async (event) => {
     event.preventDefault();
     if (user && selectedApplicant) {
       try {
+        await setDoc(doc(db, "applicants", selectedApplicant.id), {
+          scholarLink,
+        }, { merge: true });
         const response = await processScholarLink(user.uid, selectedApplicant.id, scholarLink);
         toast({
           title: 'Google Scholar Link Submitted',
