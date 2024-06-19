@@ -16,6 +16,7 @@
 
 # External
 import os
+import asyncio
 
 ## File Loader and Embeddings Imports
 from langchain_community.document_loaders import (
@@ -29,7 +30,6 @@ from langchain_experimental.text_splitter import SemanticChunker
 from langchain_openai.embeddings import OpenAIEmbeddings
 
 # Internal
-from or_store.firebase import build_secret_url, read_remote_secret_url_as_string
 from request_handler import RequestHandler, OKResponse, ErrorResponse
 from or_store.firebase_storage import FirebaseStorage
 from utils import raise_and_log_error, file_extension
@@ -118,7 +118,9 @@ class VectorizeFiles(RequestHandler):
         # Apply the splitter to the document. It will internally call create_documents
         # which will internally call split_text
         # Returns a List[Document]
+        logger.info("Splitting documents")
         chunks = text_splitter.split_documents(documents)
+        logger.info("Splitting documents....DONE")
         filtered_chunks = [
             chunk for chunk in chunks if len(chunk.page_content) >= MIN_CHUNK_SIZE
         ]
@@ -132,17 +134,23 @@ class VectorizeFiles(RequestHandler):
         return response.data[0].embedding
 
     @staticmethod
-    def _store_chunks(
+    async def _store_chunks(
         chunks, openai_client, qdrant_client, logger, tag, collection_name
     ):
-        embeddings = [
-            VectorizeFiles._get_openai_embedding(chunk.page_content, openai_client)
-            for chunk in chunks
-        ]
-        payloads = [
-            {"page_content": chunk.page_content, "metadata": chunk.metadata, "tag": tag}
-            for chunk in chunks
-        ]
+        async def process_chunk(chunk, openai_client, tag):
+            embedding = await VectorizeFiles._get_openai_embedding(
+                chunk.page_content, openai_client
+            )
+            payload = {
+                "page_content": chunk.page_content,
+                "metadata": chunk.metadata,
+                "tag": tag,
+            }
+            return embedding, payload
+
+        tasks = [process_chunk(chunk, openai_client, tag) for chunk in chunks]
+        results = await asyncio.gather(*tasks)
+        embeddings, payloads = zip(*results)
 
         # Ensure the collection exists
         qdrant_client.recreate_collection(
@@ -154,12 +162,14 @@ class VectorizeFiles(RequestHandler):
         )
 
         # Upload vectors to Qdrant
+        logger.info("Uploading vectors to Qdrant")
         qdrant_client.upload_collection(
             collection_name=collection_name,
             vectors=np.array(embeddings),
             payload=payloads,
             ids=None,  # Let Qdrant generate IDs
         )
+        logger.info("Uploading vectors to Qdrant....DONE")
 
     async def handle_request(self, request_json):
         try:
@@ -204,7 +214,7 @@ class VectorizeFiles(RequestHandler):
             self.logger.debug(
                 f"Storing chunks in Qdrant in collection {secrets.collection_name}"
             )
-            VectorizeFiles._store_chunks(
+            await VectorizeFiles._store_chunks(
                 chunks,
                 openai_client=OpenAI(api_key=openai_api_key),
                 qdrant_client=QdrantClient(url=qdrant_url, api_key=qdrant_api_key),

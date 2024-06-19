@@ -37,17 +37,17 @@ Frontend presently sends requests to the actual google cloud function
 ## Emulated Frontend via Curl
 - Run the send_curl_request script with your payload. Below is an example:
 ```
-curl -m 70 -X POST <trigger_url> \
+curl -m 70 -X POST https://us-central1-orison-ai-visa-apply.cloudfunctions.net/gateway_function_staging \
 -H "Authorization: bearer $(gcloud auth print-identity-token)" \
 -H "Content-Type: application/json" \
 -d '{
     "data":{
       "or_request_type": "vectorize-files",
       "or_request_payload": {
-        "attorneyId": "",
-        "applicantId": "", 
-        "file_ids" : ["", "", ""],
-        "bucketName": ""
+        "attorneyId": "<attorney_hash>",
+        "applicantId": "<applicant_hash>", 
+        "fileIds" : ["<filename>.pdf"],
+        "bucketName": "<bucket_name>"
       }
   }}' 
 ```
@@ -84,4 +84,10 @@ gcloud auth list # Authorized service account should be correct
 gcloud auth activate-service-account --key-file=/path_to_key_downloaded_from_service_account
 # Check again
 gcloud auth list
+```
+
+## Gcloud Deployment
+- Be in the directory containing gateway_function directory or change source accordingly
+```
+gcloud functions deploy gateway_function --runtime python310 --memory 512 --trigger-http --allow-unauthenticated --entry-point gateway_function --source=gateway_function --no-gen2 --max-instances 5 --timeout 240
 ```
