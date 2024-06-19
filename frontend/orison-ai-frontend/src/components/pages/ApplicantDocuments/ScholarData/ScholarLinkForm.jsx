@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '../../../common/firebaseConfig';
+import { auth, db } from '../../../../common/firebaseConfig';
 import {
   collection, doc, getDoc, getDocs,
   limit, orderBy, query, setDoc, where,
@@ -20,7 +20,7 @@ import {
 import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 
 // Orison AI
-import { processScholarLink } from '../../../api/api';
+import { processScholarLink } from '../../../../api/api';
 import ScholarDataModal from './ScholarDataModal';
 
 const ScholarLinkForm = ({ selectedApplicant }) => {

@@ -9,7 +9,7 @@ import {
 } from '@chakra-ui/react';
 
 // Orison
-import ScholarLinkForm from './ScholarLinkForm';
+import ScholarLinkForm from './ScholarData/ScholarLinkForm';
 import FileUploader from './FileUploader';
 
 const ApplicantDocuments = ({ selectedApplicant }) => (
