@@ -1,4 +1,4 @@
-// ./components/pages/ApplicantDocuments/FileContentModal.jsx
+// ./components/pages/ApplicantDocuments/ApplicantUploads/ViewFileModal.jsx
 
 // React
 import React from 'react';
@@ -9,7 +9,7 @@ import {
   ModalBody, ModalFooter, Button, Text,
 } from '@chakra-ui/react';
 
-const FileContentModal = ({ isOpen, onClose, fileName, fileContent }) => {
+const ViewFileModal = ({ isOpen, onClose, fileName, fileContent }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="3xl">
       <ModalOverlay />
@@ -28,4 +28,4 @@ const FileContentModal = ({ isOpen, onClose, fileName, fileContent }) => {
   );
 };
 
-export default FileContentModal;
+export default ViewFileModal;

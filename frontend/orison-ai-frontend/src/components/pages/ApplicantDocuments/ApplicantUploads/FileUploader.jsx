@@ -21,7 +21,7 @@ import { DownloadIcon } from '@chakra-ui/icons';
 // Orison
 import { vectorizeFiles } from '../../../../api/api';
 import DeleteFileModal from './DeleteFileModal';
-import FileContentModal from './FileContentModal';
+import ViewFileModal from './ViewFileModal';
 import FileTable from './FileTable';
 import OverwriteFileModal from './OverwriteFileModal';
 
@@ -242,7 +242,7 @@ const FileUploader = ({ selectedApplicant }) => {
         onConfirm={handleDeleteConfirm}
         fileName={fileToDelete}
       />
-      <FileContentModal
+      <ViewFileModal
         isOpen={isViewModalOpen}
         onClose={onViewModalClose}
         fileName={fileToView}
