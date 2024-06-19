@@ -53,7 +53,7 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
 
   return (
     <FormControl width="50%">
-      <Text width="100%" mb="1vh" fontSize="24px">Google Scholar Link</Text>
+      <Text width="100%" mb="1vh" fontSize="24px">Google Scholar</Text>
       <form onSubmit={handleScholarSubmit}>
         <HStack>
           <InputGroup>
