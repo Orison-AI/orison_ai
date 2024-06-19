@@ -5,7 +5,7 @@ import React from 'react';
 
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../common/firebaseConfig';
+import { auth } from '../../../common/firebaseConfig';
 
 // Chakra
 import {
@@ -13,7 +13,7 @@ import {
 } from '@chakra-ui/react';
 
 // Orison
-import { summarize } from '../../api/api';
+import { summarize } from '../../../api/api';
 
 const ApplicantInformatics = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);

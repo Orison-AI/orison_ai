@@ -19,7 +19,7 @@ import Settings from './components/settings/Settings';
 import Auth from './components/auth/Auth';
 import ManageApplicants from './components/pages/ManageApplicants/ManageApplicants';
 import ApplicantDocuments from './components/pages/ApplicantDocuments/ApplicantDocuments';
-import ApplicantInformatics from './components/pages/ApplicantInformatics';
+import ApplicantInformatics from './components/pages/ApplicantInformatics/ApplicantInformatics';
 
 const App = () => {
   const [isMenuOpen, setMenuOpen] = useState(false);
