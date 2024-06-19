@@ -127,7 +127,7 @@ class VectorizeFiles(RequestHandler):
         return filtered_chunks
 
     @staticmethod
-    def _get_openai_embedding(text, openaiClient):
+    async def _get_openai_embedding(text, openaiClient):
         response = openaiClient.embeddings.create(
             input=[text], model="text-embedding-ada-002"
         )  # Use the appropriate OpenAI model)

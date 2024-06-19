@@ -89,5 +89,5 @@ gcloud auth list
 ## Gcloud Deployment
 - Be in the directory containing gateway_function directory or change source accordingly
 ```
-gcloud functions deploy gateway_function --runtime python310 --memory 512 --trigger-http --allow-unauthenticated --entry-point gateway_function --source=gateway_function --no-gen2 --max-instances 5 --timeout 240
+gcloud functions deploy gateway_function --runtime python310 --memory 512 --trigger-http --allow-unauthenticated --entry-point gateway_function --source=gateway_function --no-gen2 --max-instances 5 --timeout 60
 ```

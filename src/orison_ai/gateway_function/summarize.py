@@ -139,8 +139,11 @@ class Summarize(RequestHandler):
 
             # Define the name of the collection
             collection_name = secrets.collection_name
-            collection_name = "orison_vdb"
-            embedding = OpenAIEmbeddings(model="text-embedding-ada-002")
+            # ToDo: Include embedding as part of Postman
+            # Use Postman in vectorization
+            embedding = OpenAIEmbeddings(
+                model="text-embedding-ada-002", api_key=secrets.openai_api_key
+            )
             self.vectordb = Qdrant(
                 client=self.qdrant_client,
                 collection_name=collection_name,
@@ -166,11 +169,7 @@ class Summarize(RequestHandler):
     @staticmethod
     def prompts(
         file_path: str = os.path.join(
-            os.path.dirname(
-                os.path.dirname(
-                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                )
-            ),
+            os.path.dirname(os.path.abspath(__file__)),
             "templates",
             "eb1_a_questionnaire.json",
         ),
