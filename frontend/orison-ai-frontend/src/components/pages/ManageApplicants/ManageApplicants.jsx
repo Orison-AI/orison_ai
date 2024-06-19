@@ -44,7 +44,7 @@ const ManageApplicants = ({
 
     async function fetchApplicants() {
       if (user) {
-        const q = query(collection(db, "applicants"), where("user_id", "==", user.uid));
+        const q = query(collection(db, "applicants"), where("attorney_id", "==", user.uid));
 
         unsubscribe = onSnapshot(
           q, (snapshot) => {
@@ -74,7 +74,7 @@ const ManageApplicants = ({
   const addNewApplicant = async () => {
     try {
       const newDoc = await addDoc(collection(db, "applicants"), {
-        user_id: user.uid,
+        attorney_id: user.uid,
         name: "",
         email: "",
         status: "",
@@ -92,7 +92,7 @@ const ManageApplicants = ({
     try {
       if (user) {
         await setDoc(doc(collection(db, "applicants"), applicant.id), {
-          user_id: user.uid,
+          attorney_id: user.uid,
           name: nameRef.current.value || "",
           email: emailRef.current.value || "",
           status: statusRef.current.value || "",

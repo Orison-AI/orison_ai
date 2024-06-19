@@ -6,7 +6,11 @@ import React, { useEffect, useState } from 'react';
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../../../common/firebaseConfig';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import {
+  collection, doc, getDoc, getDocs,
+  limit, orderBy, query, setDoc, where,
+} from 'firebase/firestore';
+
 
 // Chakra
 import {
@@ -29,10 +33,28 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
   useEffect(() => {
     const fetchScholarLink = async () => {
       if (user && selectedApplicant) {
+        // Check applicants collection for scholar link
         const docRef = doc(db, "applicants", selectedApplicant.id);
+        // Get the scholar link from the database
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
+          // Use scholar link from the database
           setScholarLink(docSnap.data().scholarLink || '');
+        }
+  
+        // Check google_scholar collection for latest data
+        setScholarLinkSubmitted(false);
+
+        const scholarQuery = query(
+          collection(db, "google_scholar"),
+          where("attorney_id", "==", user.uid),
+          where("applicant_id", "==", selectedApplicant.id),
+          orderBy("date_created", "desc"),
+          limit(1)
+        );
+        const querySnapshot = await getDocs(scholarQuery);
+        if (!querySnapshot.empty) {
+          setScholarLinkSubmitted(true);
         }
       }
     };
@@ -47,6 +69,13 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
         await setDoc(doc(db, "applicants", selectedApplicant.id), {
           scholarLink,
         }, { merge: true });
+        toast({
+          title: 'Submitting Google Scholar Link',
+          description: 'Please wait for processing',
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
         const response = await processScholarLink(user.uid, selectedApplicant.id, scholarLink);
         toast({
           title: 'Google Scholar Link Submitted',
@@ -55,7 +84,6 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
           duration: 5000,
           isClosable: true,
         });
-        setScholarLinkSubmitted(true);
       } catch (error) {
         toast({
           title: 'Submission Failed',
@@ -64,7 +92,6 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
           duration: 5000,
           isClosable: true,
         });
-        setScholarLinkSubmitted(false);
       }
     }
   };
