@@ -8,7 +8,8 @@ import { useDropzone } from 'react-dropzone';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../../../common/firebaseConfig';
 import {
-  deleteObject, getDownloadURL, getStorage, listAll, ref, uploadBytes,
+  deleteObject, getDownloadURL, getMetadata, getStorage,
+  listAll, ref, uploadBytes,
 } from 'firebase/storage';
 
 // Chakra
@@ -68,13 +69,25 @@ const FileUploader = ({ selectedApplicant }) => {
     for (const file of acceptedFiles) {
       const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${file.name}`;
       const storageRef = ref(storage, filePath);
+
+      // Determine the correct contentType
+      let contentType = file.type;
+
+      // Browser doesn't detect markdown files for some reason
+      if (file.name.endsWith('.md')) {
+        contentType = 'text/markdown';
+      }
+
+      const metadata = {
+        contentType: contentType,
+      };
   
       if (documents.includes(file.name)) {
         setFileToOverwrite(file);
         onOverwriteModalOpen();
       } else {
         try {
-          await uploadBytes(storageRef, file);
+          await uploadBytes(storageRef, file, metadata);
           fetchDocuments();
         } catch (error) {
           console.error(`Error uploading file: ${error.message}`);
@@ -178,12 +191,30 @@ const FileUploader = ({ selectedApplicant }) => {
     const storageRef = ref(getStorage(), filePath);
     
     try {
-      const fileUrl = await getDownloadURL(storageRef);
-      const response = await fetch(fileUrl);
-      const text = await response.text();
+      // Get file metadata, which includes the content type
+      const metadata = await getMetadata(storageRef);
+      const contentType = metadata.contentType;
+
+      // Determine if the file is text or binary based on contentType
+      const textMimeTypes = [
+        'text/plain', 'text/html', 'text/css', 'application/javascript', 'text/javascript',
+        'application/json', 'application/xml', 'text/xml', 'text/markdown', 'text/csv',
+        'application/x-yaml', 'text/yaml', 'text/x-vcard', 'text/x-vcalendar'
+      ];
+      
+      const isTextFile = (mimeType) => textMimeTypes.includes(mimeType);
+      let text = `Unable to display file of type: [${contentType}]`;
+
+      if (isTextFile(contentType)) {
+        const fileUrl = await getDownloadURL(storageRef);
+        const response = await fetch(fileUrl);
+        text = await response.text();
+      }
+      
       setFileToView(fileName);
       setFileContent(text);
       onViewModalOpen();
+
     } catch (error) {
       console.error(`Error fetching file content: ${error.message}`);
       toast({
