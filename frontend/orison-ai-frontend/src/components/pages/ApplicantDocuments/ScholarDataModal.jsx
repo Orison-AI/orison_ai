@@ -23,10 +23,17 @@ const ScholarDataModal = ({ isOpen, onClose, data }) => {
     },
     { key: "cited_by" },
     { key: "cited_by_5y" },
+    { key: "cited_each_year", dynamic: true },
     { key: "homepage" },
     { key: "h_index" },
     { key: "h_index_5y" },
     { key: "keywords", dynamic: true },
+    { key: "co_authors", dynamic: true, subKeys: [
+        { key: "name" },
+        { key: "affiliation" },
+        { key: "scholar_id" },
+      ]
+    },
     { key: "publications", dynamic: true, subKeys: [
         { key: "authors" },
         { key: "title" },
