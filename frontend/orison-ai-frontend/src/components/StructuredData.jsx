@@ -1,4 +1,4 @@
-// ./components/pages/Documents/StructuredData.jsx
+// ./components/StructuredData.jsx
 
 // React
 import React, { useState } from 'react';

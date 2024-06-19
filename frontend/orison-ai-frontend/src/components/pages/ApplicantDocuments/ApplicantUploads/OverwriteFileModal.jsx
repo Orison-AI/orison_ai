@@ -1,4 +1,4 @@
-// ./components/pages/ApplicantDocuments/OverwriteFileModal.jsx
+// ./components/pages/ApplicantDocuments/ApplicantUploads/OverwriteFileModal.jsx
 
 // React
 import React from 'react';

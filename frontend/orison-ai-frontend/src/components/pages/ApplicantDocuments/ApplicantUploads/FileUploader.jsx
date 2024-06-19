@@ -1,4 +1,4 @@
-// ./components/pages/ApplicantDocuments/FileUploader.jsx
+// ./components/pages/ApplicantDocuments/ApplicantUploads/FileUploader.jsx
 
 // React
 import React, { useCallback, useState, useEffect } from 'react';
@@ -13,16 +13,15 @@ import {
 
 // Chakra
 import {
-  Badge, Box, Button, HStack, Icon, IconButton, Link, Select,
-  Table, Thead, Tbody, Tr, Th, Td,
+  Box, HStack, Icon, Link, Select,
   Text, useDisclosure, useToast, VStack,
 } from '@chakra-ui/react';
-import { CloseIcon, CheckCircleIcon, DownloadIcon } from '@chakra-ui/icons';
-// Will use TimeIcon when processing is in-progress
+import { DownloadIcon } from '@chakra-ui/icons';
 
 // Orison
 import { vectorizeFiles } from '../../../../api/api';
 import DeleteFileModal from './DeleteFileModal';
+import FileTable from './FileTable';
 import OverwriteFileModal from './OverwriteFileModal';
 
 const buckets = ["research", "reviews", "awards", "feedback"];
@@ -183,47 +182,12 @@ const FileUploader = ({ selectedApplicant }) => {
           </Select>
         </Box>
       </HStack>
-      <Box mb="2vh" width="100%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
-        <Table variant="simple">
-          <Thead>
-            <Tr>
-              <Th>File Name</Th>
-              <Th>Status</Th>
-              <Th></Th>
-            </Tr>
-          </Thead>
-          <Tbody fontSize="20px">
-            {documents.map(fileName => (
-              <Tr key={fileName}>
-                <Td>
-                  {fileName} 
-                  {(processedFiles.includes(fileName)) && (
-                    <CheckCircleIcon ml="2" color="green.500" />
-                  )}
-                </Td>
-                <Td>
-                  {processedFiles.includes(fileName) ? (
-                    <Badge colorScheme="green">Vectorized</Badge>
-                  ) : (
-                    <Badge colorScheme="orange">Not Vectorized</Badge>
-                  )}
-                </Td>
-                <Td isNumeric>
-                  <Button ml="2vh" mr="2vh" colorScheme="blue" onClick={() => vectorizeFile(fileName)}>
-                    Vectorize
-                  </Button>
-                  <IconButton
-                    icon={<CloseIcon />}
-                    colorScheme="red"
-                    variant="ghost"
-                    onClick={() => deleteFile(fileName)}
-                  />
-                </Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
-      </Box>
+      <FileTable
+        documents={documents}
+        processedFiles={processedFiles}
+        vectorizeFile={vectorizeFile}
+        deleteFile={deleteFile}
+      />
       <VStack
         {...getRootProps()}
         border="2px dashed gray"

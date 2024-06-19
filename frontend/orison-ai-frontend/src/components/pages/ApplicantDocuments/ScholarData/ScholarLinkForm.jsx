@@ -1,4 +1,4 @@
-// ./components/pages/Documents/ScholarLinkForm.jsx
+// ./components/pages/ApplicantDocuments/ScholarData/ScholarLinkForm.jsx
 
 // React
 import React, { useCallback, useEffect, useState } from 'react';

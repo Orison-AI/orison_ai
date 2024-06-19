@@ -1,4 +1,4 @@
-// ./components/pages/Documents/ApplicantDocuments.jsx
+// ./components/pages/ApplicantDocuments/ApplicantDocuments.jsx
 
 // React
 import React from 'react';

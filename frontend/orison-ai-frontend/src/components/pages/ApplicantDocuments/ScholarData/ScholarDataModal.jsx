@@ -1,4 +1,4 @@
-// ./components/pages/Documents/ScholarDataModal.jsx
+// ./components/pages/ApplicantDocuments/ScholarData/ScholarDataModal.jsx
 
 // React
 import React from 'react';

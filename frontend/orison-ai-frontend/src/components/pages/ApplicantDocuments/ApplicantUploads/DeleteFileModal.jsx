@@ -1,4 +1,4 @@
-// ./components/pages/ApplicantDocuments/DeleteFileModal.jsx
+// ./components/pages/ApplicantDocuments/ApplicantUploads/DeleteFileModal.jsx
 
 // React
 import React from 'react';
