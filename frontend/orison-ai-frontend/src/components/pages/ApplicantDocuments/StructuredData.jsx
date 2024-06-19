@@ -53,36 +53,34 @@ const StructuredData = ({ data, keys }) => {
                 {Object.keys(data[key]).map(dynamicKey => (
                   <Box key={dynamicKey} ml="10px">
                     {dynamicCollapsible ? (
-                      <Button onClick={() => toggleCollapse(`${key}-${dynamicKey}`)} size="s" variant="link" fontWeight="bold">
+                      <Button onClick={() => toggleCollapse(`${key}-${dynamicKey}`)} size="xs" variant="link" fontWeight="bold">
                         {collapsedKeys[`${key}-${dynamicKey}`] ? '▶' : '▼'} {dynamicKey}
                       </Button>
                     ) : (
                       <Text fontWeight="bold" display="inline">{dynamicKey}:</Text>
                     )}
-                    <Collapse in={!collapsedKeys[`${key}-${dynamicKey}`]}>
-                      {subKeys ? (
-                          <Box ml="10px">
-                            {renderData(data[key][dynamicKey], subKeys, level + 1)}
-                          </Box>
-                        ) : (
-                          <Text display="inline" ml="10px">{data[key][dynamicKey]}</Text>
-                        )
-                      }
-                    </Collapse>
+                    
+                    {typeof data[key][dynamicKey] === 'object' && subKeys ? (
+                      <Collapse in={!collapsedKeys[`${key}-${dynamicKey}`]}>
+                        <Box ml="10px">
+                          {renderData(data[key][dynamicKey], subKeys, level + 1)}
+                        </Box>
+                      </Collapse>
+                    ) : (
+                      <Text display="inline" ml="10px">{data[key][dynamicKey]}</Text>
+                    )}
                   </Box>
                 ))}
               </Box>
             </Collapse>
-          ) : (
+          ) : typeof data[key] === 'object' && subKeys ? (
             <Collapse in={!isCollapsed}>
-              {subKeys ? (
-                <Box ml="10px">
-                  {renderData(data[key], subKeys, level + 1)}
-                </Box>
-              ) : (
-                <Text display="inline" ml="10px">{data[key]}</Text>
-              )}
+              <Box ml="10px">
+                {renderData(data[key], subKeys, level + 1)}
+              </Box>
             </Collapse>
+          ) : (
+            <Text display="inline" ml="10px">{data[key]}</Text>
           )}
         </Box>
       );
