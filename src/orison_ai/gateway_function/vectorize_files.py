@@ -118,7 +118,7 @@ class VectorizeFiles(RequestHandler):
         # Apply the splitter to the document. It will internally call create_documents
         # which will internally call split_text
         # Returns a List[Document]
-        # ToDo: Need async here.
+        # ToDo: Need async here. Make sure source is only file name
         logger.info("Splitting documents")
         chunks = text_splitter.split_documents(documents)
         logger.info("Splitting documents....DONE")
@@ -189,11 +189,12 @@ class VectorizeFiles(RequestHandler):
                 f"Processing file for attorney {attorney_id} and applicant {applicant_id}"
             )
 
+            # ToDo: Currently supporting only one file. Increase it later.
             # Download the file
             bucket_file_path = VectorizeFiles._file_path_builder(
                 attorney_id, applicant_id, bucketName, file_ids[0]
             )
-            local_file_path = f"/tmp/to_be_processed" + file_extension(bucket_file_path)
+            local_file_path = os.path.join("tmp", "to_be_processed", file_ids[0])
             self.logger.debug(f"Remote File path: {bucket_file_path}")
             self.logger.debug(f"Local File path: {local_file_path}")
             await VectorizeFiles._download_file(

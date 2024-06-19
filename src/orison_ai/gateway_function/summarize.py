@@ -17,6 +17,7 @@
 # External
 
 import os
+import asyncio
 import json
 from typing import Union, List
 from enum import Enum
@@ -91,7 +92,7 @@ class OpenAIPostman(ChatOpenAI):
             **kwargs,
         )
 
-    def request(
+    async def request(
         self,
         query: str,
         context: str = "",
@@ -110,7 +111,8 @@ class OpenAIPostman(ChatOpenAI):
                 f"Given the context: \n{context}, \n answer the following: {query} in {detail_level.value}.",
             ),
         ]
-        return self.invoke(prompt).content
+        result = await self.ainvoke(prompt)
+        return result.content
 
 
 @dataclass
@@ -142,7 +144,8 @@ class Summarize(RequestHandler):
             # ToDo: Include embedding as part of Postman
             # Use Postman in vectorization
             embedding = OpenAIEmbeddings(
-                model="text-embedding-ada-002", api_key=secrets.openai_api_key
+                model="text-embedding-ada-002",
+                api_key=secrets.openai_api_key,
             )
             self.vectordb = Qdrant(
                 client=self.qdrant_client,
@@ -193,7 +196,7 @@ class Summarize(RequestHandler):
     async def get_multi_query_screening(self, prompts: List[Prompt]):
         screening = ScreeningBuilder()
         async for prompt in async_generator_from_list(prompts):
-            retrieved_docs = self.retriever.invoke(prompt.question)
+            retrieved_docs = await self.retriever.ainvoke(prompt.question)
             context = "\n".join([doc.page_content for doc in retrieved_docs])
             source = "\n".join(
                 [
@@ -201,11 +204,12 @@ class Summarize(RequestHandler):
                     for doc in retrieved_docs
                 ]
             )
-            response = self.postman.request(
+            response = await self.postman.request(
                 prompt.question, context, prompt.detail_level
             )
             qna = QandA(question=prompt.question, answer=response, source=source)
             screening.summary.append(qna)
+            await asyncio.sleep(0.01)
         return screening
 
     async def handle_request(self, request_json):
@@ -232,3 +236,13 @@ class Summarize(RequestHandler):
             message = f"Error processing files: {e}"
             self.logger.error(message)
             return ErrorResponse(message)
+
+
+if __name__ == "__main__":
+    request_json = {
+        "attorneyId": "xlMsyQpatdNCTvgRfW4TcysSDgX2",
+        "applicantId": "tYdtBdc7lJHyVCxquubj",
+        "bucketName": "research",
+    }
+    summarize = Summarize()
+    asyncio.run(summarize.handle_request(request_json))

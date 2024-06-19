@@ -49,7 +49,7 @@ routes: dict[GatewayRequestType, RequestHandler] = {
     GatewayRequestType.SUMMARIZE: Summarize(),
 }
 
-LOCAL_TESTING = False
+LOCAL_TESTING = True
 
 
 def verify_bearer_token(request: Request):
