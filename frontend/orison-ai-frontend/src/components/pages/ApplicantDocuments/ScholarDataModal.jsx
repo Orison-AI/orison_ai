@@ -5,7 +5,7 @@ import React from 'react';
 
 // Chakra UI
 import {
-  Modal, ModalOverlay, ModalContent, ModalHeader,
+  Box, Modal, ModalOverlay, ModalContent, ModalHeader,
   ModalBody, ModalFooter, Button,
 } from '@chakra-ui/react';
 
@@ -13,13 +13,40 @@ import {
 import StructuredData from './StructuredData';
 
 const ScholarDataModal = ({ isOpen, onClose, data }) => {
+  const keys = [
+    { key: "author", subKeys: [
+        { key: "name" },
+        { key: "affiliation" },
+        { key: "scholar_id" },
+        { key: "profile_link" },
+      ]
+    },
+    { key: "cited_by" },
+    { key: "cited_by_5y" },
+    { key: "homepage" },
+    { key: "h_index" },
+    { key: "h_index_5y" },
+    { key: "keywords" },
+    { key: "publications", subKeys: [
+        { key: "authors" },
+        { key: "title" },
+        { key: "year" },
+        { key: "type_of_paper" },
+        { key: "cited_by" },
+        { key: "peer_reviews" },
+      ]
+    },
+  ];
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl">
+    <Modal isOpen={isOpen} onClose={onClose} size="3xl">
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>Scholar Data</ModalHeader>
         <ModalBody>
-          <StructuredData data={data} />
+          <Box p="40px">
+            <StructuredData data={data} keys={keys} />
+          </Box>
         </ModalBody>
         <ModalFooter>
           <Button variant="ghost" onClick={onClose}>Close</Button>
