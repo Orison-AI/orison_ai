@@ -45,7 +45,7 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
   return (
     <VStack height="100%" width="100%" padding="2vh" fontSize="4vh">
       <HStack width="100%" mb="4vh">
-        <Text fontSize="32px" ml="2vh" color="gray.400">Informatics &gt;</Text>
+        <Text fontSize="32px" ml="2vh" color="gray.400">Summarization &gt;</Text>
         <Text fontSize="32px" color="green.300" as="strong">
           {selectedApplicant ? selectedApplicant.name : "None"}
         </Text>

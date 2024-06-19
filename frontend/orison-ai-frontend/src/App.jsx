@@ -76,7 +76,7 @@ const App = () => {
         />;
       case Views.APPLICANT_DOCUMENTS:
         return <ApplicantDocuments selectedApplicant={selectedApplicant} />;
-      case Views.APPLICANT_INFORMATICS:
+      case Views.APPLICANT_SUMMARIZATION:
         return <ApplicantSummarization selectedApplicant={selectedApplicant} />;
       default:
         return <Text>Invalid View</Text>

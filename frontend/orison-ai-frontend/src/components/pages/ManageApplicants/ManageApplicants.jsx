@@ -132,9 +132,9 @@ const ManageApplicants = ({
     setCurrentView(Views.APPLICANT_DOCUMENTS);
   }
 
-  const viewInformatics = (applicant) => {
+  const viewSummarization = (applicant) => {
     setSelectedApplicant(applicant);
-    setCurrentView(Views.APPLICANT_INFORMATICS);
+    setCurrentView(Views.APPLICANT_SUMMARIZATION);
   }
 
   return (
@@ -193,7 +193,7 @@ const ManageApplicants = ({
                       </>
                     )}
                     <Button ml="1.0vh" onClick={() => viewDocs(applicant)}>Documents</Button>
-                    <Button ml="0.5vh" onClick={() => viewInformatics(applicant)}>Informatics</Button>
+                    <Button ml="0.5vh" onClick={() => viewSummarization(applicant)}>Summarization</Button>
                     <IconButton ml="1vh" icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />
                   </Td>
                 </Tr>
