@@ -14,7 +14,7 @@ import StructuredData from './StructuredData';
 
 const ScholarDataModal = ({ isOpen, onClose, data }) => {
   const keys = [
-    { key: "author", subKeys: [
+    { key: "author", collapsible: true, subKeys: [
         { key: "name" },
         { key: "affiliation" },
         { key: "scholar_id" },
@@ -23,18 +23,18 @@ const ScholarDataModal = ({ isOpen, onClose, data }) => {
     },
     { key: "cited_by" },
     { key: "cited_by_5y" },
-    { key: "cited_each_year", dynamic: true },
+    { key: "cited_each_year", collapsible: true, dynamic: true },
     { key: "homepage" },
     { key: "h_index" },
     { key: "h_index_5y" },
-    { key: "keywords", dynamic: true },
-    { key: "co_authors", dynamic: true, subKeys: [
+    { key: "keywords", collapsible: true, dynamic: true },
+    { key: "co_authors", collapsible: true, dynamic: true, subKeys: [
         { key: "name" },
         { key: "affiliation" },
         { key: "scholar_id" },
       ]
     },
-    { key: "publications", dynamic: true, subKeys: [
+    { key: "publications", collapsible: true, dynamic: true, subKeys: [
         { key: "authors" },
         { key: "title" },
         { key: "year" },
