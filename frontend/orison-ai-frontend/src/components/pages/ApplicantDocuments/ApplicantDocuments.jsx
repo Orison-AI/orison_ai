@@ -10,7 +10,7 @@ import {
 
 // Orison
 import ScholarLinkForm from './ScholarData/ScholarLinkForm';
-import FileUploader from './FileUploader';
+import FileUploader from './ApplicantUploads/FileUploader';
 
 const ApplicantDocuments = ({ selectedApplicant }) => (
   <VStack height="100%" width="100%" padding="2vh" fontSize="4vh">

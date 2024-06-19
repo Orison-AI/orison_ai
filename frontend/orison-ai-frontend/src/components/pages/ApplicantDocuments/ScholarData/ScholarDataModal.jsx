@@ -10,7 +10,7 @@ import {
 } from '@chakra-ui/react';
 
 // Orison AI
-import StructuredData from '../StructuredData';
+import StructuredData from '../../../StructuredData';
 
 const ScholarDataModal = ({ isOpen, onClose, data }) => {
   const keys = [

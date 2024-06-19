@@ -6,7 +6,7 @@ import { useDropzone } from 'react-dropzone';
 
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../../common/firebaseConfig';
+import { auth } from '../../../../common/firebaseConfig';
 import {
   deleteObject, getStorage, listAll, ref, uploadBytes,
 } from 'firebase/storage';
@@ -21,7 +21,7 @@ import { CloseIcon, CheckCircleIcon, DownloadIcon } from '@chakra-ui/icons';
 // Will use TimeIcon when processing is in-progress
 
 // Orison
-import { vectorizeFiles } from '../../../api/api';
+import { vectorizeFiles } from '../../../../api/api';
 import DeleteFileModal from './DeleteFileModal';
 import OverwriteFileModal from './OverwriteFileModal';
 
