@@ -8,7 +8,7 @@ import { useDropzone } from 'react-dropzone';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../../../common/firebaseConfig';
 import {
-  deleteObject, getStorage, listAll, ref, uploadBytes,
+  deleteObject, getDownloadURL, getStorage, listAll, ref, uploadBytes,
 } from 'firebase/storage';
 
 // Chakra
@@ -21,6 +21,7 @@ import { DownloadIcon } from '@chakra-ui/icons';
 // Orison
 import { vectorizeFiles } from '../../../../api/api';
 import DeleteFileModal from './DeleteFileModal';
+import FileContentModal from './FileContentModal';
 import FileTable from './FileTable';
 import OverwriteFileModal from './OverwriteFileModal';
 
@@ -35,6 +36,10 @@ const FileUploader = ({ selectedApplicant }) => {
   const { isOpen: isOverwriteModalOpen, onOpen: onOverwriteModalOpen, onClose: onOverwriteModalClose } = useDisclosure();
   const [fileToDelete, setFileToDelete] = useState(null);
   const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
+  const [fileToView, setFileToView] = useState(null);
+  const [fileContent, setFileContent] = useState('');
+  const { isOpen: isViewModalOpen, onOpen: onViewModalOpen, onClose: onViewModalClose } = useDisclosure();
+
   const toast = useToast();
 
   const fetchDocuments = useCallback(async () => {
@@ -168,6 +173,29 @@ const FileUploader = ({ selectedApplicant }) => {
     }
   };
 
+  const viewFile = async (fileName) => {
+    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileName}`;
+    const storageRef = ref(getStorage(), filePath);
+    
+    try {
+      const fileUrl = await getDownloadURL(storageRef);
+      const response = await fetch(fileUrl);
+      const text = await response.text();
+      setFileToView(fileName);
+      setFileContent(text);
+      onViewModalOpen();
+    } catch (error) {
+      console.error(`Error fetching file content: ${error.message}`);
+      toast({
+        title: 'Error Fetching File Content',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
   return (
     <VStack width="50%" height="50vh" mt="4vh">
       <HStack width="100%" mb="0.5vh" fontSize="24px">
@@ -187,6 +215,7 @@ const FileUploader = ({ selectedApplicant }) => {
         processedFiles={processedFiles}
         vectorizeFile={vectorizeFile}
         deleteFile={deleteFile}
+        viewFile={viewFile}
       />
       <VStack
         {...getRootProps()}
@@ -212,6 +241,12 @@ const FileUploader = ({ selectedApplicant }) => {
         onClose={onDeleteModalClose}
         onConfirm={handleDeleteConfirm}
         fileName={fileToDelete}
+      />
+      <FileContentModal
+        isOpen={isViewModalOpen}
+        onClose={onViewModalClose}
+        fileName={fileToView}
+        fileContent={fileContent}
       />
     </VStack>
   );
