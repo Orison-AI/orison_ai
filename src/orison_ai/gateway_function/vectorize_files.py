@@ -71,6 +71,7 @@ class VectorizeFiles(RequestHandler):
 
     @staticmethod
     def _load_file(file_path: str, logger):
+        logger.debug(f"Attempting to load file from {file_path}")
         match file_extension(file_path):
             case ".txt":
                 # Use TextLoader for text-based files
@@ -95,16 +96,17 @@ class VectorizeFiles(RequestHandler):
         # Each document is a dictionary with the keys "page_content" and "metadata"
         # Each document page_content is literally whatever is on that page
         documents = loader.load()
+        logger.debug(f"Loaded file from {file_path}")
         return documents
 
     @staticmethod
-    def _apply_semantic_splitter(documents, logger):
+    def _apply_semantic_splitter(documents, openai_api_key, logger):
 
         MIN_CHUNK_SIZE = 256
 
         # Initialize the text splitter
         text_splitter = SemanticChunker(
-            OpenAIEmbeddings(model="text-embedding-ada-002"),
+            OpenAIEmbeddings(model="text-embedding-ada-002", api_key=openai_api_key),
             breakpoint_threshold_type="percentile",
             breakpoint_threshold_amount=75,
             buffer_size=10,
@@ -157,14 +159,27 @@ class VectorizeFiles(RequestHandler):
 
     async def handle_request(self, request_json):
         try:
+<<<<<<< HEAD
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
             # TODO: Need to have tag as request parameter
             tag = "research"
             # TODO: The fileID field does not give the folder hierarchy.
+=======
+            attorney_id = request_json['attorneyId']
+            applicant_id = request_json['applicantId']
+            file_ids = request_json['fileIds']
+            bucketName = request_json['bucketName']
+            tag = request_json['tag']
+            if len(file_ids) != 1:
+                raise ValueError("Only one file per request is supported ATM")
+
+>>>>>>> dafb58e (More tweaks)
             # TODO: Need to sanitize the path to avoid path traversal attacks
-            file_path = "research/test.md"
+            file_path = f"{bucketName}/{file_ids[0]}"
             collection_name = f"{attorney_id}_{applicant_id}_collection"
+            self.logger.debug(f"Processing file for attorney {attorney_id} and applicant {applicant_id}")
+            self.logger.debug(f"File path: {file_path}")
 
             # Download the file
             bucket_file_path = VectorizeFiles._file_path_builder(
@@ -178,6 +193,7 @@ class VectorizeFiles(RequestHandler):
             # Load the file
             documents = VectorizeFiles._load_file(local_file_path, logger=self.logger)
 
+<<<<<<< HEAD
             # Chunk the file
             chunks = VectorizeFiles._apply_semantic_splitter(
                 documents, logger=self.logger
@@ -193,6 +209,18 @@ class VectorizeFiles(RequestHandler):
             openai_api_key = read_remote_secret_url_as_string(
                 build_secret_url("openai_api_key")
             )
+=======
+            # Getting secrets
+            qdrant_url = read_remote_secret_url_as_string(build_secret_url("qdrant_url"))
+            qdrant_api_key = read_remote_secret_url_as_string(build_secret_url("qdrant_api_key"))
+            openai_api_key = read_remote_secret_url_as_string(build_secret_url("openai_api_key"))
+
+            # Chunk the file
+            chunks = VectorizeFiles._apply_semantic_splitter(documents, openai_api_key=openai_api_key, logger=self.logger)
+            
+            # Store the chunks in Qdrant
+            self.logger.debug(f"Storing chunks in Qdrant in collection {collection_name}")
+>>>>>>> dafb58e (More tweaks)
             VectorizeFiles._store_chunks(
                 chunks,
                 openai_client=OpenAI(api_key=openai_api_key),
@@ -202,5 +230,6 @@ class VectorizeFiles(RequestHandler):
                 collection_name=collection_name,
             )
         except Exception as e:
+            self.logger.error(f"Error processing files: {e}")
             return ErrorResponse(str(e))
         return OKResponse("Success!")

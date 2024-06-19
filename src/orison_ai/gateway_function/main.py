@@ -35,7 +35,7 @@ from vectorize_files import VectorizeFiles
 from gateway import GatewayRequestType, router
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 _logger = logging.getLogger(__name__)
 
 
@@ -49,6 +49,8 @@ routes: dict[GatewayRequestType, RequestHandler] = {
     GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
     GatewayRequestType.SUMMARIZE: Summarize(),
 }
+
+LOCAL_TESTING = False
 
 
 def verify_bearer_token(request: Request):
@@ -64,7 +66,7 @@ def verify_bearer_token(request: Request):
 
 @http
 def gateway_function(request: Request):
-    _logger.debug(f"Received request: {request.method}")
+    _logger.debug(f"Received request: {request.json}")
 
     # Set CORS headers for the preflight request
     if request.method == "OPTIONS":
@@ -84,7 +86,9 @@ def gateway_function(request: Request):
     }
 
     try:
-        verify_bearer_token(request)
+        if not LOCAL_TESTING:
+            verify_bearer_token(request)
+
         result = asyncio.run(router(routes, request))
         code = result["status"]
 
