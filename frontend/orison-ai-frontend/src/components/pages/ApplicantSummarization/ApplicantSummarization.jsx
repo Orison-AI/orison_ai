@@ -10,7 +10,7 @@ import { collection, getDocs, orderBy, query, where, limit } from 'firebase/fire
 
 // Chakra UI
 import {
-  HStack, VStack, Text, Button, useToast,
+  Box, Button, HStack, Text, useToast, VStack,
 } from '@chakra-ui/react';
 
 // Orison AI
@@ -81,17 +81,21 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
           {selectedApplicant ? selectedApplicant.name : "None"}
         </Text>
       </HStack>
-      <Button onClick={handleSummarize} colorScheme="green">
-        Summarize
+      <Button mb="20px" onClick={handleSummarize} colorScheme="green">
+        Generate Summary
       </Button>
       {summarizationDataStatus === 'found' && (
         <SummarizationDataDisplay data={summarizationData} />
       )}
       {summarizationDataStatus === 'loading' && (
-        <Text>Loading summarization data...</Text>
+        <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
+          <Text>Loading summarization data...</Text>
+        </Box>
       )}
       {summarizationDataStatus === 'not_found' && (
-        <Text>No summarization data found.</Text>
+        <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
+          <Text>No summarization data found.</Text>
+        </Box>
       )}
     </VStack>
   );

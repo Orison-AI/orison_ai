@@ -228,7 +228,7 @@ const FileUploader = ({ selectedApplicant }) => {
   };
 
   return (
-    <VStack width="50%" height="50vh" mt="4vh">
+    <VStack width="70%" height="50vh" mt="4vh">
       <HStack width="100%" mb="0.5vh" fontSize="24px">
         <Text width="100%">Applicant Files</Text>
         <Box minWidth="200px" fontSize="24px">

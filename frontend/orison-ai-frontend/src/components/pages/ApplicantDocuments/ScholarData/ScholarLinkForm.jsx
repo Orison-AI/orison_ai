@@ -109,7 +109,7 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
   };
 
   return (
-    <Box width="50%">
+    <Box width="70%">
       <FormControl>
         <Text width="100%" mb="1vh" fontSize="24px">Google Scholar</Text>
         <form onSubmit={handleScholarSearchRequest}>

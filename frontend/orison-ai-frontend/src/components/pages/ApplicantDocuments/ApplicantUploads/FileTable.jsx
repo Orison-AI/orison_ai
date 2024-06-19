@@ -21,7 +21,7 @@ const FileTable = ({ documents, processedFiles, vectorizeFile, deleteFile, viewF
             <Th></Th>
           </Tr>
         </Thead>
-        <Tbody fontSize="20px">
+        <Tbody fontSize="16px">
           {documents.map(fileName => (
             <Tr key={fileName}>
               <Td>
