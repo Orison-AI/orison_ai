@@ -59,7 +59,7 @@ const MainMenu = ({
               ))}
             </Select>
             <MenuButton label="Documents" disabled={!selectedApplicant} onClick={() => changeView(Views.APPLICANT_DOCUMENTS)} />
-            <MenuButton label="Summarization" disabled={!selectedApplicant} onClick={() => changeView(Views.APPLICANT_SUMMARIZATION)} />
+            <MenuButton label="Summary" disabled={!selectedApplicant} onClick={() => changeView(Views.APPLICANT_SUMMARIZATION)} />
           </VStack>
         </DrawerBody>
       </DrawerContent>

@@ -76,7 +76,7 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
   return (
     <VStack height="100%" width="100%" padding="2vh">
       <HStack width="100%" mb="4vh">
-        <Text fontSize="32px" ml="2vh" color="gray.400">Summarization &gt;</Text>
+        <Text fontSize="32px" ml="2vh" color="gray.400">Summary &gt;</Text>
         <Text fontSize="32px" color="green.300" as="strong">
           {selectedApplicant ? selectedApplicant.name : "None"}
         </Text>
@@ -89,12 +89,12 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
       )}
       {summarizationDataStatus === 'loading' && (
         <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
-          <Text>Loading summarization data...</Text>
+          <Text>Loading summary data...</Text>
         </Box>
       )}
       {summarizationDataStatus === 'not_found' && (
         <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
-          <Text>No summarization data found.</Text>
+          <Text>No summary data found.</Text>
         </Box>
       )}
     </VStack>

@@ -193,7 +193,7 @@ const ManageApplicants = ({
                       </>
                     )}
                     <Button ml="1.0vh" onClick={() => viewDocs(applicant)}>Documents</Button>
-                    <Button ml="0.5vh" onClick={() => viewSummarization(applicant)}>Summarization</Button>
+                    <Button ml="0.5vh" onClick={() => viewSummarization(applicant)}>Summary</Button>
                     <IconButton ml="1vh" icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />
                   </Td>
                 </Tr>
