@@ -118,6 +118,7 @@ class VectorizeFiles(RequestHandler):
         # Apply the splitter to the document. It will internally call create_documents
         # which will internally call split_text
         # Returns a List[Document]
+        # ToDo: Need async here.
         logger.info("Splitting documents")
         chunks = text_splitter.split_documents(documents)
         logger.info("Splitting documents....DONE")
