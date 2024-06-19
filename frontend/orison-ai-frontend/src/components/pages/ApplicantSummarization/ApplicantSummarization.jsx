@@ -1,4 +1,4 @@
-// ./components/pages/ApplicantInformatics.jsx
+// ./components/pages/ApplicantSummarization/ApplicantSummarization.jsx
 
 // React
 import React from 'react';
@@ -15,7 +15,7 @@ import {
 // Orison
 import { summarize } from '../../../api/api';
 
-const ApplicantInformatics = ({ selectedApplicant }) => {
+const ApplicantSummarization = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
   const toast = useToast();
 
@@ -57,4 +57,4 @@ const ApplicantInformatics = ({ selectedApplicant }) => {
   );
 };
 
-export default ApplicantInformatics;
+export default ApplicantSummarization;
