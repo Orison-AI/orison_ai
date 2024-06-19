@@ -23,7 +23,7 @@ def file_extension(file_path: str) -> str:
     return os.path.splitext(file_path)[1].lower()
 
 
-def raise_and_log_error(self, message: str, logger, exception=Exception):
+def raise_and_log_error(message: str, logger, exception=Exception):
     logger.error(message)
     raise exception(message)
 

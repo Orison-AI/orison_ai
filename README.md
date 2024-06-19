@@ -26,19 +26,6 @@ pre-commit run --all-files
 ```
 
 ## Running the system locally for testing
-<<<<<<< HEAD
-Requires to kick off backend and frontend
-- Backend can be started using functions-framework package
-- We can use the port 5004 and localhost which is exposed by default in the docker container
-- Port and host are subject to change
-```
-functions-framework --source=path/to/gateway_function/main.py --target=gateway_function --port=XXXX --host=<HOSTNAME>
-```
-- Frontend can be emulated using curl request
-- Authentication ToDo
-```
-ToDo: Add curl format
-=======
 ## Frontend
 - Docker build should start the frontend as part of orison-frontend service
 - Frontend initiates on port 3000 and can be accessed from a browser using:
@@ -50,13 +37,18 @@ Frontend presently sends requests to the actual google cloud function
 ## Emulated Frontend via Curl
 - Run the send_curl_request script with your payload. Below is an example:
 ```
-python3 scripts/send_curl_request.py --data '{"data":{
-    "or_request_type": "summarize",
-    "or_request_payload": {
-      "attorneyId": "vnaFuo56thJBKJ2GiKo3wt80J03",
-      "applicantId": "HISMzbk1P8ATCyYqo6I",
-      "bucketName": "research"
-    }
+curl -m 70 -X POST <trigger_url> \
+-H "Authorization: bearer $(gcloud auth print-identity-token)" \
+-H "Content-Type: application/json" \
+-d '{
+    "data":{
+      "or_request_type": "vectorize-files",
+      "or_request_payload": {
+        "attorneyId": "",
+        "applicantId": "", 
+        "file_ids" : ["", "", ""],
+        "bucketName": ""
+      }
   }}' 
 ```
 
@@ -92,5 +84,4 @@ gcloud auth list # Authorized service account should be correct
 gcloud auth activate-service-account --key-file=/path_to_key_downloaded_from_service_account
 # Check again
 gcloud auth list
->>>>>>> 8fdf573 ([ORSW-46] Adding summarization and features for devcontainer (#47))
 ```

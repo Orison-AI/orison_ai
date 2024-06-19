@@ -109,5 +109,10 @@ def gateway_function(request: Request):
         return ({"error": str(e)}, 500, headers)
 
 
+@http
+def gateway_function_staging(request: Request):
+    return gateway_function(request)
+
+
 if __name__ == "__main__":
-    app = create_app(gateway_function)
+    app = create_app(gateway_function_staging)

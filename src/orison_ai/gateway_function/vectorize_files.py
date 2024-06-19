@@ -33,6 +33,7 @@ from or_store.firebase import build_secret_url, read_remote_secret_url_as_string
 from request_handler import RequestHandler, OKResponse, ErrorResponse
 from or_store.firebase_storage import FirebaseStorage
 from utils import raise_and_log_error, file_extension
+from or_store.firebase import OrisonSecrets
 
 # Vectorization Imports
 import numpy as np
@@ -165,13 +166,14 @@ class VectorizeFiles(RequestHandler):
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
             file_ids = request_json["fileIds"]
-            bucketName = request_json["bucketName"]
-            tag = request_json["tag"]
+            bucketName = "research"  # Hardcoding for now
+            tag = bucketName
+            # bucketName = request_json["bucketName"]
+            # tag = request_json["tag"]
             if len(file_ids) != 1:
                 raise ValueError("Only one file per request is supported ATM")
 
-            # TODO: Need to sanitize the path to avoid path traversal attacks
-            collection_name = f"{attorney_id}_{applicant_id}_collection"
+            secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.debug(
                 f"Processing file for attorney {attorney_id} and applicant {applicant_id}"
             )
@@ -190,15 +192,9 @@ class VectorizeFiles(RequestHandler):
             # Load the file
             documents = VectorizeFiles._load_file(local_file_path, logger=self.logger)
             # Getting secrets
-            qdrant_url = read_remote_secret_url_as_string(
-                build_secret_url("qdrant_url")
-            )
-            qdrant_api_key = read_remote_secret_url_as_string(
-                build_secret_url("qdrant_api_key")
-            )
-            openai_api_key = read_remote_secret_url_as_string(
-                build_secret_url("openai_api_key")
-            )
+            qdrant_url = secrets.qdrant_url
+            qdrant_api_key = secrets.qdrant_api_key
+            openai_api_key = secrets.openai_api_key
 
             # Chunk the file
             chunks = VectorizeFiles._apply_semantic_splitter(
@@ -206,7 +202,7 @@ class VectorizeFiles(RequestHandler):
             )
 
             self.logger.debug(
-                f"Storing chunks in Qdrant in collection {collection_name}"
+                f"Storing chunks in Qdrant in collection {secrets.collection_name}"
             )
             VectorizeFiles._store_chunks(
                 chunks,
@@ -214,7 +210,7 @@ class VectorizeFiles(RequestHandler):
                 qdrant_client=QdrantClient(url=qdrant_url, api_key=qdrant_api_key),
                 logger=self.logger,
                 tag=tag,
-                collection_name=collection_name,
+                collection_name=secrets.collection_name,
             )
         except Exception as e:
             self.logger.error(f"Error processing files: {e}")
