@@ -17,6 +17,7 @@
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
+_logger = logging.getLogger(__name__)
 
 
 def OKResponse(message, status_code=200):

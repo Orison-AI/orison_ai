@@ -18,7 +18,13 @@
 import os
 import json
 import logging
+from dataclasses import dataclass
 import datetime
+from exceptions import (
+    CREDENTIALS_NOT_FOUND,
+    INVALID_CREDENTIALS,
+    FIRESTORE_CONNECTION_FAILED,
+)
 from google.cloud.firestore_v1.base_query import FieldFilter, BaseCompositeFilter
 from google.cloud.firestore_v1.types import StructuredQuery
 from google.cloud.secretmanager_v1 import SecretManagerServiceClient
@@ -36,25 +42,43 @@ logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 
-class CREDENTIALS_NOT_FOUND(ValueError):
-    def __init__(self, message="Invalid Credentials"):
-        self.message = message
-        super().__init__(self.message)
-
-
-class INVALID_CREDENTIALS(Exception):
-    def __init__(self, message="Invalid Credentials"):
-        self.message = message
-        super().__init__(self.message)
-
-
-class FIRESTORE_CONNECTION_FAILED(Exception):
-    def __init__(self, message="Failed to connect to Firestore"):
-        self.message = message
-        super().__init__(self.message)
-
-
 PROJECT_PREFIX_FOR_SECRET_MANAGER = "projects/685108028813/secrets/"
+
+
+@dataclass
+class OrisonSecrets:
+    openai_api_key: str
+    qdrant_url: str
+    qdrant_api_key: str
+    collection_name: str
+
+    @classmethod
+    def from_attorney_applicant(cls, attorney_id: str, applicant_id: str):
+        _logger.debug(
+            f"Processing file for attorney {attorney_id} and applicant {applicant_id}"
+        )
+        return cls(
+            openai_api_key=environment_or_secret("OPENAI_API_KEY"),
+            qdrant_url=environment_or_secret("QDRANT_URL"),
+            qdrant_api_key=environment_or_secret("QDRANT_API_KEY"),
+            # TODO: Need to sanitize the path to avoid path traversal attacks
+            collection_name=f"{attorney_id}_{applicant_id}_collection",
+        )
+
+
+def environment_or_secret(key: str):
+    value = os.getenv(key.upper())
+    if value is None:
+        _logger.info(
+            f"Missing {key.upper()} in environment variable. Attempting secret manager"
+        )
+        try:
+            # Getting secrets
+            value = read_remote_secret_url_as_string(build_secret_url(key.lower()))
+        except Exception as e:
+            message = f"{key.lower()} not found in secret manager. Error: {e}"
+            raise CREDENTIALS_NOT_FOUND(message=message)
+    return value
 
 
 def build_secret_url(
@@ -74,38 +98,35 @@ def read_remote_secret_url_as_string(secret_url: str) -> str:
 
 
 def get_firebase_admin_app():
-    cred_str = os.getenv("FIREBASE_CREDENTIALS")
-    if cred_str is None:
-        _logger.info(
-            "Missing FIREBASE_CREDENTIALS in environment variable. Attempting secret manager"
-        )
-        try:
-            cred_dict = json.loads(
-                read_remote_secret_url_as_string(
-                    build_secret_url("firebase_credentials")
-                )
-            )
-        except Exception as e:
-            raise CREDENTIALS_NOT_FOUND(
-                "FIREBASE_CREDENTIALS not found in environment variable or secret manager"
-            )
-    else:
-        try:
-            cred_dict = json.loads(cred_str)
-        except json.JSONDecodeError:
-            raise INVALID_CREDENTIALS("Invalid JSON in FIREBASE_CREDENTIALS")
+    try:
+        secret = environment_or_secret("FIREBASE_CREDENTIALS")
+        cred_dict = json.loads(secret)
+    except CREDENTIALS_NOT_FOUND as e:
+        raise e
+    except json.JSONDecodeError:
+        raise INVALID_CREDENTIALS("Invalid JSON in FIREBASE_CREDENTIALS")
+    except Exception as e:
+        _logger.error(f"Unknown error: {e}")
+    options = {}
+    try:
+        bucket_str = environment_or_secret("BUCKET")
+        options = {"storageBucket": bucket_str}
+    except CREDENTIALS_NOT_FOUND as e:
+        _logger.error(f"No bucket found in environment variables. Error: {e}")
+    except Exception as e:
+        _logger.error(f"Unknown error: {e}")
 
     # Convert string back to JSON
     cred = credentials.Certificate(cred_dict)
-    options = {
-        "storageBucket": read_remote_secret_url_as_string(build_secret_url("bucket"))
-    }
+
     try:
         _logger.info("Getting existing Firestore client")
         return firebase_admin.get_app()
     except ValueError as e:
         _logger.info("No existing client found. Creating new Firestore client")
-        return firebase_admin.initialize_app(cred, options)
+        app = firebase_admin.initialize_app(cred, options)
+        _logger.info(f"Firestore client created with name: {app.name}")
+        return app
     except Exception as e:
         raise FIRESTORE_CONNECTION_FAILED("Failed to connect to Firestore")
 

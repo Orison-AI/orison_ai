@@ -13,13 +13,13 @@
             "postscript": "",
             "index": "research",
             "detail_level": [
-                "light detail",
-                "moderate detail",
-                "very heavy detail",
-                "great detail",
-                "light detail",
-                "light detail",
-                "very heavy detail"
+                "light",
+                "moderate",
+                "heavy",
+                "lengthy",
+                "light",
+                "light",
+                "heavy"
             ]
         },
         "awards": {
