@@ -30,6 +30,7 @@ const StructuredData = ({ data, keys }) => {
       const subKeys = typeof keyInfo === 'object' && keyInfo.subKeys ? keyInfo.subKeys : null;
       const dynamic = typeof keyInfo === 'object' && keyInfo.dynamic ? keyInfo.dynamic : false;
       const collapsible = typeof keyInfo === 'object' && keyInfo.collapsible ? keyInfo.collapsible : false;
+      const dynamicCollapsible = typeof keyInfo === 'object' && keyInfo.dynamic_collapsible ? keyInfo.dynamic_collapsible : false;
 
       if (!(key in data)) {
         return null;
@@ -41,7 +42,7 @@ const StructuredData = ({ data, keys }) => {
         <Box key={key} ml={`${level * 10}px`}>
           {collapsible ? (
             <Button onClick={() => toggleCollapse(key)} size="s" variant="link" fontWeight="bold">
-              {isCollapsed ? '▼' : '▶'} {key}
+              {isCollapsed ? '▶' : '▼'} {key}
             </Button>
           ) : (
             <Text fontWeight="bold" display="inline">{key}:</Text>
@@ -51,9 +52,13 @@ const StructuredData = ({ data, keys }) => {
               <Box ml="10px">
                 {Object.keys(data[key]).map(dynamicKey => (
                   <Box key={dynamicKey} ml="10px">
-                    <Button onClick={() => toggleCollapse(`${key}-${dynamicKey}`)} size="s" variant="link" fontWeight="bold">
-                      {collapsedKeys[`${key}-${dynamicKey}`] ? '▼' : '▶'} {dynamicKey}
-                    </Button>
+                    {dynamicCollapsible ? (
+                      <Button onClick={() => toggleCollapse(`${key}-${dynamicKey}`)} size="s" variant="link" fontWeight="bold">
+                        {collapsedKeys[`${key}-${dynamicKey}`] ? '▶' : '▼'} {dynamicKey}
+                      </Button>
+                    ) : (
+                      <Text fontWeight="bold" display="inline">{dynamicKey}:</Text>
+                    )}
                     <Collapse in={!collapsedKeys[`${key}-${dynamicKey}`]}>
                       {subKeys ? (
                           <Box ml="10px">

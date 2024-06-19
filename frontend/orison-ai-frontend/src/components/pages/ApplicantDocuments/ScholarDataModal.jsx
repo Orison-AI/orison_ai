@@ -28,13 +28,13 @@ const ScholarDataModal = ({ isOpen, onClose, data }) => {
     { key: "h_index" },
     { key: "h_index_5y" },
     { key: "keywords", collapsible: true, dynamic: true },
-    { key: "co_authors", collapsible: true, dynamic: true, subKeys: [
+    { key: "co_authors", collapsible: true, dynamic: true, dynamic_collapsible: true, subKeys: [
         { key: "name" },
         { key: "affiliation" },
         { key: "scholar_id" },
       ]
     },
-    { key: "publications", collapsible: true, dynamic: true, subKeys: [
+    { key: "publications", collapsible: true, dynamic: true, dynamic_collapsible: true, subKeys: [
         { key: "authors" },
         { key: "title" },
         { key: "year" },
