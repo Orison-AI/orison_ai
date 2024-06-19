@@ -8,14 +8,14 @@ import { signOut, deleteUser } from "firebase/auth";
 
 // Chakra
 import {
-  Box, Button, Center, HStack,
+  Button, Center, // Box, HStack,
   Modal, ModalOverlay, ModalContent,
   Text, useToast, VStack
 } from '@chakra-ui/react';
 
 // Internal
 import { auth } from '../../common/firebaseConfig';
-import ColorModeToggle from "../settings/ColorModeToggle";
+// import ColorModeToggle from "../settings/ColorModeToggle";
 
 function Settings({ isOpen, onClose }) {
   const toast = useToast();
@@ -68,19 +68,16 @@ function Settings({ isOpen, onClose }) {
       <ModalContent>
         <Center width="100%" p="1vh">
           <VStack width="100%">
-            <Text fontSize="20px">
+            <Text fontSize="20px" mb="20px">
               Settings
             </Text>
-            <Text fontSize="12px" mb="4vh">
-              (in progress)
-            </Text>
-            <Box mb="1vh">
+            {/* Temporarily removing, since don't have time to support light mode
+            <Box mb="10px">
               <ColorModeToggle />
             </Box>
-            <HStack mb="1vh">
-              <Button colorScheme="blue" width="12vh" onClick={handleLogout}>Logout</Button>
-              <Button colorScheme="red" width="12vh" onClick={handleDeleteAccount}>Delete Account</Button>
-            </HStack>
+            */}
+            <Button colorScheme="blue" width="12vh" mb="10px" onClick={handleLogout}>Logout</Button>
+            <Button colorScheme="red" width="12vh" mb="10px" onClick={handleDeleteAccount}>Delete Account</Button>
           </VStack>
         </Center>
       </ModalContent>
