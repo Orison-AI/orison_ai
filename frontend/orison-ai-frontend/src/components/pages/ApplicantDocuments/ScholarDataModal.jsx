@@ -26,8 +26,8 @@ const ScholarDataModal = ({ isOpen, onClose, data }) => {
     { key: "homepage" },
     { key: "h_index" },
     { key: "h_index_5y" },
-    { key: "keywords" },
-    { key: "publications", subKeys: [
+    { key: "keywords", dynamic: true },
+    { key: "publications", dynamic: true, subKeys: [
         { key: "authors" },
         { key: "title" },
         { key: "year" },

@@ -15,6 +15,7 @@ const StructuredData = ({ data, keys }) => {
     return keys.map(keyInfo => {
       const key = typeof keyInfo === 'string' ? keyInfo : keyInfo.key;
       const subKeys = typeof keyInfo === 'object' && keyInfo.subKeys ? keyInfo.subKeys : null;
+      const dynamic = typeof keyInfo === 'object' && keyInfo.dynamic ? keyInfo.dynamic : false;
 
       if (!(key in data)) {
         return null;
@@ -23,12 +24,29 @@ const StructuredData = ({ data, keys }) => {
       return (
         <Box key={key} ml={`${level * 10}px`}>
           <Text fontWeight="bold" display="inline">{key}:</Text>
-          {typeof data[key] === 'object' && subKeys ? (
+          {dynamic ? (
             <Box ml="10px">
-              {renderData(data[key], subKeys, level + 1)}
+              {Object.keys(data[key]).map(dynamicKey => (
+                <Box key={dynamicKey} ml="10px">
+                  <Text fontWeight="bold" display="inline">{dynamicKey}:</Text>
+                  {subKeys ? (
+                      <Box ml="10px">
+                        {renderData(data[key][dynamicKey], subKeys, level + 1)}
+                      </Box>
+                    ) : (
+                      <Text display="inline" ml="10px">{data[key][dynamicKey]}</Text>
+                    )
+                  }
+                </Box>
+              ))}
             </Box>
-          ) : (
-            <Text display="inline" ml="10px">{data[key]}</Text>
+          ) : (subKeys ? (
+              <Box ml="10px">
+                {renderData(data[key], subKeys, level + 1)}
+              </Box>
+            ) : (
+              <Text display="inline" ml="10px">{data[key]}</Text>
+            )
           )}
         </Box>
       );
