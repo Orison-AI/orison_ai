@@ -16,9 +16,9 @@ import {
 import {
   Button, FormControl, FormHelperText,
   HStack, Input, InputGroup, InputRightElement,
-  Text, useToast,
+  Spinner, Text, useToast,
 } from '@chakra-ui/react';
-import { CheckCircleIcon, TimeIcon, WarningIcon } from '@chakra-ui/icons';
+import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 
 // Orison
 import { processScholarLink } from '../../../api/api';
@@ -53,7 +53,6 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
   }, [user, selectedApplicant]);
 
   useEffect(() => {
-
     const fetchScholarLink = async () => {
       if (selectedApplicant) {
         // Check applicants collection for scholar link
@@ -71,13 +70,10 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
     fetchScholarData();
   }, [fetchScholarData, selectedApplicant]);
 
-  const handleScholarSubmit = async (event) => {
+  const handleScholarSearchRequest = async (event) => {
     event.preventDefault();
     if (user && selectedApplicant) {
       try {
-        await setDoc(doc(db, "applicants", selectedApplicant.id), {
-          scholarLink,
-        }, { merge: true });
         toast({
           title: 'Searching for Google Scholar Data',
           description: 'Please wait for processing',
@@ -94,8 +90,12 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
           duration: 5000,
           isClosable: true,
         });
+        await setDoc(doc(db, "applicants", selectedApplicant.id), {
+          scholarLink,
+        }, { merge: true });
         await fetchScholarData();
       } catch (error) {
+        setScholarDataStatus('not_found');
         toast({
           title: 'Google Scholar Search Failed',
           description: error.message,
@@ -110,7 +110,7 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
   return (
     <FormControl width="50%">
       <Text width="100%" mb="1vh" fontSize="24px">Google Scholar</Text>
-      <form onSubmit={handleScholarSubmit}>
+      <form onSubmit={handleScholarSearchRequest}>
         <HStack>
           <InputGroup>
             <Input 
@@ -120,7 +120,7 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
             />
             <InputRightElement>
               {(scholarDataStatus === 'loading') && (
-                <TimeIcon color="blue.500" />
+                <Spinner color="blue.500" size="sm" />
               )}
               {(scholarDataStatus === 'found') && (
                 <CheckCircleIcon color="green.500" />
