@@ -16,7 +16,7 @@ const ViewFileModal = ({ isOpen, onClose, fileName, fileContent }) => {
       <ModalContent p="20px">
         <ModalHeader fontSize="2xl">{fileName}</ModalHeader>
         <ModalBody>
-          <Box whiteSpace="pre-wrap">
+          <Box whiteSpace="pre-wrap" bg="gray.900" p="20px" borderRadius="8px">
             <Text>{fileContent}</Text>
           </Box>
         </ModalBody>

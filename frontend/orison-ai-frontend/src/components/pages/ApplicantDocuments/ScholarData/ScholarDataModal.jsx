@@ -51,7 +51,7 @@ const ScholarDataModal = ({ isOpen, onClose, data }) => {
       <ModalContent p="20px">
         <ModalHeader fontSize="2xl">Scholar Data</ModalHeader>
         <ModalBody>
-          <Box>
+          <Box bg="gray.900" p="20px" borderRadius="8px">
             <StructuredData data={data} keys={keys} />
           </Box>
         </ModalBody>
