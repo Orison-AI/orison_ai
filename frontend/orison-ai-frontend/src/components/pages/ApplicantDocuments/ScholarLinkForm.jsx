@@ -1,7 +1,7 @@
 // ./components/pages/Documents/ScholarLinkForm.jsx
 
 // React
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -18,8 +18,7 @@ import {
   HStack, Input, InputGroup, InputRightElement,
   Text, useToast,
 } from '@chakra-ui/react';
-import { CheckCircleIcon } from '@chakra-ui/icons';
-// Will use TimeIcon when processing is in-progress
+import { CheckCircleIcon, TimeIcon, WarningIcon } from '@chakra-ui/icons';
 
 // Orison
 import { processScholarLink } from '../../../api/api';
@@ -27,12 +26,41 @@ import { processScholarLink } from '../../../api/api';
 const ScholarLinkForm = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
   const [scholarLink, setScholarLink] = useState('');
-  const [scholarLinkSubmitted, setScholarLinkSubmitted] = useState(false);
+  const [scholarDataStatus, setScholarDataStatus] = useState('');
   const toast = useToast();
 
+  const fetchScholarData = useCallback(async () => {
+    if (user && selectedApplicant) {
+      // Check google_scholar collection for latest data
+
+      // Update status icons for loading
+      setScholarDataStatus('loading');
+  
+      // Create the query
+      const scholarQuery = query(
+        collection(db, "google_scholar"),
+        where("attorney_id", "==", user.uid),
+        where("applicant_id", "==", selectedApplicant.id),
+        orderBy("date_created", "desc"),
+        limit(1)
+      );
+
+      // Perform the query
+      const querySnapshot = await getDocs(scholarQuery);
+
+      // Update status icons based on result of query
+      if (querySnapshot.empty) {
+        setScholarDataStatus('not_found');
+      } else {
+        setScholarDataStatus('found');
+      }
+    }
+  }, [user, selectedApplicant, setScholarDataStatus]);
+
   useEffect(() => {
+
     const fetchScholarLink = async () => {
-      if (user && selectedApplicant) {
+      if (selectedApplicant) {
         // Check applicants collection for scholar link
         const docRef = doc(db, "applicants", selectedApplicant.id);
         // Get the scholar link from the database
@@ -41,26 +69,12 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
           // Use scholar link from the database
           setScholarLink(docSnap.data().scholarLink || '');
         }
-  
-        // Check google_scholar collection for latest data
-        setScholarLinkSubmitted(false);
-
-        const scholarQuery = query(
-          collection(db, "google_scholar"),
-          where("attorney_id", "==", user.uid),
-          where("applicant_id", "==", selectedApplicant.id),
-          orderBy("date_created", "desc"),
-          limit(1)
-        );
-        const querySnapshot = await getDocs(scholarQuery);
-        if (!querySnapshot.empty) {
-          setScholarLinkSubmitted(true);
-        }
       }
     };
 
     fetchScholarLink();
-  }, [user, selectedApplicant]);
+    fetchScholarData();
+  }, [fetchScholarData, selectedApplicant]);
 
   const handleScholarSubmit = async (event) => {
     event.preventDefault();
@@ -70,23 +84,25 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
           scholarLink,
         }, { merge: true });
         toast({
-          title: 'Submitting Google Scholar Link',
+          title: 'Searching for Google Scholar Data',
           description: 'Please wait for processing',
-          status: 'success',
+          status: 'loading',
           duration: 5000,
           isClosable: true,
         });
-        const response = await processScholarLink(user.uid, selectedApplicant.id, scholarLink);
+        setScholarDataStatus('loading');
+        await processScholarLink(user.uid, selectedApplicant.id, scholarLink);
         toast({
-          title: 'Google Scholar Link Submitted',
-          description: `Request ID: ${response.requestId}`,
+          title: 'Google Scholar Data Found',
+          description: `Link: ${scholarLink}`,
           status: 'success',
           duration: 5000,
           isClosable: true,
         });
+        await fetchScholarData();
       } catch (error) {
         toast({
-          title: 'Submission Failed',
+          title: 'Google Scholar Search Failed',
           description: error.message,
           status: 'error',
           duration: 5000,
@@ -108,13 +124,19 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
               onChange={(e) => setScholarLink(e.target.value)}
             />
             <InputRightElement>
-              {scholarLinkSubmitted && (
+              {(scholarDataStatus === 'loading') && (
+                <TimeIcon color="blue.500" />
+              )}
+              {(scholarDataStatus === 'found') && (
                 <CheckCircleIcon color="green.500" />
+              )}
+              {(scholarDataStatus === 'not_found') && (
+                <WarningIcon color="red.500" />
               )}
             </InputRightElement>
           </InputGroup>
           <Button type="submit" colorScheme="blue" ml="0.5vh">
-            Submit
+            Search
           </Button>
         </HStack>
       </form>
