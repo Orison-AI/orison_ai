@@ -27,16 +27,12 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
   const [scholarLink, setScholarLink] = useState('');
   const [scholarDataStatus, setScholarDataStatus] = useState('');
+  const [scholarData, setScholarData] = useState(null);
   const toast = useToast();
 
   const fetchScholarData = useCallback(async () => {
     if (user && selectedApplicant) {
-      // Check google_scholar collection for latest data
-
-      // Update status icons for loading
       setScholarDataStatus('loading');
-  
-      // Create the query
       const scholarQuery = query(
         collection(db, "google_scholar"),
         where("attorney_id", "==", user.uid),
@@ -44,18 +40,17 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
         orderBy("date_created", "desc"),
         limit(1)
       );
-
-      // Perform the query
       const querySnapshot = await getDocs(scholarQuery);
-
-      // Update status icons based on result of query
       if (querySnapshot.empty) {
+        setScholarData(null);
         setScholarDataStatus('not_found');
       } else {
+        const data = querySnapshot.docs[0].data();
+        setScholarData(data);
         setScholarDataStatus('found');
       }
     }
-  }, [user, selectedApplicant, setScholarDataStatus]);
+  }, [user, selectedApplicant]);
 
   useEffect(() => {
 
