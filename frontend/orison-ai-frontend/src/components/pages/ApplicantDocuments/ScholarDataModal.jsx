@@ -48,10 +48,10 @@ const ScholarDataModal = ({ isOpen, onClose, data }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="3xl">
       <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Scholar Data</ModalHeader>
+      <ModalContent p="20px">
+        <ModalHeader fontSize="2xl">Scholar Data</ModalHeader>
         <ModalBody>
-          <Box p="40px">
+          <Box>
             <StructuredData data={data} keys={keys} />
           </Box>
         </ModalBody>
