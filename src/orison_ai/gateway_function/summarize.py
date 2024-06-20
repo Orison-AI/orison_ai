@@ -143,14 +143,14 @@ class Summarize(RequestHandler):
             collection_name = secrets.collection_name
             # ToDo: Include embedding as part of Postman
             # Use Postman in vectorization
-            embedding = OpenAIEmbeddings(
+            self.embedding = OpenAIEmbeddings(
                 model="text-embedding-ada-002",
                 api_key=secrets.openai_api_key,
             )
             self.vectordb = Qdrant(
                 client=self.qdrant_client,
                 collection_name=collection_name,
-                embeddings=embedding,
+                embeddings=self.embedding,
             )
         except Exception as e:
             message = f"Error initializing Qdrant. Error: {e}"
