@@ -217,7 +217,8 @@ class Summarize(RequestHandler):
         attorney_id = request_json["attorneyId"]
         applicant_id = request_json["applicantId"]
         # ToDo: Use bucket with qdrant tag
-        bucket_name = request_json["bucketName"]
+        # bucket_name = request_json["bucketName"]
+        bucket_name = "research"  # Hardcoded for now
         try:
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             _logger.info("Initializing summarizer with secrets")
