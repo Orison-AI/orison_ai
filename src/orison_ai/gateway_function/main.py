@@ -49,7 +49,7 @@ routes: dict[GatewayRequestType, RequestHandler] = {
     GatewayRequestType.SUMMARIZE: Summarize(),
 }
 
-LOCAL_TESTING = False
+LOCAL_TESTING = True
 
 
 def verify_bearer_token(request: Request):
@@ -93,7 +93,13 @@ def gateway_function(request: Request):
         code = result["status"]
 
         return (
-            {"data": {"requestId": "request-12345"} if code == 200 else {}},
+            {
+                "data": (
+                    {"requestId": "request-12345"}
+                    if code == 200
+                    else {"Internal Server Error": result["message"]}
+                )
+            },
             code,
             headers,
         )

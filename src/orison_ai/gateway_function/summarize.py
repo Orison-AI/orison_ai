@@ -29,6 +29,7 @@ from enum import Enum
 import logging
 from dataclasses import dataclass
 from qdrant_client import QdrantClient
+from qdrant_client.async_qdrant_client import AsyncQdrantClient
 from langchain_openai import ChatOpenAI
 from langchain_qdrant import Qdrant
 from langchain_openai import OpenAIEmbeddings
@@ -254,9 +255,19 @@ class Summarize(RequestHandler):
             raise LLM_INITIALIZATION_FAILED(message)
 
         try:
+            # There is a bug in langchain Qdrant which checks for both regular client
+            # and async client. It is not possible to use only async client.
             self.qdrant_client = QdrantClient(
                 url=os.getenv("QDRANT_URL"),
                 api_key=os.getenv("QDRANT_API_KEY"),
+                port=6333,
+                grpc_port=6333,
+            )
+            self._async_qdrant_client = AsyncQdrantClient(
+                url=os.getenv("QDRANT_URL"),
+                api_key=os.getenv("QDRANT_API_KEY"),
+                port=6333,
+                grpc_port=6333,
             )
 
             # Define the name of the collection
@@ -270,6 +281,7 @@ class Summarize(RequestHandler):
             )
             self.vectordb = Qdrant(
                 client=self.qdrant_client,
+                async_client=self._async_qdrant_client,
                 collection_name=collection_name,
                 embeddings=self.embedding,
             )
@@ -398,6 +410,7 @@ class Summarize(RequestHandler):
             _logger.info("Initializing summarizer with secrets")
             self.initialize(secrets)
             prompts = self.prompts()
+            prompts = [prompts[0]]
             _logger.info("Initializing summarizer with secrets...done")
             screening = await self.summarize(prompts)
             screening.attorney_id = attorney_id
@@ -407,8 +420,8 @@ class Summarize(RequestHandler):
             id = await self._screening_client.insert(screening)
             _logger.info(f"Screening stored in Firestore with ID: {id}")
         except Exception as e:
-            message = f"Error processing files: {e}"
-            self.logger.error(message)
+            message = f"Error processing files. Error code: {type(e).__name__}. Error message: {e}"
+            self.logger.error(message, exc_info=True)
             return ErrorResponse(message)
         return OKResponse("Success!")
 
