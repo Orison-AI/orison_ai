@@ -27,11 +27,9 @@ from typing import Union, List
 from enum import Enum
 from dataclasses import dataclass
 from qdrant_client import QdrantClient
-from qdrant_client.async_qdrant_client import AsyncQdrantClient
 from langchain_openai import ChatOpenAI
 from langchain_qdrant import Qdrant
 from langchain_openai import OpenAIEmbeddings
-from langchain_core.embeddings import Embeddings
 from langchain_core.documents import Document
 
 # Internal
@@ -245,13 +243,6 @@ class Summarize(RequestHandler):
                 port=6333,
                 grpc_port=6333,
             )
-            # self._async_qdrant_client = AsyncQdrantClient(
-            #     url=os.getenv("QDRANT_URL"),
-            #     api_key=os.getenv("QDRANT_API_KEY"),
-            #     port=6333,
-            #     grpc_port=6333,
-            # )
-
             # Define the name of the collection
             collection_name = secrets.collection_name
             # ToDo: Include embedding as part of Postman
