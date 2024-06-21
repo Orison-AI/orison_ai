@@ -16,23 +16,22 @@
 
 # External
 
-import time
-from asyncio.locks import Event
+import logging
 import re
 import uuid
 import os
 import asyncio
 import tiktoken
 import json
-from typing import Union, List, Callable, Any
+from typing import Union, List
 from enum import Enum
-import logging
 from dataclasses import dataclass
 from qdrant_client import QdrantClient
 from qdrant_client.async_qdrant_client import AsyncQdrantClient
 from langchain_openai import ChatOpenAI
 from langchain_qdrant import Qdrant
 from langchain_openai import OpenAIEmbeddings
+from langchain_core.embeddings import Embeddings
 from langchain_core.documents import Document
 
 # Internal
@@ -46,12 +45,11 @@ from exceptions import (
 from or_store.models import ScreeningBuilder, StoryBuilder, QandA
 from or_store.story_client import ScreeningClient
 from or_store.firebase import OrisonSecrets
-from utils import async_generator_from_list
+from utils import async_generator_from_list, ThrottleRequest, OPENAI_SLEEP
 
 logging.basicConfig(level=logging.INFO)
-_logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
-OPENAI_SLEEP = 0.15  # seconds
 MODEL_NAME = "gpt-4-turbo"
 
 
@@ -83,32 +81,7 @@ class DetailLevel(Enum):
         raise ValueError(f"No matching DetailLevel for keyword: {keyword}")
 
 
-class ThrottleRequest:
-    register_last = None  # Class variable to track the time of the last call
-    throttle_lock = Event()  # Lock to throttle the requests
-
-    @staticmethod
-    async def throttle_call(future: Callable[..., Any], *args, **kwargs) -> Any:
-        if ThrottleRequest.register_last is not None:
-            # Wait for event to clear
-            await ThrottleRequest.throttle_lock.wait()
-            # Calculate the time since the last call
-            time_elapsed = time.time() - ThrottleRequest.register_last
-            # If the time since the last call is less than the limit, wait for the remaining time
-            if time_elapsed <= OPENAI_SLEEP:
-                await asyncio.sleep(OPENAI_SLEEP - time_elapsed)
-
-        # Update the time_elapsed to the current time
-        ThrottleRequest.throttle_lock.clear()
-        ThrottleRequest.register_last = time.time()
-        # Call the future with the provided arguments
-        result = await future(*args, **kwargs)
-        ThrottleRequest.throttle_lock.set()
-        # Return the result
-        return result
-
-
-class OpenAIMessenger(ChatOpenAI):
+class OrisonMessenger(ChatOpenAI):
     ROLE = """
     You are a helpful, respectful and honest assistant.\
     Always answer as helpfully as possible and follow ALL given instructions.\
@@ -153,7 +126,7 @@ class OpenAIMessenger(ChatOpenAI):
         tokenizer = tiktoken.encoding_for_model(MODEL_NAME)
         # Tokenize the input text
         tokens = tokenizer.encode(text)
-        _logger.info(f"Token count: {len(tokens)}. Allowed: {max_tokens}")
+        logger.info(f"Token count: {len(tokens)}. Allowed: {max_tokens}")
         # Check if the token count exceeds the maximum allowed tokens
         if len(tokens) > max_tokens:
             # Calculate the number of tokens to remove
@@ -178,7 +151,7 @@ class OpenAIMessenger(ChatOpenAI):
         queries = []
 
         async def process_prompt(prompt: Prompt):
-            _logger.info(
+            logger.info(
                 f"Generating multi-query chunks through retriever invocation for prompt: {prompt.question}"
             )
             request = [
@@ -191,12 +164,12 @@ class OpenAIMessenger(ChatOpenAI):
                     f"Original question: {prompt.question}.",
                 ),
             ]
-            result = await ThrottleRequest.throttle_call(self.ainvoke, request)
+            result = await ThrottleRequest.athrottle_call(self.ainvoke, request)
             questions = [
                 q.strip() for q in re.split(r"\d+\.\s+", result.content) if q.strip()
             ]
             questions.append(prompt.question)
-            _logger.info(
+            logger.info(
                 f"Generated multi-queries for prompt: {prompt.question} \n{questions}"
             )
             queries.append((prompt, questions))
@@ -222,9 +195,9 @@ class OpenAIMessenger(ChatOpenAI):
         if isinstance(detail_level, str):
             detail_level = DetailLevel.from_keyword(detail_level)
 
-        _logger.info("Checking if context exceeds max tokens. Truncating if required")
-        context = await OpenAIMessenger.truncate_to_max_tokens(context)
-        _logger.info(
+        logger.info("Checking if context exceeds max tokens. Truncating if required")
+        context = await OrisonMessenger.truncate_to_max_tokens(context)
+        logger.info(
             "Checking if context exceeds max tokens. Truncating if required...DONE"
         )
         prompt = [
@@ -237,21 +210,30 @@ class OpenAIMessenger(ChatOpenAI):
                 f"Given the context: \n{context}, \n answer the following: {query} in {detail_level.value}.",
             ),
         ]
-        result = await ThrottleRequest.throttle_call(self.ainvoke, prompt)
+        result = await ThrottleRequest.athrottle_call(self.ainvoke, prompt)
         return result.content
+
+
+class OrisonEmbeddings(OpenAIEmbeddings):
+    def __init__(self, model: str, api_key: str, max_retries: int = 5):
+        super().__init__(model=model, api_key=api_key, max_retries=max_retries)
+
+    def embed_query(self, text: str) -> List[float]:
+        return ThrottleRequest.throttle_call(super().embed_query, text)
 
 
 class Summarize(RequestHandler):
     def __init__(self):
         super().__init__(str(self.__class__.__qualname__))
+        ThrottleRequest.logger = self.logger
 
     def initialize(self, secrets):
         try:
-            self.retriever_llm = OpenAIMessenger(api_key=secrets.openai_api_key)
-            self.prompter_llm = OpenAIMessenger(api_key=secrets.openai_api_key)
+            self.retriever_llm = OrisonMessenger(api_key=secrets.openai_api_key)
+            self.prompter_llm = OrisonMessenger(api_key=secrets.openai_api_key)
         except Exception as e:
-            message = f"Error initializing OpenAIMessenger. Error: {e}"
-            _logger.error(message)
+            message = f"Error initializing OrisonMessenger. Error: {e}"
+            self.logger.error(message)
             raise LLM_INITIALIZATION_FAILED(message)
 
         try:
@@ -263,38 +245,38 @@ class Summarize(RequestHandler):
                 port=6333,
                 grpc_port=6333,
             )
-            self._async_qdrant_client = AsyncQdrantClient(
-                url=os.getenv("QDRANT_URL"),
-                api_key=os.getenv("QDRANT_API_KEY"),
-                port=6333,
-                grpc_port=6333,
-            )
+            # self._async_qdrant_client = AsyncQdrantClient(
+            #     url=os.getenv("QDRANT_URL"),
+            #     api_key=os.getenv("QDRANT_API_KEY"),
+            #     port=6333,
+            #     grpc_port=6333,
+            # )
 
             # Define the name of the collection
             collection_name = secrets.collection_name
             # ToDo: Include embedding as part of Postman
             # Use Postman in vectorization
-            self.embedding = OpenAIEmbeddings(
+            self.embedding = OrisonEmbeddings(
                 model="text-embedding-ada-002",
                 api_key=secrets.openai_api_key,
                 max_retries=5,
             )
             self.vectordb = Qdrant(
                 client=self.qdrant_client,
-                async_client=self._async_qdrant_client,
+                # async_client=self._async_qdrant_client,
                 collection_name=collection_name,
                 embeddings=self.embedding,
             )
         except Exception as e:
             message = f"Error initializing Qdrant. Error: {e}"
-            _logger.error(message)
+            self.logger.error(message)
             raise QDrant_INITIALIZATION_FAILED(message)
 
         try:
             self.retriever = self.vectordb.as_retriever(search_kwargs={"k": 10})
         except Exception as e:
             message = f"Error initializing Retriever. Error: {e}"
-            _logger.error(message)
+            self.logger.error(message)
             raise Retriever_INITIALIZATION_FAILED(message)
         self._screening_client = ScreeningClient()
 
@@ -336,9 +318,7 @@ class Summarize(RequestHandler):
         async def process_query(prompt, multi_query):
             retrieved_docs = []
             async for query in async_generator_from_list(multi_query):
-                result = await ThrottleRequest.throttle_call(
-                    self.retriever.ainvoke, query
-                )
+                result = self.retriever.invoke(query)
                 retrieved_docs.extend(result)
             prompt_docs.append((prompt, retrieved_docs))
 
@@ -407,18 +387,18 @@ class Summarize(RequestHandler):
             # bucket_name = request_json["bucketName"]
             bucket_name = "research"  # Hardcoded for now
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
-            _logger.info("Initializing summarizer with secrets")
+            self.logger.info("Initializing summarizer with secrets")
             self.initialize(secrets)
             prompts = self.prompts()
             prompts = [prompts[0]]
-            _logger.info("Initializing summarizer with secrets...done")
+            self.logger.info("Initializing summarizer with secrets...done")
             screening = await self.summarize(prompts)
             screening.attorney_id = attorney_id
             screening.applicant_id = applicant_id
             screening.bucket_name = bucket_name
-            _logger.info("Storing screening in Firestore")
+            self.logger.info("Storing screening in Firestore")
             id = await self._screening_client.insert(screening)
-            _logger.info(f"Screening stored in Firestore with ID: {id}")
+            self.logger.info(f"Screening stored in Firestore with ID: {id}")
         except Exception as e:
             message = f"Error processing files. Error code: {type(e).__name__}. Error message: {e}"
             self.logger.error(message, exc_info=True)
