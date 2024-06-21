@@ -18,7 +18,7 @@ import logging
 from argparse import ArgumentParser
 import subprocess
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 

@@ -16,19 +16,23 @@
 
 # External
 
+import time
+from asyncio.locks import Event
+import re
+import uuid
 import os
 import asyncio
+import tiktoken
 import json
-from typing import Union, List
+from typing import Union, List, Callable, Any
 from enum import Enum
-import traceback
 import logging
 from dataclasses import dataclass
 from qdrant_client import QdrantClient
 from langchain_openai import ChatOpenAI
-from langchain_openai import OpenAIEmbeddings
 from langchain_qdrant import Qdrant
-from langchain.retrievers.multi_query import MultiQueryRetriever
+from langchain_openai import OpenAIEmbeddings
+from langchain_core.documents import Document
 
 # Internal
 
@@ -38,13 +42,23 @@ from exceptions import (
     QDrant_INITIALIZATION_FAILED,
     Retriever_INITIALIZATION_FAILED,
 )
-from or_store.models import ScreeningBuilder, QandA, StoryBuilder
-from or_store.story_client import ScreeningClient, StoryClient
+from or_store.models import ScreeningBuilder, StoryBuilder, QandA
+from or_store.story_client import ScreeningClient
 from or_store.firebase import OrisonSecrets
 from utils import async_generator_from_list
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
+
+OPENAI_SLEEP = 0.15  # seconds
+MODEL_NAME = "gpt-4-turbo"
+
+
+@dataclass
+class Prompt:
+    question: list
+    detail_level: str
+    id: str = uuid.uuid4().hex
 
 
 class DetailLevel(Enum):
@@ -68,17 +82,50 @@ class DetailLevel(Enum):
         raise ValueError(f"No matching DetailLevel for keyword: {keyword}")
 
 
-class OpenAIPostman(ChatOpenAI):
+class ThrottleRequest:
+    register_last = None  # Class variable to track the time of the last call
+    throttle_lock = Event()  # Lock to throttle the requests
+
+    @staticmethod
+    async def throttle_call(future: Callable[..., Any], *args, **kwargs) -> Any:
+        if ThrottleRequest.register_last is not None:
+            # Wait for event to clear
+            await ThrottleRequest.throttle_lock.wait()
+            # Calculate the time since the last call
+            time_elapsed = time.time() - ThrottleRequest.register_last
+            # If the time since the last call is less than the limit, wait for the remaining time
+            if time_elapsed <= OPENAI_SLEEP:
+                await asyncio.sleep(OPENAI_SLEEP - time_elapsed)
+
+        # Update the time_elapsed to the current time
+        ThrottleRequest.throttle_lock.clear()
+        ThrottleRequest.register_last = time.time()
+        # Call the future with the provided arguments
+        result = await future(*args, **kwargs)
+        ThrottleRequest.throttle_lock.set()
+        # Return the result
+        return result
+
+
+class OpenAIMessenger(ChatOpenAI):
     ROLE = """
     You are a helpful, respectful and honest assistant.\
     Always answer as helpfully as possible and follow ALL given instructions.\
     Do not speculate or make up information.\
     """
 
+    MULTI_QUERY_ROLE = """
+    You are an AI language model assistant. \
+    Your task is to generate 3 different versions of the given user question. \
+    The questions will be used to retrieve relevant documents from a vector database. \
+    By generating multiple perspectives on the user question, your goal is to help the user overcome some of the limitations of distance-based similarity search. \
+    Provide these alternative questions separated by newlines.
+    """
+
     def __init__(
         self,
         api_key: str,
-        model: str = "gpt-3.5-turbo",
+        model: str = MODEL_NAME,
         temperature: float = 0.2,
         max_tokens: int = 4096,
         **kwargs,
@@ -88,9 +135,74 @@ class OpenAIPostman(ChatOpenAI):
             model=model,
             temperature=temperature,
             max_tokens=max_tokens,
-            timeout=30.0,
+            timeout=90.0,
             **kwargs,
         )
+
+    @staticmethod
+    async def truncate_to_max_tokens(text: str, max_tokens: int = 120000) -> str:
+        """
+        Truncate the input text to the maximum allowed tokens
+        :param text: Input text
+        :param max_tokens: Maximum allowed tokens
+        :return: Truncated text
+        """
+
+        # Initialize the tokenizer for the specific model
+        tokenizer = tiktoken.encoding_for_model(MODEL_NAME)
+        # Tokenize the input text
+        tokens = tokenizer.encode(text)
+        _logger.info(f"Token count: {len(tokens)}. Allowed: {max_tokens}")
+        # Check if the token count exceeds the maximum allowed tokens
+        if len(tokens) > max_tokens:
+            # Calculate the number of tokens to remove
+            tokens_to_remove = len(tokens) - max_tokens
+            # Truncate the tokens from the end
+            truncated_tokens = tokens[:-tokens_to_remove]
+            # Decode the tokens back to a string
+            truncated_text = tokenizer.decode(truncated_tokens)
+            return truncated_text
+        else:
+            return text
+
+    async def generate_queries(
+        self, prompts: List[Prompt]
+    ) -> List[tuple[Prompt, List[str]]]:
+        """
+        Generate multiple queries for each prompt
+        :param prompts: List of prompts
+        :return: List of tuples containing prompt and multi-query
+        """
+
+        queries = []
+
+        async def process_prompt(prompt: Prompt):
+            _logger.info(
+                f"Generating multi-query chunks through retriever invocation for prompt: {prompt.question}"
+            )
+            request = [
+                (
+                    "system",
+                    self.MULTI_QUERY_ROLE,
+                ),
+                (
+                    "human",
+                    f"Original question: {prompt.question}.",
+                ),
+            ]
+            result = await ThrottleRequest.throttle_call(self.ainvoke, request)
+            questions = [
+                q.strip() for q in re.split(r"\d+\.\s+", result.content) if q.strip()
+            ]
+            questions.append(prompt.question)
+            _logger.info(
+                f"Generated multi-queries for prompt: {prompt.question} \n{questions}"
+            )
+            queries.append((prompt, questions))
+
+        tasks = [process_prompt(prompt) for prompt in prompts]
+        await asyncio.gather(*tasks)
+        return queries
 
     async def request(
         self,
@@ -98,9 +210,22 @@ class OpenAIPostman(ChatOpenAI):
         context: str = "",
         detail_level: Union[str, DetailLevel] = DetailLevel.LIGHT,
     ):
+        """
+        Request the LLM to answer a question
+        :param query: Question to ask
+        :param context: Context to provide
+        :param detail_level: Level of detail
+        :return: Answer to the question
+        """
+
         if isinstance(detail_level, str):
             detail_level = DetailLevel.from_keyword(detail_level)
 
+        _logger.info("Checking if context exceeds max tokens. Truncating if required")
+        context = await OpenAIMessenger.truncate_to_max_tokens(context)
+        _logger.info(
+            "Checking if context exceeds max tokens. Truncating if required...DONE"
+        )
         prompt = [
             (
                 "system",
@@ -111,14 +236,8 @@ class OpenAIPostman(ChatOpenAI):
                 f"Given the context: \n{context}, \n answer the following: {query} in {detail_level.value}.",
             ),
         ]
-        result = await self.ainvoke(prompt)
+        result = await ThrottleRequest.throttle_call(self.ainvoke, prompt)
         return result.content
-
-
-@dataclass
-class Prompt:
-    question: list
-    detail_level: str
 
 
 class Summarize(RequestHandler):
@@ -127,9 +246,10 @@ class Summarize(RequestHandler):
 
     def initialize(self, secrets):
         try:
-            self.postman = OpenAIPostman(api_key=secrets.openai_api_key)
+            self.retriever_llm = OpenAIMessenger(api_key=secrets.openai_api_key)
+            self.prompter_llm = OpenAIMessenger(api_key=secrets.openai_api_key)
         except Exception as e:
-            message = f"Error initializing OpenAIPostman. Error: {e}"
+            message = f"Error initializing OpenAIMessenger. Error: {e}"
             _logger.error(message)
             raise LLM_INITIALIZATION_FAILED(message)
 
@@ -146,6 +266,7 @@ class Summarize(RequestHandler):
             self.embedding = OpenAIEmbeddings(
                 model="text-embedding-ada-002",
                 api_key=secrets.openai_api_key,
+                max_retries=5,
             )
             self.vectordb = Qdrant(
                 client=self.qdrant_client,
@@ -158,11 +279,7 @@ class Summarize(RequestHandler):
             raise QDrant_INITIALIZATION_FAILED(message)
 
         try:
-            self.retriever = MultiQueryRetriever.from_llm(
-                retriever=self.vectordb.as_retriever(search_kwargs={"k": 10}),
-                llm=self.postman,
-                include_original=True,
-            )
+            self.retriever = self.vectordb.as_retriever(search_kwargs={"k": 10})
         except Exception as e:
             message = f"Error initializing Retriever. Error: {e}"
             _logger.error(message)
@@ -176,7 +293,13 @@ class Summarize(RequestHandler):
             "templates",
             "eb1_a_questionnaire.json",
         ),
-    ):
+    ) -> List[Prompt]:
+        """
+        Load prompts from a JSON file
+        :param file_path: Path to the JSON file
+        :return: List of prompts
+        """
+
         prompts = []
         with open(file=file_path, mode="r") as file:
             js = json.load(file)
@@ -193,10 +316,32 @@ class Summarize(RequestHandler):
             file.close()
         return prompts
 
-    async def get_multi_query_screening(self, prompts: List[Prompt]):
-        screening = ScreeningBuilder()
-        async for prompt in async_generator_from_list(prompts):
-            retrieved_docs = await self.retriever.ainvoke(prompt.question)
+    async def retrieve_chunks(
+        self, queries: List[tuple[Prompt, List[str]]]
+    ) -> List[tuple[Prompt, List[Document]]]:
+        prompt_docs = []
+
+        async def process_query(prompt, multi_query):
+            retrieved_docs = []
+            async for query in async_generator_from_list(multi_query):
+                result = await ThrottleRequest.throttle_call(
+                    self.retriever.ainvoke, query
+                )
+                retrieved_docs.extend(result)
+            prompt_docs.append((prompt, retrieved_docs))
+
+        tasks = [process_query(prompt, multi_query) for prompt, multi_query in queries]
+        await asyncio.gather(*tasks)
+        return prompt_docs
+
+    async def generate_story(
+        self,
+        prompt_docs: List[tuple[Prompt, List[Document]]],
+        class_type: Union[ScreeningBuilder, StoryBuilder],
+    ):
+        story = class_type()
+
+        async def process_result(prompt, retrieved_docs):
             context = "\n".join([doc.page_content for doc in retrieved_docs])
             source = "\n".join(
                 [
@@ -204,39 +349,68 @@ class Summarize(RequestHandler):
                     for doc in retrieved_docs
                 ]
             )
-            response = await self.postman.request(
+            self.logger.info(
+                f"Prompting llm with context for prompt: {prompt.question}"
+            )
+            response = await self.prompter_llm.request(
                 prompt.question, context, prompt.detail_level
             )
+            self.logger.info(
+                f"Prompting llm with context for prompt: {prompt.question}....DONE"
+            )
             qna = QandA(question=prompt.question, answer=response, source=source)
-            screening.summary.append(qna)
-            await asyncio.sleep(0.01)
+            story.summary.append(qna)
+
+        tasks = [
+            process_result(prompt, retrieved_docs)
+            for prompt, retrieved_docs in prompt_docs
+        ]
+        await asyncio.gather(*tasks)
+        return story
+
+    async def summarize(self, prompts: List[Prompt]):
+        self.logger.info("Generating queries for prompts")
+        queries = await self.retriever_llm.generate_queries(prompts)
+        self.logger.info("Generating queries for prompts...DONE")
+
+        await asyncio.sleep(OPENAI_SLEEP * 5)
+
+        self.logger.info("Retrieving chunks for prompts")
+        prompt_docs = await self.retrieve_chunks(queries)
+        self.logger.info("Retrieving chunks for prompts...DONE")
+
+        await asyncio.sleep(OPENAI_SLEEP * 5)
+
+        self.logger.info("Generating screening")
+        screening = await self.generate_story(prompt_docs, class_type=ScreeningBuilder)
+        self.logger.info("Generating screening...DONE")
         return screening
 
     async def handle_request(self, request_json):
-        self.logger.info(f"Handling summarize request: {request_json}")
-        attorney_id = request_json["attorneyId"]
-        applicant_id = request_json["applicantId"]
-        # ToDo: Use bucket with qdrant tag
-        # bucket_name = request_json["bucketName"]
-        bucket_name = "research"  # Hardcoded for now
         try:
+            self.logger.info(f"Handling summarize request: {request_json}")
+            attorney_id = request_json["attorneyId"]
+            applicant_id = request_json["applicantId"]
+            # ToDo: Use bucket with qdrant tag
+            # bucket_name = request_json["bucketName"]
+            bucket_name = "research"  # Hardcoded for now
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             _logger.info("Initializing summarizer with secrets")
             self.initialize(secrets)
             prompts = self.prompts()
             _logger.info("Initializing summarizer with secrets...done")
-            screening = await self.get_multi_query_screening(prompts)
+            screening = await self.summarize(prompts)
             screening.attorney_id = attorney_id
             screening.applicant_id = applicant_id
             screening.bucket_name = bucket_name
             _logger.info("Storing screening in Firestore")
             id = await self._screening_client.insert(screening)
             _logger.info(f"Screening stored in Firestore with ID: {id}")
-            return OKResponse("Success!")
         except Exception as e:
             message = f"Error processing files: {e}"
             self.logger.error(message)
             return ErrorResponse(message)
+        return OKResponse("Success!")
 
 
 if __name__ == "__main__":

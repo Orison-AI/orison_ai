@@ -40,3 +40,7 @@ jobs:
           source_dir: './src/orison_ai/gateway_function'
           runtime: 'python310'
           memory_mb: '512'
+          min_instance_count: 0
+          max_instance_count: 5
+          service_timeout: 540
+          environment: 'GEN_1'

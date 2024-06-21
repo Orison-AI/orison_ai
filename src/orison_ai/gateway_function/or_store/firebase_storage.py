@@ -18,7 +18,7 @@ import logging
 
 from firebase_admin import storage
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 

@@ -28,7 +28,7 @@ from request_handler import (
     ErrorResponse,
 )
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 

@@ -34,7 +34,7 @@ from vectorize_files import VectorizeFiles
 from gateway import GatewayRequestType, router
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 
@@ -49,7 +49,7 @@ routes: dict[GatewayRequestType, RequestHandler] = {
     GatewayRequestType.SUMMARIZE: Summarize(),
 }
 
-LOCAL_TESTING = True
+LOCAL_TESTING = False
 
 
 def verify_bearer_token(request: Request):
