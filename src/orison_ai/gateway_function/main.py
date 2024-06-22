@@ -56,7 +56,7 @@ def initialize():
     return routes
 
 
-LOCAL_TESTING = True
+LOCAL_TESTING = False
 
 
 def verify_bearer_token(request: Request):
