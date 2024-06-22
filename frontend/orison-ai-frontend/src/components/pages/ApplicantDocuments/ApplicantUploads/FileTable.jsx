@@ -5,18 +5,18 @@ import React from 'react';
 
 // Chakra UI
 import {
-    Badge, Box, Button, IconButton,
+    Badge, Box, Button, IconButton, Spinner,
     Table, Thead, Tbody, Tr, Th, Td,
 } from '@chakra-ui/react';
-import { CloseIcon, CheckCircleIcon } from '@chakra-ui/icons';
+import { CheckCircleIcon, CloseIcon, WarningIcon } from '@chakra-ui/icons';
 
 const FileTable = ({
   documents,
-  processedFiles,
   vectorizeFile,
   deleteFile,
   viewFile,
-  isVectorizing,
+  vectorizingFile,
+  vectorizeStatus,
 }) => {
   return (
     <Box
@@ -38,24 +38,24 @@ const FileTable = ({
           {documents.map(fileName => (
             <Tr key={fileName}>
               <Td>
-                {fileName} 
-                {(processedFiles.includes(fileName)) && (
-                  <CheckCircleIcon ml="2" color="green.500" />
-                )}
+                {fileName}
               </Td>
               <Td>
-                {processedFiles.includes(fileName) ? (
+                {vectorizingFile === fileName && vectorizeStatus === 'success' ? (
                   <Badge colorScheme="green">Vectorized</Badge>
                 ) : (
                   <Badge colorScheme="orange">Not Vectorized</Badge>
                 )}
               </Td>
               <Td isNumeric>
+                {vectorizingFile === fileName && vectorizeStatus === 'loading' && <Spinner color="blue.500" size="sm" />}
+                {vectorizingFile === fileName && vectorizeStatus === 'success' && <CheckCircleIcon color="green.500" />}
+                {vectorizingFile === fileName && vectorizeStatus === 'error' && <WarningIcon color="red.500" />}
                 <Button
                   ml="16px"
                   colorScheme="blue"
                   onClick={() => vectorizeFile(fileName)}
-                  isDisabled={isVectorizing}
+                  isDisabled={vectorizeStatus === 'loading'}
                 >
                   Vectorize
                 </Button>
