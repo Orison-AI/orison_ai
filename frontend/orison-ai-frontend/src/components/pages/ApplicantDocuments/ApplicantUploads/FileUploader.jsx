@@ -186,8 +186,6 @@ const FileUploader = ({ selectedApplicant }) => {
           isClosable: true,
         });
         setVectorizeStatus('error'); // Set status to error
-      } finally {
-        setVectorizingFile(null); // Clear the file being vectorized
       }
     }
   };
