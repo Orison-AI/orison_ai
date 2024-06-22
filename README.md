@@ -47,7 +47,7 @@ curl -m 70 -X POST https://us-central1-orison-ai-visa-apply.cloudfunctions.net/g
         "attorneyId": "<attorney_hash>",
         "applicantId": "<applicant_hash>", 
         "fileIds" : ["<filename>.pdf"],
-        "bucketName": "<bucket_name>"
+        "bucketName": "<bucketName>"
       }
   }}' 
 ```
