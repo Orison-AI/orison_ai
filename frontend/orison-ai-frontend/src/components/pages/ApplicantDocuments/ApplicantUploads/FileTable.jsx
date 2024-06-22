@@ -35,13 +35,13 @@ const FileTable = ({
           </Tr>
         </Thead>
         <Tbody fontSize="16px">
-          {documents.map(fileName => (
+          {documents.map(({ fileName, vectorized }) => (
             <Tr key={fileName}>
               <Td whiteSpace="nowrap">
                 {fileName}
               </Td>
               <Td whiteSpace="nowrap">
-                {vectorizingFile === fileName && vectorizeStatus === 'success' ? (
+                {vectorized ? (
                   <Badge colorScheme="green">Vectorized</Badge>
                 ) : (
                   <Badge colorScheme="orange">Not Vectorized</Badge>

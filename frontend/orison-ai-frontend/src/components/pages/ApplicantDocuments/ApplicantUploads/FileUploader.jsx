@@ -2,11 +2,11 @@
 
 // React
 import React, { useCallback, useState, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
 
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../../../common/firebaseConfig';
+import { auth, db } from '../../../../common/firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 import {
   deleteObject, getDownloadURL, getMetadata, getStorage,
   listAll, ref, uploadBytes,
@@ -42,8 +42,18 @@ const FileUploader = ({ selectedApplicant }) => {
   const { isOpen: isViewModalOpen, onOpen: onViewModalOpen, onClose: onViewModalClose } = useDisclosure();
   const [vectorizingFile, setVectorizingFile] = useState(null);
   const [vectorizeStatus, setVectorizeStatus] = useState('');
-
+  const [vectorizedFiles, setVectorizedFiles] = useState([]);
   const toast = useToast();
+
+  const fetchVectorizedFiles = useCallback(async () => {
+    if (user && selectedApplicant) {
+      const docRef = doc(db, "applicants", selectedApplicant.id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setVectorizedFiles(docSnap.data().vectorized_files || []);
+      }
+    }
+  }, [user, selectedApplicant]);
 
   const fetchDocuments = useCallback(async () => {
     if (user && selectedApplicant) {
@@ -53,17 +63,33 @@ const FileUploader = ({ selectedApplicant }) => {
       
       try {
         const res = await listAll(listRef);
-        const docs = res.items.map(itemRef => (itemRef.name));
+        const docs = res.items.map(itemRef => ({
+          fileName: itemRef.name,
+          vectorized: vectorizedFiles.includes(itemRef.name),
+        }));
         setDocuments(docs);
       } catch (error) {
         console.error("Error fetching documents:", error);
       }
     }
-  }, [user, selectedApplicant, selectedBucket]);
+  }, [user, selectedApplicant, selectedBucket, vectorizedFiles]);
 
+  // Fetch the list of vectorized files when the component mounts or the selected applicant changes
+  useEffect(() => {
+    fetchVectorizedFiles();
+  }, [fetchVectorizedFiles]);
+
+  // Fetch the list of documents whenever selected bucket changes
   useEffect(() => {
     fetchDocuments();
   }, [fetchDocuments, selectedBucket]);
+
+  // Fetch list of vectorized files whenever a round of vectorization completes
+  useEffect(() => {
+    if (vectorizeStatus === 'success') {
+      fetchVectorizedFiles();
+    }
+  }, [vectorizeStatus, fetchVectorizedFiles]);
 
   const onDrop = async (acceptedFiles) => {
     const storage = getStorage();
@@ -161,7 +187,7 @@ const FileUploader = ({ selectedApplicant }) => {
     }
   };
 
-  const vectorizeFile = async (fileName) => {
+  const vectorizeFile = useCallback(async (fileName) => {
     if (user && selectedApplicant) {
       setVectorizingFile(fileName);  // Set the file being vectorized
       setVectorizeStatus('loading'); // Set status to loading
@@ -186,9 +212,9 @@ const FileUploader = ({ selectedApplicant }) => {
         setVectorizeStatus('error'); // Set status to error
       }
     }
-  };
+  }, [selectedApplicant, toast, user]);
 
-  const viewFile = async (fileName) => {
+  const viewFile = useCallback(async (fileName) => {
     const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileName}`;
     const storageRef = ref(getStorage(), filePath);
     
@@ -227,7 +253,7 @@ const FileUploader = ({ selectedApplicant }) => {
         isClosable: true,
       });
     }
-  };
+  }, [onViewModalOpen, selectedApplicant.id, selectedBucket, toast, user.uid]);
 
   return (
     <VStack width="100%" flex="1" mt="20px" overflowY="auto" overflowX="auto">
