@@ -20,7 +20,7 @@ const SummarizationDataDisplay = ({ data }) => {
   ];
 
   return (
-    <Box bg="gray.900" p="20px" overflowY="auto" borderRadius="20px" width="60%" maxHeight="60%" minWidth="600px">
+    <Box bg="gray.900" p="20px" overflowY="auto" borderRadius="20px" width="100%">
       <Text fontSize="2xl" mb="4">Summary</Text>
       <StructuredData data={data} keys={keys} />
     </Box>

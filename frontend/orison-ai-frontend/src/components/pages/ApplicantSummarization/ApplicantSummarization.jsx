@@ -88,37 +88,44 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
           {selectedApplicant ? selectedApplicant.name : "None"}
         </Text>
       </HStack>
-      <HStack>
-        <Button
-          onClick={handleSummarize}
-          colorScheme="green"
-          isDisabled={summarizationProgress === 'loading'}
-        >
-          Generate Summary
-        </Button>
-        {summarizationProgress === 'loading' && (
-          <Spinner color="blue.500" size="sm" />
+      <Box height="100%" width="80%" >
+        <HStack width="100%" mb="20px" justifyContent="flex-start">
+          <Button
+            onClick={handleSummarize}
+            colorScheme="green"
+            isDisabled={summarizationProgress === 'loading'}
+            mr="10px"
+          >
+            Generate Summary
+          </Button>
+          {summarizationProgress === 'loading' && (
+            <Spinner color="blue.500" size="sm" />
+          )}
+          {summarizationProgress === 'success' && (
+            <Box boxSize="24px">
+              <CheckCircleIcon color="green.500" boxSize="100%" />
+            </Box>
+          )}
+          {summarizationProgress === 'error' && (
+            <Box boxSize="24px">
+              <WarningIcon color="red.500" boxSize="100%" />
+            </Box>
+          )}
+        </HStack>
+        {summarizationDataStatus === 'found' && (
+          <SummarizationDataDisplay data={summarizationData} />
         )}
-        {summarizationProgress === 'success' && (
-          <CheckCircleIcon color="green.500" />
+        {summarizationDataStatus === 'loading' && (
+          <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
+            <Text>Loading summary data...</Text>
+          </Box>
         )}
-        {summarizationProgress === 'error' && (
-          <WarningIcon color="red.500" />
+        {summarizationDataStatus === 'not_found' && (
+          <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
+            <Text>No summary data found.</Text>
+          </Box>
         )}
-      </HStack>
-      {summarizationDataStatus === 'found' && (
-        <SummarizationDataDisplay data={summarizationData} />
-      )}
-      {summarizationDataStatus === 'loading' && (
-        <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
-          <Text>Loading summary data...</Text>
-        </Box>
-      )}
-      {summarizationDataStatus === 'not_found' && (
-        <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
-          <Text>No summary data found.</Text>
-        </Box>
-      )}
+      </Box>
     </VStack>
   );
 };
