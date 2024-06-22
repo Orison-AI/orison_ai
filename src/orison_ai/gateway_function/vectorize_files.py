@@ -194,7 +194,7 @@ class VectorizeFiles(RequestHandler):
             bucket_file_path = VectorizeFiles._file_path_builder(
                 attorney_id, applicant_id, bucketName, file_ids[0]
             )
-            local_file_path = os.path.join("tmp", file_ids[0])
+            local_file_path = f"/tmp/to_be_processed.pdf"
             self.logger.info(f"Remote File path: {bucket_file_path}")
             self.logger.info(f"Local File path: {local_file_path}")
             await VectorizeFiles._download_file(
