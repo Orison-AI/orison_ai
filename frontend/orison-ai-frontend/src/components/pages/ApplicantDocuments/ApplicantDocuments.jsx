@@ -1,4 +1,4 @@
-// ./components/pages/Documents/ApplicantDocuments.jsx
+// ./components/pages/ApplicantDocuments/ApplicantDocuments.jsx
 
 // React
 import React from 'react';
@@ -9,8 +9,8 @@ import {
 } from '@chakra-ui/react';
 
 // Orison
-import ScholarLinkForm from './ScholarLinkForm';
-import FileUploader from './FileUploader';
+import ScholarLinkForm from './ScholarData/ScholarLinkForm';
+import FileUploader from './ApplicantUploads/FileUploader';
 
 const ApplicantDocuments = ({ selectedApplicant }) => (
   <VStack height="100%" width="100%" padding="2vh" fontSize="4vh">

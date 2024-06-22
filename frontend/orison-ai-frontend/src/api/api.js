@@ -20,7 +20,7 @@ const endpoints = {
 
 
 const gateway = async (orRequestType, orRequestPayload) => {
-  console.log(`DEBUG: Fetching: ${serverUrl}/${endpoints.gateway}, orRequestType=${orRequestType}`);
+  console.log(`Fetching: ${serverUrl}/${endpoints.gateway}, orRequestType=${orRequestType}`);
 
   const gatewayFunction = httpsCallable(functions, endpoints.gateway);
   try {

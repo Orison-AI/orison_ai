@@ -1,4 +1,4 @@
-// ./components/pages/ApplicantDocuments/FileUploader.jsx
+// ./components/pages/ApplicantDocuments/ApplicantUploads/FileUploader.jsx
 
 // React
 import React, { useCallback, useState, useEffect } from 'react';
@@ -6,23 +6,24 @@ import { useDropzone } from 'react-dropzone';
 
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../../common/firebaseConfig';
+import { auth } from '../../../../common/firebaseConfig';
 import {
-  deleteObject, getStorage, listAll, ref, uploadBytes,
+  deleteObject, getDownloadURL, getMetadata, getStorage,
+  listAll, ref, uploadBytes,
 } from 'firebase/storage';
 
 // Chakra
 import {
-  Badge, Box, Button, HStack, Icon, IconButton, Link, Select,
-  Table, Thead, Tbody, Tr, Th, Td,
+  Box, HStack, Icon, Link, Select,
   Text, useDisclosure, useToast, VStack,
 } from '@chakra-ui/react';
-import { CloseIcon, CheckCircleIcon, DownloadIcon } from '@chakra-ui/icons';
-// Will use TimeIcon when processing is in-progress
+import { DownloadIcon } from '@chakra-ui/icons';
 
 // Orison
-import { vectorizeFiles } from '../../../api/api';
+import { vectorizeFiles } from '../../../../api/api';
 import DeleteFileModal from './DeleteFileModal';
+import ViewFileModal from './ViewFileModal';
+import FileTable from './FileTable';
 import OverwriteFileModal from './OverwriteFileModal';
 
 const buckets = ["research", "reviews", "awards", "feedback"];
@@ -36,6 +37,10 @@ const FileUploader = ({ selectedApplicant }) => {
   const { isOpen: isOverwriteModalOpen, onOpen: onOverwriteModalOpen, onClose: onOverwriteModalClose } = useDisclosure();
   const [fileToDelete, setFileToDelete] = useState(null);
   const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
+  const [fileToView, setFileToView] = useState(null);
+  const [fileContent, setFileContent] = useState('');
+  const { isOpen: isViewModalOpen, onOpen: onViewModalOpen, onClose: onViewModalClose } = useDisclosure();
+
   const toast = useToast();
 
   const fetchDocuments = useCallback(async () => {
@@ -64,13 +69,25 @@ const FileUploader = ({ selectedApplicant }) => {
     for (const file of acceptedFiles) {
       const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${file.name}`;
       const storageRef = ref(storage, filePath);
+
+      // Determine the correct contentType
+      let contentType = file.type;
+
+      // Browser doesn't detect markdown files for some reason
+      if (file.name.endsWith('.md')) {
+        contentType = 'text/markdown';
+      }
+
+      const metadata = {
+        contentType: contentType,
+      };
   
       if (documents.includes(file.name)) {
         setFileToOverwrite(file);
         onOverwriteModalOpen();
       } else {
         try {
-          await uploadBytes(storageRef, file);
+          await uploadBytes(storageRef, file, metadata);
           fetchDocuments();
         } catch (error) {
           console.error(`Error uploading file: ${error.message}`);
@@ -169,8 +186,49 @@ const FileUploader = ({ selectedApplicant }) => {
     }
   };
 
+  const viewFile = async (fileName) => {
+    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileName}`;
+    const storageRef = ref(getStorage(), filePath);
+    
+    try {
+      // Get file metadata, which includes the content type
+      const metadata = await getMetadata(storageRef);
+      const contentType = metadata.contentType;
+
+      // Determine if the file is text or binary based on contentType
+      const textMimeTypes = [
+        'text/plain', 'text/html', 'text/css', 'application/javascript', 'text/javascript',
+        'application/json', 'application/xml', 'text/xml', 'text/markdown', 'text/csv',
+        'application/x-yaml', 'text/yaml', 'text/x-vcard', 'text/x-vcalendar'
+      ];
+      
+      const isTextFile = (mimeType) => textMimeTypes.includes(mimeType);
+      let text = `Unable to display file of type: [${contentType}]`;
+
+      if (isTextFile(contentType)) {
+        const fileUrl = await getDownloadURL(storageRef);
+        const response = await fetch(fileUrl);
+        text = await response.text();
+      }
+      
+      setFileToView(fileName);
+      setFileContent(text);
+      onViewModalOpen();
+
+    } catch (error) {
+      console.error(`Error fetching file content: ${error.message}`);
+      toast({
+        title: 'Error Fetching File Content',
+        description: error.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
   return (
-    <VStack width="50%" mt="4vh">
+    <VStack width="50%" height="50vh" mt="4vh">
       <HStack width="100%" mb="0.5vh" fontSize="24px">
         <Text width="100%">Applicant Files</Text>
         <Box minWidth="200px" fontSize="24px">
@@ -183,60 +241,26 @@ const FileUploader = ({ selectedApplicant }) => {
           </Select>
         </Box>
       </HStack>
-      <Box mb="20px" width="100%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
-        <Table variant="simple">
-          <Thead>
-            <Tr>
-              <Th>File Name</Th>
-              <Th>Status</Th>
-              <Th></Th>
-            </Tr>
-          </Thead>
-          <Tbody fontSize="20px">
-            {documents.map(fileName => (
-              <Tr key={fileName}>
-                <Td>
-                  {fileName} 
-                  {(processedFiles.includes(fileName)) && (
-                    <CheckCircleIcon ml="2" color="green.500" />
-                  )}
-                </Td>
-                <Td>
-                  {processedFiles.includes(fileName) ? (
-                    <Badge colorScheme="green">Vectorized</Badge>
-                  ) : (
-                    <Badge colorScheme="orange">Not Vectorized</Badge>
-                  )}
-                </Td>
-                <Td isNumeric>
-                  <Button ml="2vh" mr="2vh" colorScheme="blue" onClick={() => vectorizeFile(fileName)}>
-                    Vectorize
-                  </Button>
-                  <IconButton
-                    icon={<CloseIcon />}
-                    colorScheme="red"
-                    variant="ghost"
-                    onClick={() => deleteFile(fileName)}
-                  />
-                </Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
-        <VStack
-          {...getRootProps()}
-          border="2px dashed gray"
-          p="2vh"
-          m="2vh"
-          backgroundColor={isDragActive ? 'gray.700' : 'transparent'}
-        >
-          <input {...getInputProps()} />
-          <Icon as={DownloadIcon} w="4vh" h="4vh" mt="2vh" mb="2vh" color="gray.500" />
-          <Text fontSize="20px">
-            <Link as="b" onClick={open} cursor="pointer">Choose a file</Link> or drag it here
-          </Text>
-        </VStack>
-      </Box>
+      <FileTable
+        documents={documents}
+        processedFiles={processedFiles}
+        vectorizeFile={vectorizeFile}
+        deleteFile={deleteFile}
+        viewFile={viewFile}
+      />
+      <VStack
+        {...getRootProps()}
+        border="2px dashed gray"
+        p="2vh"
+        mb="2vh"
+        backgroundColor={isDragActive ? 'gray.700' : 'transparent'}
+      >
+        <input {...getInputProps()} />
+        <Icon as={DownloadIcon} w="4vh" h="4vh" mt="2vh" mb="2vh" color="gray.500" />
+        <Text fontSize="20px">
+          <Link as="b" onClick={open} cursor="pointer">Choose a file</Link> or drag it here
+        </Text>
+      </VStack>
       <OverwriteFileModal
         isOpen={isOverwriteModalOpen}
         onClose={onOverwriteModalClose}
@@ -248,6 +272,12 @@ const FileUploader = ({ selectedApplicant }) => {
         onClose={onDeleteModalClose}
         onConfirm={handleDeleteConfirm}
         fileName={fileToDelete}
+      />
+      <ViewFileModal
+        isOpen={isViewModalOpen}
+        onClose={onViewModalClose}
+        fileName={fileToView}
+        fileContent={fileContent}
       />
     </VStack>
   );

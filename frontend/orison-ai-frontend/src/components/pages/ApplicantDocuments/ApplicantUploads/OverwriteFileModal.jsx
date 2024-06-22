@@ -1,4 +1,4 @@
-// ./components/pages/ApplicantDocuments/DeleteFileModal.jsx
+// ./components/pages/ApplicantDocuments/ApplicantUploads/OverwriteFileModal.jsx
 
 // React
 import React from 'react';
@@ -9,20 +9,20 @@ import {
   ModalBody, ModalFooter, Button, Text
 } from '@chakra-ui/react';
 
-const DeleteFileModal = ({ isOpen, onClose, onConfirm, fileName }) => {
+const OverwriteFileModal = ({ isOpen, onClose, onConfirm, fileName }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Delete File</ModalHeader>
+        <ModalHeader>Overwrite File</ModalHeader>
         <ModalBody>
           <Text>
-            Are you sure you want to delete the file <strong>{fileName}</strong>? This action cannot be undone.
+            The file <strong>{fileName}</strong> already exists. Do you want to overwrite it? This action cannot be undone.
           </Text>
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="red" mr={3} onClick={onConfirm}>
-            Delete
+            Overwrite
           </Button>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
         </ModalFooter>
@@ -31,4 +31,4 @@ const DeleteFileModal = ({ isOpen, onClose, onConfirm, fileName }) => {
   );
 };
 
-export default DeleteFileModal;
+export default OverwriteFileModal;
