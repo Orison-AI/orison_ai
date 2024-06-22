@@ -54,12 +54,10 @@ export const processScholarLink = async (attorneyId, applicantId, scholarLink) =
   return response.data;
 };
 
-export const vectorizeFiles = async (attorneyId, applicantId, bucketName, tag, fileIds) => {
+export const vectorizeFiles = async (attorneyId, applicantId, fileIds) => {
   const response = await gateway(endpoints.vectorizeFiles, {
     attorneyId,
     applicantId,
-    bucketName,
-    tag,
     fileIds,
   });
 

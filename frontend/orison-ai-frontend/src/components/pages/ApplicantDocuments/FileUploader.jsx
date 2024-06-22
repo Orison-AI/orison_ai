@@ -145,11 +145,10 @@ const FileUploader = ({ selectedApplicant }) => {
     }
   };  
 
-  const vectorizeFile = async (bucketName, fileName) => {
+  const vectorizeFile = async (fileName) => {
     if (user && selectedApplicant) {
       try {
-        const tag = bucketName;
-        const response = await vectorizeFiles(user.uid, selectedApplicant.id, bucketName, tag, [fileName]);
+        const response = await vectorizeFiles(user.uid, selectedApplicant.id, [fileName]);
         toast({
           title: 'Vectorization Started',
           description: `Vectorization for ${fileName} has started. Request ID: ${response.requestId}`,
@@ -210,7 +209,7 @@ const FileUploader = ({ selectedApplicant }) => {
                   )}
                 </Td>
                 <Td isNumeric>
-                  <Button ml="2vh" mr="2vh" colorScheme="blue" onClick={() => vectorizeFile(selectedBucket, fileName)}>
+                  <Button ml="2vh" mr="2vh" colorScheme="blue" onClick={() => vectorizeFile(fileName)}>
                     Vectorize
                   </Button>
                   <IconButton
