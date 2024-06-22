@@ -57,13 +57,6 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
     if (selectedApplicant) {
       try {
         setSummarizationProgress('loading');
-        toast({
-          title: 'Summarizing applicant data',
-          description: 'Please wait for processing',
-          status: 'loading',
-          duration: 5000,
-          isClosable: true,
-        });
         await summarize(user.uid, selectedApplicant.id);
         setSummarizationProgress('success');
         toast({

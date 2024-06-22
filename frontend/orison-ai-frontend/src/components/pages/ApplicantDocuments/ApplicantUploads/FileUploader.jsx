@@ -160,16 +160,16 @@ const FileUploader = ({ selectedApplicant }) => {
         isClosable: true,
       });
     }
-  };  
+  };
 
   const vectorizeFile = async (fileName) => {
     if (user && selectedApplicant) {
       try {
-        const response = await vectorizeFiles(user.uid, selectedApplicant.id, [fileName]);
+        await vectorizeFiles(user.uid, selectedApplicant.id, [fileName]);
         toast({
-          title: 'Vectorization Started',
-          description: `Vectorization for ${fileName} has started. Request ID: ${response.requestId}`,
-          status: 'info',
+          title: 'Vectorization Completed',
+          description: `Vectorization for ${fileName} has completed successfully.`,
+          status: 'success',
           duration: 5000,
           isClosable: true,
         });

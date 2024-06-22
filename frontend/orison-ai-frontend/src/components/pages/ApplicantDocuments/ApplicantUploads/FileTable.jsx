@@ -41,7 +41,7 @@ const FileTable = ({ documents, processedFiles, vectorizeFile, deleteFile, viewF
                 <Button ml="2vh" colorScheme="blue" onClick={() => vectorizeFile(fileName)}>
                   Vectorize
                 </Button>
-                <Button ml="2vh" colorScheme="teal" onClick={() => viewFile(fileName)}>
+                <Button ml="2vh" onClick={() => viewFile(fileName)}>
                   View
                 </Button>
                 <IconButton

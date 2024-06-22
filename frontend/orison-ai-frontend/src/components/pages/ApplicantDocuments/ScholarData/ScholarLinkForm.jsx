@@ -135,7 +135,7 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
             <Button type="submit" colorScheme="blue" ml="0.5vh">
               Search
             </Button>
-            <Button onClick={onScholarDataModalOpen} colorScheme="teal" ml="0.5vh" isDisabled={scholarDataStatus !== 'found'}>
+            <Button onClick={onScholarDataModalOpen} ml="0.5vh" isDisabled={scholarDataStatus !== 'found'}>
               View
             </Button>
           </HStack>

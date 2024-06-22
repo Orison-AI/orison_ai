@@ -36,7 +36,6 @@ const ManageApplicants = ({
   // Refs for edit fields
   const nameRef = useRef();
   const emailRef = useRef();
-  const statusRef = useRef();
 
   // Set the applicants list
   useEffect(() => {
@@ -77,7 +76,6 @@ const ManageApplicants = ({
         attorney_id: user.uid,
         name: "",
         email: "",
-        status: "",
       });
       startEdit(newDoc.id);
     } catch (error) {
@@ -95,7 +93,6 @@ const ManageApplicants = ({
           attorney_id: user.uid,
           name: nameRef.current.value || "",
           email: emailRef.current.value || "",
-          status: statusRef.current.value || "",
         }, { merge: true });
       }
     } catch (error) {
@@ -147,7 +144,6 @@ const ManageApplicants = ({
               <Tr>
                 <Th>Name</Th>
                 <Th>Email</Th>
-                <Th>Status</Th>
                 <Th></Th>
               </Tr>
             </Thead>
@@ -171,15 +167,6 @@ const ManageApplicants = ({
                         onKeyDown={(e) => handleKeyDown(e, applicant)}
                       />
                     ) : applicant.email}
-                  </Td>
-                  <Td>
-                    {editId === applicant.id ? (
-                      <Input
-                        defaultValue={applicant.status}
-                        ref={statusRef}
-                        onKeyDown={(e) => handleKeyDown(e, applicant)}
-                      />
-                    ) : applicant.status}
                   </Td>
                   <Td isNumeric>
                     {editId === applicant.id ? (
