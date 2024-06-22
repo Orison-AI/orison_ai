@@ -6,22 +6,25 @@ import React, { useCallback, useEffect, useState } from 'react';
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../../../common/firebaseConfig';
-import { collection, getDocs, orderBy, query, where, limit } from 'firebase/firestore';
+import {
+  collection, getDocs, orderBy, query, where, limit,
+} from 'firebase/firestore';
 
 // Chakra UI
 import {
-  Box, Button, HStack, Text, useToast, VStack,
+  Box, Button, HStack, Text, useToast, VStack, Spinner,
 } from '@chakra-ui/react';
+import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 
 // Orison AI
 import { summarize } from '../../../api/api';
 import SummarizationDataDisplay from './SummarizationDataDisplay';
 
-
 const ApplicantSummarization = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
   const [summarizationDataStatus, setSummarizationDataStatus] = useState('');
   const [summarizationData, setSummarizationData] = useState(null);
+  const [summarizationProgress, setSummarizationProgress] = useState('');
   const toast = useToast();
 
   const fetchSummarizationData = useCallback(async () => {
@@ -53,17 +56,28 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
   const handleSummarize = async () => {
     if (selectedApplicant) {
       try {
-        const response = await summarize(user.uid, selectedApplicant.id);
+        setSummarizationProgress('loading');
         toast({
-          title: 'Summarization Started',
-          description: `Summarization for ${selectedApplicant.name} has started. Request ID: ${response.requestId}`,
-          status: 'info',
+          title: 'Summarizing applicant data',
+          description: 'Please wait for processing',
+          status: 'loading',
           duration: 5000,
           isClosable: true,
         });
-      } catch (error) {
+        await summarize(user.uid, selectedApplicant.id);
+        setSummarizationProgress('success');
         toast({
-          title: 'Summarization Failed',
+          title: 'Summary Complete',
+          description: `Summary generated successfully for ${selectedApplicant.name}`,
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+        await fetchSummarizationData();
+      } catch (error) {
+        setSummarizationProgress('error');
+        toast({
+          title: 'Summary Failed',
           description: error.message,
           status: 'error',
           duration: 5000,
@@ -81,9 +95,20 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
           {selectedApplicant ? selectedApplicant.name : "None"}
         </Text>
       </HStack>
-      <Button mb="20px" onClick={handleSummarize} colorScheme="green">
-        Generate Summary
-      </Button>
+      <HStack>
+        <Button onClick={handleSummarize} colorScheme="green">
+          Generate Summary
+        </Button>
+        {summarizationProgress === 'loading' && (
+          <Spinner color="blue.500" size="sm" />
+        )}
+        {summarizationProgress === 'success' && (
+          <CheckCircleIcon color="green.500" />
+        )}
+        {summarizationProgress === 'error' && (
+          <WarningIcon color="red.500" />
+        )}
+      </HStack>
       {summarizationDataStatus === 'found' && (
         <SummarizationDataDisplay data={summarizationData} />
       )}
