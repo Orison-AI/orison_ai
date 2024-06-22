@@ -226,7 +226,7 @@ class VectorizeFiles(RequestHandler):
                 tag=tag,
                 collection_name=secrets.collection_name,
             )
-            client.update_collection_document(
+            await client.update_collection_document(
                 collection_name="applicants",
                 document_name=applicant_id,
                 field="vectorized_files",

@@ -43,12 +43,12 @@ _logger = logging.getLogger(__name__)
 def initialize():
     _logger.info("Getting firebase admin app.")
     # Initialize Firebase Admin SDK
-    get_firebase_admin_app()
+    app = get_firebase_admin_app()
     _logger.info("Getting firebase admin app....DONE")
 
     # These are the routes that the gateway can handle. The router function will use the GatewayRequestType to determine
     # which handler to use.
-    routes: dict[GatewayRequestType, RequestHandler] = {
+    routes = {
         GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
         # GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
         # GatewayRequestType.SUMMARIZE: Summarize(),
@@ -92,10 +92,9 @@ def gateway_function(request: Request):
     }
 
     try:
+        routes = initialize()
         if not LOCAL_TESTING:
             verify_bearer_token(request)
-
-        routes = initialize()
 
         _logger.info("Token verified. Sending request to router.")
         result = asyncio.run(router(routes, request))

@@ -169,7 +169,11 @@ class FireStoreDB:
         collection = self.client.collection(collection_name)
         document = collection.document(document_name)
         # Check if field value is instance of a list. In that case append to list.
-        current_value = document.get().to_dict()[field]
+        current_value = document.get().to_dict().get(field)
+        # Check if field exists in document
+        if current_value is None:
+            logging.error("Field does not exist in document. Cannot update field")
+            return None
         if isinstance(current_value, list):
             if isinstance(value, list):
                 for val in value:
