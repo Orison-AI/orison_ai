@@ -75,6 +75,7 @@ def environment_or_secret(key: str):
         try:
             # Getting secrets
             value = read_remote_secret_url_as_string(build_secret_url(key.lower()))
+            _logger.info(f"{key.lower()} found in secret manager.")
         except Exception as e:
             message = f"{key.lower()} not found in secret manager. Error: {e}"
             raise CREDENTIALS_NOT_FOUND(message=message)
@@ -102,6 +103,9 @@ def get_firebase_admin_app():
         secret = environment_or_secret("FIREBASE_CREDENTIALS")
         cred_dict = json.loads(secret)
     except CREDENTIALS_NOT_FOUND as e:
+        _logger.error(
+            f"No Firebase credentials found in environment variables or secret manager. Error: {e}"
+        )
         raise e
     except json.JSONDecodeError:
         raise INVALID_CREDENTIALS("Invalid JSON in FIREBASE_CREDENTIALS")
@@ -110,9 +114,11 @@ def get_firebase_admin_app():
     options = {}
     try:
         bucket_str = environment_or_secret("BUCKET")
-        options = {"storageBucket": bucket_str}
+        options = {"storageBucket": str(bucket_str)}
     except CREDENTIALS_NOT_FOUND as e:
-        _logger.error(f"No bucket found in environment variables. Error: {e}")
+        _logger.error(
+            f"No bucket found in environment variables or secret manager. Error: {e}"
+        )
     except Exception as e:
         _logger.error(f"Unknown error: {e}")
 

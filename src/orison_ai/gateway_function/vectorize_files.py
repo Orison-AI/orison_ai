@@ -185,7 +185,7 @@ class VectorizeFiles(RequestHandler):
                 raise ValueError("Only one file per request is supported ATM")
 
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
-            self.logger.debug(
+            self.logger.info(
                 f"Processing file for attorney {attorney_id} and applicant {applicant_id}"
             )
 
@@ -194,9 +194,9 @@ class VectorizeFiles(RequestHandler):
             bucket_file_path = VectorizeFiles._file_path_builder(
                 attorney_id, applicant_id, bucketName, file_ids[0]
             )
-            local_file_path = os.path.join("tmp", "to_be_processed", file_ids[0])
-            self.logger.debug(f"Remote File path: {bucket_file_path}")
-            self.logger.debug(f"Local File path: {local_file_path}")
+            local_file_path = os.path.join("tmp", file_ids[0])
+            self.logger.info(f"Remote File path: {bucket_file_path}")
+            self.logger.info(f"Local File path: {local_file_path}")
             await VectorizeFiles._download_file(
                 bucket_file_path, local_file_path, logger=self.logger
             )
