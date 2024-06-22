@@ -7,10 +7,9 @@ import React, { useEffect, useState } from 'react';
 import { onAuthStateChanged } from "firebase/auth";
 
 // Chakra
-import { Text, useDisclosure, VStack } from '@chakra-ui/react';
+import { Box, Text, useDisclosure, VStack } from '@chakra-ui/react';
 
 // Internal
-
 import { auth } from './common/firebaseConfig';
 import Views from './common/views';
 import Header from './components/Header';
@@ -84,7 +83,7 @@ const App = () => {
   };
 
   return (
-    <VStack height="100%" width="100%">
+    <VStack height="100vh" width="100vw">
       <Header toggleMenu={toggleMenu} onSettingsOpen={onOpen} />
       <MainMenu
         isOpen={isMenuOpen}
@@ -95,7 +94,9 @@ const App = () => {
         setSelectedApplicant={setSelectedApplicantCustom}
       />
       <Settings isOpen={isOpen} onClose={onClose} />
-      {renderCurrentView()}
+      <Box width="100%" flex="1" overflowY="auto">
+        {renderCurrentView()}
+      </Box>
     </VStack>
   );
 }

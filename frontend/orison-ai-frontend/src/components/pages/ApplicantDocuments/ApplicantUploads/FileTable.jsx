@@ -22,10 +22,9 @@ const FileTable = ({
     <Box
       mb="10px"
       width="100%"
-      minHeight="100px"
       border="1px"
       borderColor="gray.600"
-      borderRadius="1vh"
+      borderRadius="10px"
     >
       <Table variant="simple">
         <Thead>
@@ -53,19 +52,19 @@ const FileTable = ({
               </Td>
               <Td isNumeric>
                 <Button
-                  ml="2vh"
+                  ml="16px"
                   colorScheme="blue"
                   onClick={() => vectorizeFile(fileName)}
                   isDisabled={isVectorizing}
                 >
                   Vectorize
                 </Button>
-                <Button ml="2vh" onClick={() => viewFile(fileName)}>
+                <Button ml="16px" onClick={() => viewFile(fileName)}>
                   View
                 </Button>
                 <IconButton
                   icon={<CloseIcon />}
-                  ml="2vh"
+                  ml="16px"
                   colorScheme="red"
                   variant="ghost"
                   onClick={() => deleteFile(fileName)}
