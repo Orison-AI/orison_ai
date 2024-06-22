@@ -31,8 +31,8 @@ from or_store.firebase import get_firebase_admin_app
 from request_handler import RequestHandler
 from fetch_scholar import FetchScholar
 
-# from summarize import Summarize
-# from vectorize_files import VectorizeFiles
+from summarize import Summarize
+from vectorize_files import VectorizeFiles
 from gateway import GatewayRequestType, router
 
 
@@ -50,13 +50,13 @@ def initialize():
     # which handler to use.
     routes = {
         GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
-        # GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
-        # GatewayRequestType.SUMMARIZE: Summarize(),
+        GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
+        GatewayRequestType.SUMMARIZE: Summarize(),
     }
     return routes
 
 
-LOCAL_TESTING = False
+LOCAL_TESTING = True
 
 
 def verify_bearer_token(request: Request):
@@ -71,7 +71,7 @@ def verify_bearer_token(request: Request):
 
 
 @http
-def gateway_function(request: Request):
+def gateway_function_test(request: Request):
     _logger.info(f"Gateway received request: {request.json}")
 
     # Set CORS headers for the preflight request
@@ -124,5 +124,5 @@ def gateway_function(request: Request):
 
 
 if __name__ == "__main__":
-    app = create_app(gateway_function)
+    app = create_app(gateway_function_test)
     app.run(port=int(os.environ.get("PORT", 8080)), host="0.0.0.0", debug=True)
