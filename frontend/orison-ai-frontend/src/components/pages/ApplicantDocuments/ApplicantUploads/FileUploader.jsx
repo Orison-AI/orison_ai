@@ -15,15 +15,15 @@ import {
 // Chakra
 import {
   Alert, AlertIcon, AlertDescription,
-  Box, HStack, Icon, Link, Select,
-  Text, useDisclosure, useToast, VStack,
+  Box, HStack, Select, Text,
+  useDisclosure, useToast, VStack,
 } from '@chakra-ui/react';
-import { DownloadIcon } from '@chakra-ui/icons';
 
 // Orison
 import { vectorizeFiles } from '../../../../api/api';
 import DeleteFileModal from './DeleteFileModal';
 import ViewFileModal from './ViewFileModal';
+import FileDropzone from './FileDropzone';
 import FileTable from './FileTable';
 import OverwriteFileModal from './OverwriteFileModal';
 
@@ -104,8 +104,6 @@ const FileUploader = ({ selectedApplicant }) => {
       }
     }
   };
-
-  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({ onDrop });
 
   const handleOverwriteConfirm = async () => {
     const storage = getStorage();
@@ -254,20 +252,7 @@ const FileUploader = ({ selectedApplicant }) => {
             Support for multiple files will be added in a future version.
           </AlertDescription>
         </Alert>
-        <VStack
-          {...getRootProps()}
-          border="2px dashed gray"
-          w="100%"
-          p="20px"
-          mb="20px"
-          backgroundColor={isDragActive ? 'gray.700' : 'transparent'}
-        >
-          <input {...getInputProps()} />
-          <Icon as={DownloadIcon} color="gray.500" />
-          <Text fontSize="20px">
-            <Link as="b" onClick={open} cursor="pointer">Choose a file</Link> or drag it here
-          </Text>
-        </VStack>
+        <FileDropzone onDrop={onDrop} />
         <FileTable
           documents={documents}
           vectorizeFile={vectorizeFile}
