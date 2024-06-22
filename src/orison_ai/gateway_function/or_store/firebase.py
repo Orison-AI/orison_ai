@@ -162,6 +162,9 @@ class FireStoreDB:
         :param field: the field to update
         :param value: the value to update the field to
         """
+        if not value or not field:
+            logging.error("Failed to update document. Field and value cannot be empty")
+            return None
         # Assumes a unique document is found
         collection = self.client.collection(collection_name)
         document = collection.document(document_name)

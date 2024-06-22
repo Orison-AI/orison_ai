@@ -174,7 +174,6 @@ class VectorizeFiles(RequestHandler):
         logger.info("Uploading vectors to Qdrant....DONE")
 
     async def handle_request(self, request_json):
-        file_ids = []
         try:
             client = FireStoreDB()
             attorney_id = request_json["attorneyId"]
@@ -227,13 +226,13 @@ class VectorizeFiles(RequestHandler):
                 tag=tag,
                 collection_name=secrets.collection_name,
             )
+            client.update_collection_document(
+                collection_name="applicants",
+                document_name=applicant_id,
+                field="vectorized_files",
+                value=file_ids,
+            )
         except Exception as e:
             self.logger.error(f"Error processing files: {e}")
             return ErrorResponse(str(e))
-        client.update_collection_document(
-            collection_name="applicants",
-            document_name=applicant_id,
-            field="vectorized_files",
-            value=file_ids,
-        )
         return OKResponse("Success!")
