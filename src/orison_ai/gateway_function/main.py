@@ -28,7 +28,6 @@ from firebase_admin import auth
 
 # Internal
 from or_store.firebase import get_firebase_admin_app
-from request_handler import RequestHandler
 from fetch_scholar import FetchScholar
 from summarize import Summarize
 from vectorize_files import VectorizeFiles
@@ -38,18 +37,32 @@ from gateway import GatewayRequestType, router
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
+firebase_app = None
+routes = None
 
-# Initialize Firebase Admin SDK
-get_firebase_admin_app()
+def init_firebase():
+    global firebase_app
 
-# These are the routes that the gateway can handle. The router function will use the GatewayRequestType to determine
-# which handler to use.
-routes: dict[GatewayRequestType, RequestHandler] = {
-    GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
-    GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
-    GatewayRequestType.SUMMARIZE: Summarize(),
-}
+    if firebase_app:
+        _logger.info("Firebase admin app already created")
+    else:
+        _logger.info("Getting firebase admin app.")
+        firebase_app = get_firebase_admin_app()
+    _logger.info("Getting firebase admin app....DONE")
 
+def init_routes():
+    global routes
+
+    if routes:
+        _logger.info("Routes already created")
+    else:
+        _logger.info("Initializing routes")
+        routes = {
+            GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
+            GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
+            GatewayRequestType.SUMMARIZE: Summarize(),
+        }
+        _logger.info("Initializing routes....DONE")
 
 def verify_bearer_token(request: Request):
     """Verifies the Bearer token from the Authorization header."""
@@ -84,7 +97,11 @@ def gateway_function(request: Request):
     }
 
     try:
+        init_firebase()
         verify_bearer_token(request)
+        init_routes()
+
+        _logger.info("Token verified. Sending request to router.")
         result = asyncio.run(router(routes, request))
         code = result["status"]
 
