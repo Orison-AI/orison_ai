@@ -15,6 +15,7 @@
 # ==========================================================================
 
 # External
+import os
 import logging
 import asyncio
 from flask import Request
@@ -29,8 +30,9 @@ from firebase_admin import auth
 from or_store.firebase import get_firebase_admin_app
 from request_handler import RequestHandler
 from fetch_scholar import FetchScholar
-from summarize import Summarize
-from vectorize_files import VectorizeFiles
+
+# from summarize import Summarize
+# from vectorize_files import VectorizeFiles
 from gateway import GatewayRequestType, router
 
 
@@ -38,16 +40,21 @@ logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
 
 
-# Initialize Firebase Admin SDK
-get_firebase_admin_app()
+def initialize():
+    _logger.info("Getting firebase admin app.")
+    # Initialize Firebase Admin SDK
+    get_firebase_admin_app()
+    _logger.info("Getting firebase admin app....DONE")
 
-# These are the routes that the gateway can handle. The router function will use the GatewayRequestType to determine
-# which handler to use.
-routes: dict[GatewayRequestType, RequestHandler] = {
-    GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
-    GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
-    GatewayRequestType.SUMMARIZE: Summarize(),
-}
+    # These are the routes that the gateway can handle. The router function will use the GatewayRequestType to determine
+    # which handler to use.
+    routes: dict[GatewayRequestType, RequestHandler] = {
+        GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
+        # GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
+        # GatewayRequestType.SUMMARIZE: Summarize(),
+    }
+    return routes
+
 
 LOCAL_TESTING = True
 
@@ -88,6 +95,8 @@ def gateway_function(request: Request):
         if not LOCAL_TESTING:
             verify_bearer_token(request)
 
+        routes = initialize()
+
         _logger.info("Token verified. Sending request to router.")
         result = asyncio.run(router(routes, request))
         code = result["status"]
@@ -115,10 +124,6 @@ def gateway_function(request: Request):
         return ({"error": str(e)}, 500, headers)
 
 
-@http
-def gateway_function_staging(request: Request):
-    return gateway_function(request)
-
-
 if __name__ == "__main__":
-    app = create_app(gateway_function_staging)
+    app = create_app(gateway_function)
+    app.run(port=int(os.environ.get("PORT", 8080)), host="0.0.0.0", debug=True)

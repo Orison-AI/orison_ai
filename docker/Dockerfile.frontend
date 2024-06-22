@@ -6,7 +6,9 @@ WORKDIR /app/frontend/orison-frontend
 
 # Copy the rest of your application code
 COPY ./frontend/orison-ai-frontend .
+COPY ./frontend/orison-ai-frontend/package*.json ./
 RUN npm install
+ENV NODE_ENV=production
 RUN npm run build
 
 # Expose the port the app runs on
