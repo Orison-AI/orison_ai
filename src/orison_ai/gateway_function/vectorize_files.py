@@ -32,6 +32,7 @@ from langchain_openai.embeddings import OpenAIEmbeddings
 # Internal
 from request_handler import RequestHandler, OKResponse, ErrorResponse
 from or_store.firebase_storage import FirebaseStorage
+from or_store.firebase import FireStoreDB
 from utils import raise_and_log_error, file_extension
 from or_store.firebase import OrisonSecrets
 
@@ -173,7 +174,9 @@ class VectorizeFiles(RequestHandler):
         logger.info("Uploading vectors to Qdrant....DONE")
 
     async def handle_request(self, request_json):
+        file_ids = []
         try:
+            client = FireStoreDB()
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
             file_ids = request_json["fileIds"]
@@ -227,4 +230,10 @@ class VectorizeFiles(RequestHandler):
         except Exception as e:
             self.logger.error(f"Error processing files: {e}")
             return ErrorResponse(str(e))
+        client.update_collection_document(
+            collection_name="applicants",
+            document_name=applicant_id,
+            field="vectorized_files",
+            value=file_ids,
+        )
         return OKResponse("Success!")

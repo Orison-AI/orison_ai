@@ -35,7 +35,7 @@ from firebase_admin import firestore_async, firestore
 from bson import ObjectId
 from typing import Optional
 from mongoengine import Document, EmbeddedDocument
-from typing import List, Union
+from typing import List, Union, Any
 from pymongo import DESCENDING, ASCENDING
 
 logging.basicConfig(level=logging.INFO)
@@ -146,6 +146,41 @@ class FireStoreDB:
         app = get_firebase_admin_app()
         self.async_client = firestore_async.client(app)
         self.client = firestore.client(app)
+
+    async def update_collection_document(
+        self,
+        collection_name: str,
+        document_name: str,
+        field: str,
+        value: Union[Any, List[Any]],
+    ):
+        """
+        Updates the collection to be used in the Firestore DB
+
+        :param collection_name: the name of the collection to update
+        :param document_name: the name of the document to update
+        :param field: the field to update
+        :param value: the value to update the field to
+        """
+        # Assumes a unique document is found
+        collection = self.client.collection(collection_name)
+        document = collection.document(document_name)
+        # Check if field value is instance of a list. In that case append to list.
+        current_value = document.get().to_dict()[field]
+        if isinstance(current_value, list):
+            if isinstance(value, list):
+                for val in value:
+                    if val not in current_value:
+                        current_value.append(val)
+            elif value not in current_value:
+                current_value.append(value)
+            document.update({field: current_value})
+        else:
+            document.update({field: value})
+        logging.info(
+            f"Updated document with new field:value {field}:{value} in collection {collection_name} and document {document_name}"
+        )
+        return True
 
 
 class FirestoreClient(FireStoreDB):
