@@ -37,17 +37,17 @@ const FileTable = ({
         <Tbody fontSize="16px">
           {documents.map(fileName => (
             <Tr key={fileName}>
-              <Td>
+              <Td whiteSpace="nowrap">
                 {fileName}
               </Td>
-              <Td>
+              <Td whiteSpace="nowrap">
                 {vectorizingFile === fileName && vectorizeStatus === 'success' ? (
                   <Badge colorScheme="green">Vectorized</Badge>
                 ) : (
                   <Badge colorScheme="orange">Not Vectorized</Badge>
                 )}
               </Td>
-              <Td isNumeric>
+              <Td isNumeric whiteSpace="nowrap">
                 {vectorizingFile === fileName && vectorizeStatus === 'loading' && <Spinner color="blue.500" size="sm" />}
                 {vectorizingFile === fileName && vectorizeStatus === 'success' && <CheckCircleIcon color="green.500" />}
                 {vectorizingFile === fileName && vectorizeStatus === 'error' && <WarningIcon color="red.500" />}

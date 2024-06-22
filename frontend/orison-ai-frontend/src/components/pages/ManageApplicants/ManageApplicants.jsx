@@ -150,7 +150,7 @@ const ManageApplicants = ({
             <Tbody>
               {applicants.map(applicant => (
                 <Tr key={applicant.id}>
-                  <Td>
+                  <Td whiteSpace="nowrap">
                     {editId === applicant.id ? (
                       <Input
                         defaultValue={applicant.name}
@@ -159,7 +159,7 @@ const ManageApplicants = ({
                       />
                     ) : applicant.name}
                   </Td>
-                  <Td>
+                  <Td whiteSpace="nowrap">
                     {editId === applicant.id ? (
                       <Input
                         defaultValue={applicant.email} 
@@ -168,7 +168,7 @@ const ManageApplicants = ({
                       />
                     ) : applicant.email}
                   </Td>
-                  <Td isNumeric>
+                  <Td isNumeric whiteSpace="nowrap">
                     {editId === applicant.id ? (
                       <>
                         <IconButton icon={<CheckIcon />} onClick={() => saveEdit(applicant)} colorScheme="green" mr="4px" />
