@@ -40,6 +40,7 @@ const FileUploader = ({ selectedApplicant }) => {
   const [fileToView, setFileToView] = useState(null);
   const [fileContent, setFileContent] = useState('');
   const { isOpen: isViewModalOpen, onOpen: onViewModalOpen, onClose: onViewModalClose } = useDisclosure();
+  const [isVectorizing, setIsVectorizing] = useState(false);
 
   const toast = useToast();
 
@@ -164,6 +165,7 @@ const FileUploader = ({ selectedApplicant }) => {
 
   const vectorizeFile = async (fileName) => {
     if (user && selectedApplicant) {
+      setIsVectorizing(true);  // Start vectorizing
       try {
         await vectorizeFiles(user.uid, selectedApplicant.id, [fileName]);
         toast({
@@ -182,6 +184,8 @@ const FileUploader = ({ selectedApplicant }) => {
           duration: 5000,
           isClosable: true,
         });
+      } finally {
+        setIsVectorizing(false);  // End vectorizing
       }
     }
   };
@@ -247,6 +251,7 @@ const FileUploader = ({ selectedApplicant }) => {
         vectorizeFile={vectorizeFile}
         deleteFile={deleteFile}
         viewFile={viewFile}
+        isVectorizing={isVectorizing}
       />
       <VStack
         {...getRootProps()}

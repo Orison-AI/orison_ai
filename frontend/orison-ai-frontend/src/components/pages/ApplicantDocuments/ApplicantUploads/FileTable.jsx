@@ -10,7 +10,14 @@ import {
 } from '@chakra-ui/react';
 import { CloseIcon, CheckCircleIcon } from '@chakra-ui/icons';
 
-const FileTable = ({ documents, processedFiles, vectorizeFile, deleteFile, viewFile }) => {
+const FileTable = ({
+  documents,
+  processedFiles,
+  vectorizeFile,
+  deleteFile,
+  viewFile,
+  isVectorizing,
+}) => {
   return (
     <Box mb="2vh" width="100%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
       <Table variant="simple">
@@ -38,7 +45,12 @@ const FileTable = ({ documents, processedFiles, vectorizeFile, deleteFile, viewF
                 )}
               </Td>
               <Td isNumeric>
-                <Button ml="2vh" colorScheme="blue" onClick={() => vectorizeFile(fileName)}>
+                <Button
+                  ml="2vh"
+                  colorScheme="blue"
+                  onClick={() => vectorizeFile(fileName)}
+                  isDisabled={isVectorizing}
+                >
                   Vectorize
                 </Button>
                 <Button ml="2vh" onClick={() => viewFile(fileName)}>
