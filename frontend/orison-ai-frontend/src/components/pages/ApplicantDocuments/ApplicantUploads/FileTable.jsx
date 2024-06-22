@@ -19,7 +19,14 @@ const FileTable = ({
   isVectorizing,
 }) => {
   return (
-    <Box mb="2vh" width="100%" minHeight="100px" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
+    <Box
+      mb="10px"
+      width="100%"
+      minHeight="100px"
+      border="1px"
+      borderColor="gray.600"
+      borderRadius="1vh"
+    >
       <Table variant="simple">
         <Thead>
           <Tr>
