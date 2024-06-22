@@ -4,15 +4,9 @@
 import { functions } from '../common/firebaseConfig';
 import { httpsCallable } from "firebase/functions";
 
-// Postman mock server
-// const serverUrl = "https://0ce3b64f-175d-4856-abcf-073461b968bf.mock.pstmn.io";
-
-// Google cloud function
-const serverUrl = "https://us-central1-orison-ai-visa-apply.cloudfunctions.net";
-
 // Map function names to their endpoints
 const endpoints = {
-  gateway: "gateway_function",
+  gateway: "gateway_function_staging",
   processScholarLink: "process-scholar-link",
   vectorizeFiles: "vectorize-files",
   summarize: "summarize",
@@ -20,7 +14,7 @@ const endpoints = {
 
 
 const gateway = async (orRequestType, orRequestPayload) => {
-  console.log(`Fetching: ${serverUrl}/${endpoints.gateway}, orRequestType=${orRequestType}`);
+  console.log(`Fetching cloud endpoint: ${endpoints.gateway}, orRequestType=${orRequestType}`);
 
   const gatewayFunction = httpsCallable(functions, endpoints.gateway);
   try {
