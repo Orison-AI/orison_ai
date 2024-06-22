@@ -14,7 +14,7 @@ function Header({ toggleMenu, onSettingsOpen }) {
   const headerColor = useColorModeValue("rgba(23, 25, 35, 0.10)", "rgba(23, 25, 35, 0.90)");
 
   return (
-    <HStack width="100%" bg={headerColor} p="1vh" pl="2vh" pr="2vh">
+    <HStack width="100%" bg={headerColor} p="8px" pl="16px" pr="16px">
       <IconButton 
         aria-label="Open menu" 
         icon={<Icon as={HamburgerIcon} />} 

@@ -111,7 +111,7 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
   return (
     <Box width="100%">
       <FormControl>
-        <Text width="100%" mb="1vh" fontSize="24px">Google Scholar</Text>
+        <Text width="100%" mb="8px" fontSize="24px">Google Scholar</Text>
         <form onSubmit={handleScholarSearchRequest}>
           <HStack>
             <InputGroup>
@@ -136,12 +136,12 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
             <Button
               type="submit"
               colorScheme="blue"
-              ml="0.5vh"
+              ml="4px"
               isDisabled={scholarDataStatus === 'loading'}
             >
               Search
             </Button>
-            <Button onClick={onScholarDataModalOpen} ml="0.5vh" isDisabled={scholarDataStatus !== 'found'}>
+            <Button onClick={onScholarDataModalOpen} ml="4px" isDisabled={scholarDataStatus !== 'found'}>
               View
             </Button>
           </HStack>

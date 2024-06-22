@@ -136,9 +136,9 @@ const ManageApplicants = ({
 
   return (
     <Box width="100%">
-      <Text fontSize="32px" m="2vh" mb="4vh" color="gray.400">Manage Applicants</Text>
+      <Text fontSize="32px" m="16px" mb="32px" color="gray.400">Manage Applicants</Text>
       <Center>
-        <Box overflowX="auto" minWidth="60%" maxWidth="90%" border="1px" borderColor="gray.600" borderRadius="1vh">
+        <Box overflowX="auto" minWidth="60%" maxWidth="90%" border="1px" borderColor="gray.600" borderRadius="8px">
           <Table variant="simple">
             <Thead>
               <Tr>
@@ -171,7 +171,7 @@ const ManageApplicants = ({
                   <Td isNumeric>
                     {editId === applicant.id ? (
                       <>
-                        <IconButton icon={<CheckIcon />} onClick={() => saveEdit(applicant)} colorScheme="green" mr="0.5vh" />
+                        <IconButton icon={<CheckIcon />} onClick={() => saveEdit(applicant)} colorScheme="green" mr="4px" />
                         <IconButton icon={<CloseIcon />} onClick={cancelEdit} colorScheme="red" />
                       </>
                     ) : (
@@ -179,9 +179,9 @@ const ManageApplicants = ({
                         <IconButton icon={<EditIcon />} onClick={() => startEdit(applicant.id)} colorScheme="blue" />
                       </>
                     )}
-                    <Button ml="1.0vh" onClick={() => viewDocs(applicant)}>Documents</Button>
-                    <Button ml="0.5vh" onClick={() => viewSummarization(applicant)}>Summary</Button>
-                    <IconButton ml="1vh" icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />
+                    <Button ml="8px" onClick={() => viewDocs(applicant)}>Documents</Button>
+                    <Button ml="4px" onClick={() => viewSummarization(applicant)}>Summary</Button>
+                    <IconButton ml="8px" icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />
                   </Td>
                 </Tr>
               ))}
@@ -190,7 +190,7 @@ const ManageApplicants = ({
         </Box>
       </Center>
       <Center>
-        <Button mt="2vh" colorScheme="blue" onClick={addNewApplicant}>Add New Applicant</Button>
+        <Button mt="16px" colorScheme="blue" onClick={addNewApplicant}>Add New Applicant</Button>
       </Center>
       <DeleteApplicantModal
         isOpen={isOpen}

@@ -43,7 +43,7 @@ const MainMenu = ({
       <DrawerContent>
         <DrawerCloseButton />
         <DrawerHeader>orison.ai</DrawerHeader>
-        <DrawerBody pl="4vh">
+        <DrawerBody pl="32px">
           <VStack spacing={4}>
             <MenuButton label="Manage Applicants" onClick={() => changeView(Views.MANAGE_APPLICANTS)} />
             <Divider/>
