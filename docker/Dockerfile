@@ -43,12 +43,6 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 RUN apt-get update && xargs -a packages-apt.txt apt-get install -y
 
-# Install node
-# RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh
-# RUN bash nodesource_setup.sh
-# RUN apt-get install -y nodejs
-# RUN rm -rf nodesource_setup.sh
-
 RUN chmod 755 /app/docker/entrypoint.sh
 
 EXPOSE 5004

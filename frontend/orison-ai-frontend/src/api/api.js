@@ -8,9 +8,7 @@ import { httpsCallable } from "firebase/functions";
 // const serverUrl = "https://0ce3b64f-175d-4856-abcf-073461b968bf.mock.pstmn.io";
 
 // Google cloud function
-// const serverUrl = "https://us-central1-orison-ai-visa-apply.cloudfunctions.net";
-// Google staging function
-const serverUrl = "https://us-central1-orison-ai-visa-apply.cloudfunctions.net/gateway_function_staging"
+const serverUrl = "https://us-central1-orison-ai-visa-apply.cloudfunctions.net";
 
 // Map function names to their endpoints
 const endpoints = {
