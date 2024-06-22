@@ -119,6 +119,7 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
                 placeholder="Enter Google Scholar URL" 
                 value={scholarLink}
                 onChange={(e) => setScholarLink(e.target.value)}
+                isDisabled={scholarDataStatus === 'loading'}
               />
               <InputRightElement>
                 {(scholarDataStatus === 'loading') && (
@@ -132,7 +133,12 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
                 )}
               </InputRightElement>
             </InputGroup>
-            <Button type="submit" colorScheme="blue" ml="0.5vh">
+            <Button
+              type="submit"
+              colorScheme="blue"
+              ml="0.5vh"
+              isDisabled={scholarDataStatus === 'loading'}
+            >
               Search
             </Button>
             <Button onClick={onScholarDataModalOpen} ml="0.5vh" isDisabled={scholarDataStatus !== 'found'}>

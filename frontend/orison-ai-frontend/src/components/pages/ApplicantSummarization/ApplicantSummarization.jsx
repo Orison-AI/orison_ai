@@ -89,7 +89,11 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
         </Text>
       </HStack>
       <HStack>
-        <Button onClick={handleSummarize} colorScheme="green">
+        <Button
+          onClick={handleSummarize}
+          colorScheme="green"
+          isDisabled={summarizationProgress === 'loading'}
+        >
           Generate Summary
         </Button>
         {summarizationProgress === 'loading' && (
