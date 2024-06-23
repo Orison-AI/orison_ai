@@ -242,6 +242,7 @@ class Summarize(RequestHandler):
                 api_key=os.getenv("QDRANT_API_KEY"),
                 port=6333,
                 grpc_port=6333,
+                https=True,
             )
             # Define the name of the collection
             collection_name = secrets.collection_name
@@ -254,7 +255,6 @@ class Summarize(RequestHandler):
             )
             self.vectordb = Qdrant(
                 client=self.qdrant_client,
-                # async_client=self._async_qdrant_client,
                 collection_name=collection_name,
                 embeddings=self.embedding,
             )

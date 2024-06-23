@@ -13,7 +13,7 @@ langchain==0.2.2
 langchain_community==0.2.3
 langchain_experimental==0.0.60
 langchain_openai==0.1.8
-qdrant_client==1.9.1
+qdrant_client==1.9.2
 langchain_qdrant==0.1.0
 pypdf==4.2.0
 unstructured==0.14.7
