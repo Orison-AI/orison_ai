@@ -74,15 +74,24 @@ gcloud auth application-default login
 ```
 - Enter the orison standard email and password for admins
 The above command will authorize your local machine to access the google cloud services.
+```
+gcloud config list --all # List all config parameters
+```
 - Check the following:
 ```
 gcloud config get-value project # Should be orison project name
+# If project name is not set correctly then use the following
+gcloud config set project orison-ai-visa-apply
 gcloud auth list # Authorized service account should be correct
-                Credential JSON corresponding to service account should be FIREBASE_CREDENTIALS
-                environment variable within the container
-# If incorrect service account is present, change using following commands
+                # Make sure there is an * present before service account that is the same as
+                # listed in details tab of the google function.
+                # The service account credentials as part of JSON file should be set as
+                # FIREBASE_CREDENTIALS environment variable within the container
+# If incorrect service account is present, first set the new account using:
+gcloud config set account <account name>
+# Then change authentication credentials using following commands
 gcloud auth activate-service-account --key-file=/path_to_key_downloaded_from_service_account
-# Check again
+# Check again to make sure correct account is listed.
 gcloud auth list
 ```
 
