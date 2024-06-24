@@ -76,6 +76,7 @@ const ManageApplicants = ({
         attorney_id: user.uid,
         name: "",
         email: "",
+        files: [],
       });
       startEdit(newDoc.id);
     } catch (error) {
