@@ -33,19 +33,18 @@ jobs:
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
 
-      - name: Set environment variables for using appropriate function mode
-        run: |
-          echo "FUNCTION_MODE=gateway_function_staging" >> $GITHUB_ENV
-
       - name: 'Deploy'
         uses: 'google-github-actions/deploy-cloud-functions@v2'
         with:
           name: 'gateway_function_staging'
           source_dir: './src/orison_ai/gateway_function'
           runtime: 'python310'
-          memory_mb: '512'
+          memory: '512M'
           min_instance_count: 0
           max_instance_count: 5
           service_timeout: 540
           environment: 'GEN_2'
           region: "us-central1"
+          build_environment_variables: |-
+            FUNCTION_MODE=gateway_function_staging
+          build_service_account: orison-ai-visa-apply@appspot.gserviceaccount.com
