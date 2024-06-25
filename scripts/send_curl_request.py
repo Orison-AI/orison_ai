@@ -17,6 +17,7 @@
 import logging
 from argparse import ArgumentParser
 import subprocess
+from print_firebase_identity_token import get_firebase_identity_token
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
@@ -52,11 +53,9 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("-d", "--data", type=str, required=True)
     parser.add_argument("-u", "--url", type=str, default=url_default)
-    parser.add_argument("-a", "--authorization", type=str)
     args = parser.parse_args()
     data = args.data
     url = args.url
-    if args.authorization:
-        headers["Authorization"] = f"Bearer {args.authorization}"
+    headers["Authorization"] = f"Bearer {get_firebase_identity_token()}"
 
     send_curl_request(url, method, headers, data)
