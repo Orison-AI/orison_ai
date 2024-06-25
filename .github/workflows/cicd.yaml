@@ -47,4 +47,3 @@ jobs:
           region: "us-central1"
           build_environment_variables: |-
             FUNCTION_MODE=gateway_function_staging
-          build_service_account: orison-ai-visa-apply@appspot.gserviceaccount.com
