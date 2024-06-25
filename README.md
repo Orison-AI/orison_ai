@@ -34,20 +34,18 @@ localhost:3000
 ```
 Frontend presently sends requests to the actual google cloud function
 
-## Emulated Frontend via Curl
-- Run the send_curl_request script with your payload. Below is an example:
+## Emulated Frontend via Curl Python
+- Make sure you set the standard Orison password as environment variable ORISON_PASSWORD
+- Run the send_curl_request script with your payload and url corresponding to the cloud function. Below is an example:
 ```
-curl -m 70 -X POST https://us-central1-orison-ai-visa-apply.cloudfunctions.net/gateway_function_staging \
--H "Authorization: bearer $(gcloud auth print-identity-token)" \
--H "Content-Type: application/json" \
--d '{
+python send_curl_request --url https://us-central1-orison-ai-visa-apply.cloudfunctions.net/gateway_function --data '{
     "data":{
       "or_request_type": "vectorize-files",
       "or_request_payload": {
         "attorneyId": "<attorney_hash>",
         "applicantId": "<applicant_hash>", 
         "fileIds" : ["<filename>.pdf"],
-        "bucketName": "<bucketName>"
+        "bucket_name": "<bucket_name>"
       }
   }}' 
 ```
@@ -62,6 +60,7 @@ functions-framework --target gateway_function --port=3000 --debug
 OR
 functions-framework --source=path/gateway_function/main.py --target=gateway_function --port=3000 --debug
 ```
+- You can run the python curl program again by changing url to localhost:3000
 
 ## GCloud Configuration
 - Make sure gcloud is installed and configured on HOST Machine
@@ -98,5 +97,5 @@ gcloud auth list
 ## Gcloud Deployment
 - Be in the directory containing gateway_function directory or change source accordingly
 ```
-gcloud functions deploy gateway_function --runtime python310 --memory 512 --trigger-http --allow-unauthenticated --entry-point gateway_function --source=gateway_function --no-gen2 --max-instances 5 --timeout 60
+gcloud functions deploy gateway_function --runtime python310 --memory 512 --trigger-http --allow-unauthenticated --entry-point gateway_function --source=gateway_function --gen2 --max-instances 5 --timeout 540
 ```

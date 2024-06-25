@@ -49,7 +49,7 @@ class VectorizeFiles(RequestHandler):
 
     @staticmethod
     def _file_path_builder(
-        attorney_id: str, applicant_id: str, bucketName: str, file_path: str
+        attorney_id: str, applicant_id: str, bucket_name: str, file_path: str
     ):
         return os.path.join(
             *[
@@ -58,7 +58,7 @@ class VectorizeFiles(RequestHandler):
                 attorney_id,
                 "applicants",
                 applicant_id,
-                bucketName,
+                bucket_name,
                 file_path,
             ]
         )
@@ -75,7 +75,7 @@ class VectorizeFiles(RequestHandler):
             raise_and_log_error(f"Could not download file to {local_file_path}", logger)
 
     @staticmethod
-    def _load_file(file_path: str, logger):
+    def _load_file(file_path: str, logger, filename: str):
         logger.debug(f"Attempting to load file from {file_path}")
         match file_extension(file_path):
             case ".txt":
@@ -102,6 +102,9 @@ class VectorizeFiles(RequestHandler):
         # Each document page_content is literally whatever is on that page
         documents = loader.load()
         logger.debug(f"Loaded file from {file_path}")
+        # Update metadata filename
+        for document in documents:
+            document.metadata["source"] = filename
         return documents
 
     @staticmethod
@@ -137,7 +140,7 @@ class VectorizeFiles(RequestHandler):
 
     @staticmethod
     async def _store_chunks(
-        chunks, openai_client, qdrant_client, logger, tag, collection_name
+        chunks, openai_client, qdrant_client, logger, tag, collection_name, filename
     ):
         async def process_chunk(chunk, openai_client, tag):
             embedding = await VectorizeFiles._get_openai_embedding(
@@ -147,6 +150,7 @@ class VectorizeFiles(RequestHandler):
                 "page_content": chunk.page_content,
                 "metadata": chunk.metadata,
                 "tag": tag,
+                "filename": filename,
             }
             return embedding, payload
 
@@ -174,27 +178,40 @@ class VectorizeFiles(RequestHandler):
         logger.info("Uploading vectors to Qdrant....DONE")
 
     async def handle_request(self, request_json):
+        """
+        Handle the request to vectorize the files.
+        1. Download the file from Firebase Storage
+        2. Load the file
+        3. Chunk the file
+        4. Store the chunks in Qdrant
+        5. Update the applicant document in Firestore
+
+        :param request_json: The request JSON
+        :return: OKResponse if successful, ErrorResponse if not
+        """
         try:
             client = FireStoreDB()
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
             file_ids = request_json["fileIds"]
-            bucketName = "research"  # Hardcoding for now
-            tag = bucketName
-            # bucketName = request_json["bucketName"]
-            # tag = request_json["tag"]
             if len(file_ids) != 1:
                 raise ValueError("Only one file per request is supported ATM")
+            file_id = file_ids[0]
+            bucket_name = "research"  # Hardcoding for now
+            tag = bucket_name
+            # bucket_name = request_json["bucket_name"]
+            # tag = request_json["tag"]
 
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info(
                 f"Processing file for attorney {attorney_id} and applicant {applicant_id}"
             )
 
-            # ToDo: Currently supporting only one file. Increase it later.
+            # ToDo: Currently supporting only one file.
+            # We should make multiple calls from the frontend instead for scalability
             # Download the file
             bucket_file_path = VectorizeFiles._file_path_builder(
-                attorney_id, applicant_id, bucketName, file_ids[0]
+                attorney_id, applicant_id, bucket_name, file_id
             )
             local_file_path = f"/tmp/to_be_processed.pdf"
             self.logger.info(f"Remote File path: {bucket_file_path}")
@@ -204,7 +221,9 @@ class VectorizeFiles(RequestHandler):
             )
 
             # Load the file
-            documents = VectorizeFiles._load_file(local_file_path, logger=self.logger)
+            documents = VectorizeFiles._load_file(
+                local_file_path, logger=self.logger, filename=file_id
+            )
             # Getting secrets
             qdrant_url = secrets.qdrant_url
             qdrant_api_key = secrets.qdrant_api_key
@@ -225,6 +244,7 @@ class VectorizeFiles(RequestHandler):
                 logger=self.logger,
                 tag=tag,
                 collection_name=secrets.collection_name,
+                filename=file_id,
             )
             await client.update_collection_document(
                 collection_name="applicants",

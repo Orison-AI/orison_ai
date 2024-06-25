@@ -4,11 +4,11 @@ name: orison_staging_deploy
 # Controls when the action will run. 
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
-  # push:
-  #   branches: [ staging ]
+  push:
+    branches: [ staging ]
 
-  # pull_request:
-  #   branches: [ staging ]
+  pull_request:
+    branches: [ staging ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -33,6 +33,10 @@ jobs:
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v2'
 
+      - name: Set environment variables for using appropriate function mode
+        run: |
+          echo "FUNCTION_MODE=gateway_function_staging" >> $GITHUB_ENV
+
       - name: 'Deploy'
         uses: 'google-github-actions/deploy-cloud-functions@v2'
         with:
@@ -43,4 +47,5 @@ jobs:
           min_instance_count: 0
           max_instance_count: 5
           service_timeout: 540
-          environment: 'GEN_1'
+          environment: 'GEN_2'
+          region: "us-central1"

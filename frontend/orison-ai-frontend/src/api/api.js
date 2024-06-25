@@ -12,7 +12,7 @@ const serverUrl = "https://us-central1-orison-ai-visa-apply.cloudfunctions.net";
 
 // Map function names to their endpoints
 const endpoints = {
-  gateway: "gateway_function_test",
+  gateway: "gateway_function",
   processScholarLink: "process-scholar-link",
   vectorizeFiles: "vectorize-files",
   summarize: "summarize",

@@ -80,7 +80,7 @@ def verify_bearer_token(request: Request):
 
 
 @http
-def gateway_function_staging(request: Request):
+def gateway_function(request: Request):
     _logger.info(f"Gateway received request: {request.json}")
 
     # Set CORS headers for the preflight request
@@ -132,6 +132,15 @@ def gateway_function_staging(request: Request):
         return ({"error": str(e)}, 500, headers)
 
 
+@http
+def gateway_function_staging(request: Request):
+    return gateway_function(request)
+
+
 if __name__ == "__main__":
-    app = create_app(gateway_function_staging)
+    function_mode = os.getenv("FUNCTION_MODE", "gateway_function")
+    if function_mode == "gateway_function":
+        app = create_app(gateway_function)
+    elif function_mode == "gateway_function_staging":
+        app = create_app(gateway_function_staging)
     app.run(port=int(os.environ.get("PORT", 8080)), host="0.0.0.0", debug=True)

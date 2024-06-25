@@ -309,7 +309,9 @@ class Summarize(RequestHandler):
         async def process_query(prompt, multi_query):
             retrieved_docs = []
             async for query in async_generator_from_list(multi_query):
-                result = self.retriever.invoke(query)
+                # ToDo: Qdrant refuses connection so change this later.
+                result = []
+                # result = self.retriever.invoke(query)
                 retrieved_docs.extend(result)
             prompt_docs.append((prompt, retrieved_docs))
 
@@ -375,13 +377,12 @@ class Summarize(RequestHandler):
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
             # ToDo: Use bucket with qdrant tag
-            # bucket_name = request_json["bucketName"]
+            # bucket_name = request_json["bucket_name"]
             bucket_name = "research"  # Hardcoded for now
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info("Initializing summarizer with secrets")
             self.initialize(secrets)
             prompts = self.prompts()
-            prompts = [prompts[0]]
             self.logger.info("Initializing summarizer with secrets...done")
             screening = await self.summarize(prompts)
             screening.attorney_id = attorney_id
@@ -401,7 +402,7 @@ if __name__ == "__main__":
     request_json = {
         "attorneyId": "xlMsyQpatdNCTvgRfW4TcysSDgX2",
         "applicantId": "tYdtBdc7lJHyVCxquubj",
-        "bucketName": "research",
+        "bucket_name": "research",
     }
     summarize = Summarize()
     asyncio.run(summarize.handle_request(request_json))
