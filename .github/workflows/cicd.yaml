@@ -47,3 +47,5 @@ jobs:
           region: "us-central1"
           build_environment_variables: |-
             FUNCTION_MODE=gateway_function_staging
+          service_account: orison-ai-visa-apply@appspot.gserviceaccount.com
+          # max_instance_request_concurrency: 5 # Explore this later
