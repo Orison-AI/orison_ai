@@ -43,7 +43,7 @@ jobs:
           min_instance_count: 0
           max_instance_count: 5
           service_timeout: 540
-          environment: 'GEN_2'
+          environment: 'GEN_1'
           region: "us-central1"
           build_environment_variables: |-
             FUNCTION_MODE=gateway_function_staging
