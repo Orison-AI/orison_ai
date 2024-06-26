@@ -2,11 +2,11 @@
 
 // React
 import React, { useCallback, useState, useEffect } from 'react';
-import { useDropzone } from 'react-dropzone';
 
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../../../common/firebaseConfig';
+import { auth, db } from '../../../../common/firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
 import {
   deleteObject, getDownloadURL, getMetadata, getStorage,
   listAll, ref, uploadBytes,
@@ -14,15 +14,16 @@ import {
 
 // Chakra
 import {
-  Box, HStack, Icon, Link, Select,
-  Text, useDisclosure, useToast, VStack,
+  Alert, AlertIcon, AlertDescription,
+  Box, HStack, Select, Text,
+  useDisclosure, useToast, VStack,
 } from '@chakra-ui/react';
-import { DownloadIcon } from '@chakra-ui/icons';
 
 // Orison
 import { vectorizeFiles } from '../../../../api/api';
 import DeleteFileModal from './DeleteFileModal';
 import ViewFileModal from './ViewFileModal';
+import FileDropzone from './FileDropzone';
 import FileTable from './FileTable';
 import OverwriteFileModal from './OverwriteFileModal';
 
@@ -31,7 +32,6 @@ const buckets = ["research", "reviews", "awards", "feedback"];
 const FileUploader = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
   const [documents, setDocuments] = useState([]);
-  const [processedFiles, setProcessedFiles] = useState([]);
   const [selectedBucket, setSelectedBucket] = useState(buckets[0]);
   const [fileToOverwrite, setFileToOverwrite] = useState(null);
   const { isOpen: isOverwriteModalOpen, onOpen: onOverwriteModalOpen, onClose: onOverwriteModalClose } = useDisclosure();
@@ -40,8 +40,20 @@ const FileUploader = ({ selectedApplicant }) => {
   const [fileToView, setFileToView] = useState(null);
   const [fileContent, setFileContent] = useState('');
   const { isOpen: isViewModalOpen, onOpen: onViewModalOpen, onClose: onViewModalClose } = useDisclosure();
-
+  const [vectorizingFile, setVectorizingFile] = useState(null);
+  const [vectorizeStatus, setVectorizeStatus] = useState('');
+  const [vectorizedFiles, setVectorizedFiles] = useState([]);
   const toast = useToast();
+
+  const fetchVectorizedFiles = useCallback(async () => {
+    if (user && selectedApplicant) {
+      const docRef = doc(db, "applicants", selectedApplicant.id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setVectorizedFiles(docSnap.data().vectorized_files || []);
+      }
+    }
+  }, [user, selectedApplicant]);
 
   const fetchDocuments = useCallback(async () => {
     if (user && selectedApplicant) {
@@ -51,17 +63,33 @@ const FileUploader = ({ selectedApplicant }) => {
       
       try {
         const res = await listAll(listRef);
-        const docs = res.items.map(itemRef => (itemRef.name));
+        const docs = res.items.map(itemRef => ({
+          fileName: itemRef.name,
+          vectorized: vectorizedFiles.includes(itemRef.name),
+        }));
         setDocuments(docs);
       } catch (error) {
         console.error("Error fetching documents:", error);
       }
     }
-  }, [user, selectedApplicant, selectedBucket]);
+  }, [user, selectedApplicant, selectedBucket, vectorizedFiles]);
 
+  // Fetch the list of vectorized files when the component mounts or the selected applicant changes
+  useEffect(() => {
+    fetchVectorizedFiles();
+  }, [fetchVectorizedFiles]);
+
+  // Fetch the list of documents whenever selected bucket changes
   useEffect(() => {
     fetchDocuments();
   }, [fetchDocuments, selectedBucket]);
+
+  // Fetch list of vectorized files whenever a round of vectorization completes
+  useEffect(() => {
+    if (vectorizeStatus === 'success') {
+      fetchVectorizedFiles();
+    }
+  }, [vectorizeStatus, fetchVectorizedFiles]);
 
   const onDrop = async (acceptedFiles) => {
     const storage = getStorage();
@@ -103,8 +131,6 @@ const FileUploader = ({ selectedApplicant }) => {
     }
   };
 
-  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({ onDrop });
-
   const handleOverwriteConfirm = async () => {
     const storage = getStorage();
     const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileToOverwrite.name}`;
@@ -112,7 +138,6 @@ const FileUploader = ({ selectedApplicant }) => {
   
     try {
       await uploadBytes(storageRef, fileToOverwrite);
-      setProcessedFiles(prevState => prevState.filter(fileName => fileName !== fileToOverwrite.name));
       fetchDocuments();
       onOverwriteModalClose();
       setFileToOverwrite(null);
@@ -160,20 +185,22 @@ const FileUploader = ({ selectedApplicant }) => {
         isClosable: true,
       });
     }
-  };  
+  };
 
-  const vectorizeFile = async (fileName) => {
+  const vectorizeFile = useCallback(async (fileName) => {
     if (user && selectedApplicant) {
+      setVectorizingFile(fileName);  // Set the file being vectorized
+      setVectorizeStatus('loading'); // Set status to loading
       try {
-        const response = await vectorizeFiles(user.uid, selectedApplicant.id, [fileName]);
+        await vectorizeFiles(user.uid, selectedApplicant.id, [fileName]);
         toast({
-          title: 'Vectorization Started',
-          description: `Vectorization for ${fileName} has started. Request ID: ${response.requestId}`,
-          status: 'info',
+          title: 'Vectorization Completed',
+          description: `Vectorization for ${fileName} has completed successfully.`,
+          status: 'success',
           duration: 5000,
           isClosable: true,
         });
-        setProcessedFiles(prevState => [...prevState, fileName]);
+        setVectorizeStatus('success'); // Set status to success
       } catch (error) {
         toast({
           title: 'Vectorization Failed',
@@ -182,11 +209,12 @@ const FileUploader = ({ selectedApplicant }) => {
           duration: 5000,
           isClosable: true,
         });
+        setVectorizeStatus('error'); // Set status to error
       }
     }
-  };
+  }, [selectedApplicant, toast, user]);
 
-  const viewFile = async (fileName) => {
+  const viewFile = useCallback(async (fileName) => {
     const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileName}`;
     const storageRef = ref(getStorage(), filePath);
     
@@ -225,11 +253,11 @@ const FileUploader = ({ selectedApplicant }) => {
         isClosable: true,
       });
     }
-  };
+  }, [onViewModalOpen, selectedApplicant.id, selectedBucket, toast, user.uid]);
 
   return (
-    <VStack width="50%" height="50vh" mt="4vh">
-      <HStack width="100%" mb="0.5vh" fontSize="24px">
+    <VStack width="100%" flex="1" mt="20px" overflowY="auto" overflowX="auto">
+      <HStack width="100%" fontSize="24px">
         <Text width="100%">Applicant Files</Text>
         <Box minWidth="200px" fontSize="24px">
           <Select value={selectedBucket} onChange={(e) => setSelectedBucket(e.target.value)} color="blue.100">
@@ -241,25 +269,24 @@ const FileUploader = ({ selectedApplicant }) => {
           </Select>
         </Box>
       </HStack>
-      <FileTable
-        documents={documents}
-        processedFiles={processedFiles}
-        vectorizeFile={vectorizeFile}
-        deleteFile={deleteFile}
-        viewFile={viewFile}
-      />
-      <VStack
-        {...getRootProps()}
-        border="2px dashed gray"
-        p="2vh"
-        mb="2vh"
-        backgroundColor={isDragActive ? 'gray.700' : 'transparent'}
-      >
-        <input {...getInputProps()} />
-        <Icon as={DownloadIcon} w="4vh" h="4vh" mt="2vh" mb="2vh" color="gray.500" />
-        <Text fontSize="20px">
-          <Link as="b" onClick={open} cursor="pointer">Choose a file</Link> or drag it here
-        </Text>
+      <VStack width="100%" flex="1" overflowY="auto" overflowX="auto">
+        <Alert status="warning" minHeight="80px" borderRadius="10px" mb="4" fontSize="16px">
+          <AlertIcon />
+          <AlertDescription>
+            Only vectorized files are included in the applicant summary generated by the AI model, and currently only one file may be vectorized at a time.
+            Vectorizing a file will delete the vectors for any other file.
+            Support for multiple files will be added in a future version.
+          </AlertDescription>
+        </Alert>
+        <FileDropzone onDrop={onDrop} />
+        <FileTable
+          documents={documents}
+          vectorizeFile={vectorizeFile}
+          deleteFile={deleteFile}
+          viewFile={viewFile}
+          vectorizingFile={vectorizingFile}
+          vectorizeStatus={vectorizeStatus}
+        />
       </VStack>
       <OverwriteFileModal
         isOpen={isOverwriteModalOpen}

@@ -86,7 +86,7 @@ const SignUpForm = () => {
         <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
         <FormErrorMessage>{error}</FormErrorMessage>
       </FormControl>
-      <Button mt="2vh" type="submit" colorScheme="blue" isDisabled={!email || !password || !confirmPassword}>Sign Up</Button>
+      <Button mt="16px" type="submit" colorScheme="blue" isDisabled={!email || !password || !confirmPassword}>Sign Up</Button>
     </VStack>
   );
 };
