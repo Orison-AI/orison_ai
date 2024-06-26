@@ -81,6 +81,7 @@ def verify_bearer_token(request: Request):
 
 @http
 def gateway_function(request: Request):
+    _logger.info(f"Request: {request.method}")
     _logger.info(f"Gateway received request: {request.json}")
 
     # Set CORS headers for the preflight request
