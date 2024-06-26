@@ -5,14 +5,27 @@ import React from 'react';
 
 // Chakra UI
 import {
-    Badge, Box, Button, IconButton,
+    Badge, Box, Button, IconButton, Spinner,
     Table, Thead, Tbody, Tr, Th, Td,
 } from '@chakra-ui/react';
-import { CloseIcon, CheckCircleIcon } from '@chakra-ui/icons';
+import { CheckCircleIcon, CloseIcon, WarningIcon } from '@chakra-ui/icons';
 
-const FileTable = ({ documents, processedFiles, vectorizeFile, deleteFile, viewFile }) => {
+const FileTable = ({
+  documents,
+  vectorizeFile,
+  deleteFile,
+  viewFile,
+  vectorizingFile,
+  vectorizeStatus,
+}) => {
   return (
-    <Box mb="2vh" width="100%" overflowY="auto" overflowX="auto" border="1px" borderColor="gray.600" borderRadius="1vh">
+    <Box
+      mb="10px"
+      width="100%"
+      border="1px"
+      borderColor="gray.600"
+      borderRadius="10px"
+    >
       <Table variant="simple">
         <Thead>
           <Tr>
@@ -21,32 +34,37 @@ const FileTable = ({ documents, processedFiles, vectorizeFile, deleteFile, viewF
             <Th></Th>
           </Tr>
         </Thead>
-        <Tbody fontSize="20px">
-          {documents.map(fileName => (
+        <Tbody fontSize="16px">
+          {documents.map(({ fileName, vectorized }) => (
             <Tr key={fileName}>
-              <Td>
-                {fileName} 
-                {(processedFiles.includes(fileName)) && (
-                  <CheckCircleIcon ml="2" color="green.500" />
-                )}
+              <Td whiteSpace="nowrap">
+                {fileName}
               </Td>
-              <Td>
-                {processedFiles.includes(fileName) ? (
+              <Td whiteSpace="nowrap">
+                {vectorized ? (
                   <Badge colorScheme="green">Vectorized</Badge>
                 ) : (
                   <Badge colorScheme="orange">Not Vectorized</Badge>
                 )}
               </Td>
-              <Td isNumeric>
-                <Button ml="2vh" colorScheme="blue" onClick={() => vectorizeFile(fileName)}>
+              <Td isNumeric whiteSpace="nowrap">
+                {vectorizingFile === fileName && vectorizeStatus === 'loading' && <Spinner color="blue.500" size="sm" />}
+                {vectorizingFile === fileName && vectorizeStatus === 'success' && <CheckCircleIcon color="green.500" />}
+                {vectorizingFile === fileName && vectorizeStatus === 'error' && <WarningIcon color="red.500" />}
+                <Button
+                  ml="16px"
+                  colorScheme="blue"
+                  onClick={() => vectorizeFile(fileName)}
+                  isDisabled={vectorizeStatus === 'loading'}
+                >
                   Vectorize
                 </Button>
-                <Button ml="2vh" colorScheme="teal" onClick={() => viewFile(fileName)}>
+                <Button ml="16px" onClick={() => viewFile(fileName)}>
                   View
                 </Button>
                 <IconButton
                   icon={<CloseIcon />}
-                  ml="2vh"
+                  ml="16px"
                   colorScheme="red"
                   variant="ghost"
                   onClick={() => deleteFile(fileName)}

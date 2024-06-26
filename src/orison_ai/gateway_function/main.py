@@ -49,6 +49,21 @@ CORS_PREFLIGHT_HEADERS = {
 }
 
 
+def init_routes():
+    global routes
+
+    if routes:
+        _logger.info("Routes already created")
+    else:
+        _logger.info("Initializing routes")
+        routes = {
+            GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
+            GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
+            GatewayRequestType.SUMMARIZE: Summarize(),
+        }
+        _logger.info("Initializing routes....DONE")
+
+
 def init_firebase():
     global firebase_app
 

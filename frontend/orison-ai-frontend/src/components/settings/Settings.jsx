@@ -66,7 +66,7 @@ function Settings({ isOpen, onClose }) {
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
       <ModalContent>
-        <Center width="100%" p="1vh">
+        <Center width="100%" p="8px">
           <VStack width="100%">
             <Text fontSize="20px" mb="20px">
               Settings
@@ -76,8 +76,8 @@ function Settings({ isOpen, onClose }) {
               <ColorModeToggle />
             </Box>
             */}
-            <Button colorScheme="blue" width="12vh" mb="10px" onClick={handleLogout}>Logout</Button>
-            <Button colorScheme="red" width="12vh" mb="10px" onClick={handleDeleteAccount}>Delete Account</Button>
+            <Button colorScheme="blue" width="116px" mb="10px" onClick={handleLogout}>Logout</Button>
+            <Button colorScheme="red" width="116px" mb="10px" onClick={handleDeleteAccount}>Delete Account</Button>
           </VStack>
         </Center>
       </ModalContent>

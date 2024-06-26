@@ -12,7 +12,7 @@ const ColorModeToggle = () => {
   const { colorMode, toggleColorMode } = useColorMode();
 
   return (
-    <Center width="20vh">
+    <Center width="160px">
       <Button
         onClick={toggleColorMode}
         isDisabled={colorMode === 'light'}

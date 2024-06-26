@@ -52,7 +52,7 @@ const LogInForm = () => {
         <FormLabel>Password</FormLabel>
         <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </FormControl>
-      <Button mt="2vh" type="submit" colorScheme="blue">Login</Button>
+      <Button mt="16px" type="submit" colorScheme="blue">Login</Button>
     </VStack>
   );
 };
