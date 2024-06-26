@@ -41,6 +41,13 @@ _logger = logging.getLogger(__name__)
 firebase_app = None
 routes = None
 
+CORS_PREFLIGHT_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Max-Age": "3600",
+}
+
 
 def init_firebase():
     global firebase_app
@@ -81,17 +88,11 @@ def verify_bearer_token(request: Request):
 
 @http
 def gateway_function(request: Request):
-    _logger.info(f"Gateway received request: {request.json}")
+    global CORS_PREFLIGHT_HEADERS
 
     # Set CORS headers for the preflight request
     if request.method == "OPTIONS":
-        headers = {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
-            "Access-Control-Max-Age": "3600",
-        }
-        return ("", 204, headers)
+        return ("", 204, CORS_PREFLIGHT_HEADERS)
 
     # Set CORS headers for main request
     headers = {
@@ -101,6 +102,8 @@ def gateway_function(request: Request):
     }
 
     try:
+        _logger.info(f"Gateway received request: {request.json}")
+
         init_firebase()
         verify_bearer_token(request)
         init_routes()
@@ -134,6 +137,12 @@ def gateway_function(request: Request):
 
 @http
 def gateway_function_staging(request: Request):
+    global CORS_PREFLIGHT_HEADERS
+
+    # Set CORS headers for the preflight request
+    if request.method == "OPTIONS":
+        return ("", 204, CORS_PREFLIGHT_HEADERS)
+
     return gateway_function(request)
 
 
