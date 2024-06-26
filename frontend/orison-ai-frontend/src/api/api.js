@@ -6,7 +6,7 @@ import { httpsCallable } from "firebase/functions";
 
 // Map function names to their endpoints
 const endpoints = {
-  gateway: "gateway_function_staging",
+  gateway: "gateway_function",
   processScholarLink: "process-scholar-link",
   vectorizeFiles: "vectorize-files",
   summarize: "summarize",
