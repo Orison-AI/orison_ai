@@ -16,6 +16,7 @@
 
 # External
 
+import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Coroutine
@@ -25,8 +26,10 @@ from typing import Any, Coroutine
 from request_handler import (
     RequestHandler,
     ErrorResponse,
-    OKResponse,
 )
+
+logging.basicConfig(level=logging.INFO)
+_logger = logging.getLogger(__name__)
 
 
 def _str_to_enum(enum_class, string):
@@ -66,11 +69,12 @@ async def router(
 
     # Parse the incoming JSON request data
     request_json = request.get_json()
-
+    _logger.info(f"Router received request: {request_json}")
     if not request_json:
         return await as_async(ErrorResponse("Could not parse input to JSON"))
     try:
         gateway_request = GatewayRequest(**(request_json["data"]))
+        _logger.info(f"Parsed GatewayRequest type: {gateway_request}")
     except Exception as e:
         return await as_async(
             ErrorResponse(f"Could not parse input to GatewayRequest: {e}")

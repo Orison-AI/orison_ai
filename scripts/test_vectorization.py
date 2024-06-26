@@ -23,7 +23,7 @@ QDRANT_API_KEY
 
 # Standard Imports
 
-from typing import Optional, Union
+import logging
 import os
 from IPython import embed
 import numpy as np
@@ -39,7 +39,6 @@ from langchain_community.document_loaders import (
     JSONLoader,
 )
 from langchain_experimental.text_splitter import SemanticChunker
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_openai.embeddings import OpenAIEmbeddings
 
 
@@ -60,6 +59,9 @@ collection_name = "orison_vdb"
 
 # Chunking
 MIN_CHUNK_SIZE = 256
+
+logging.basicConfig(level=logging.INFO)
+_logger = logging.getLogger(__name__)
 
 
 def load_file(file_path):
@@ -103,7 +105,9 @@ def apply_semantic_splitter(documents):
     # Apply the splitter to the document. It will internally call create_documents
     # which will internally call split_text
     # Returns a List[Document]
+    _logger.info("Splitting documents")
     chunks = text_splitter.split_documents(documents)
+    _logger.info("Splitting documents....done")
     filtered_chunks = []
     for chunk in chunks:
         if len(chunk.page_content) >= MIN_CHUNK_SIZE:

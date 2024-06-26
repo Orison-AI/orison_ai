@@ -15,8 +15,9 @@ RUN echo 'Etc/UTC' > /etc/timezone && \
 # Copy the rest of the application code into the container
 COPY . .
 # Copy requirements.txt into the container
-COPY ./docker/packages-python3.txt .
+COPY ./src/orison_ai/gateway_function/requirements.txt .
 COPY ./docker/packages-apt.txt .
+COPY ./docker/python_addons.txt .
 
 # Install Python 3.10.14 and pip
 RUN apt-get update && \
@@ -33,7 +34,8 @@ RUN echo "alias python3=python3.10" >> /root/.bashrc
 RUN rm /usr/bin/python3
 RUN ln -s /usr/bin/python3.10 /usr/bin/python3
 # Install any additional Python packages needed
-RUN python3.10 -m pip install --no-cache-dir -r packages-python3.txt
+RUN python3.10 -m pip install --no-cache-dir -r requirements.txt 
+RUN python3.10 -m pip install --no-cache-dir -r python_addons.txt
 
 # Install any additional system packages needed
 RUN apt-get update && apt-get install -y \
@@ -47,7 +49,6 @@ RUN chmod 755 /app/docker/entrypoint.sh
 
 EXPOSE 5004
 EXPOSE 5005
-EXPOSE 3000
 
 RUN echo 'export PYTHONPATH="${PYTHONPATH}:/app/src/"' >> /root/.bashrc
 

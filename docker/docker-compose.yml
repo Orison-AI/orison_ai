@@ -1,6 +1,15 @@
 version: '3.8'
 
 services:
+  orison-frontend:
+    image: orison-frontend
+    container_name: orison-frontend
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.frontend
+    ports:
+      - "3000:3000"
+
   orison-service:
     build:
       context: ../
@@ -15,4 +24,5 @@ services:
       - "8888:8888"
       - "5004:5004"
       - "5005:5005"
-      - "3000:3000"
+    depends_on:
+      - orison-frontend

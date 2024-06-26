@@ -15,10 +15,10 @@
 # ==========================================================================
 
 # External
+import os
 import logging
 import asyncio
 from flask import Request
-import logging
 
 # GCP
 from functions_framework import create_app, http
@@ -29,6 +29,7 @@ from firebase_admin import auth
 # Internal
 from or_store.firebase import get_firebase_admin_app
 from fetch_scholar import FetchScholar
+
 from summarize import Summarize
 from vectorize_files import VectorizeFiles
 from gateway import GatewayRequestType, router
@@ -40,15 +41,13 @@ _logger = logging.getLogger(__name__)
 firebase_app = None
 routes = None
 
-def init_firebase():
-    global firebase_app
+CORS_PREFLIGHT_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Max-Age": "3600",
+}
 
-    if firebase_app:
-        _logger.info("Firebase admin app already created")
-    else:
-        _logger.info("Getting firebase admin app.")
-        firebase_app = get_firebase_admin_app()
-    _logger.info("Getting firebase admin app....DONE")
 
 def init_routes():
     global routes
@@ -64,6 +63,33 @@ def init_routes():
         }
         _logger.info("Initializing routes....DONE")
 
+
+def init_firebase():
+    global firebase_app
+
+    if firebase_app:
+        _logger.info("Firebase admin app already created")
+    else:
+        _logger.info("Getting firebase admin app.")
+        firebase_app = get_firebase_admin_app()
+    _logger.info("Getting firebase admin app....DONE")
+
+
+def init_routes():
+    global routes
+
+    if routes:
+        _logger.info("Routes already created")
+    else:
+        _logger.info("Initializing routes")
+        routes = {
+            GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
+            GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
+            GatewayRequestType.SUMMARIZE: Summarize(),
+        }
+        _logger.info("Initializing routes....DONE")
+
+
 def verify_bearer_token(request: Request):
     """Verifies the Bearer token from the Authorization header."""
     auth_header = request.headers.get("Authorization")
@@ -77,17 +103,11 @@ def verify_bearer_token(request: Request):
 
 @http
 def gateway_function(request: Request):
-    _logger.debug(f"Received request: {request.method}")
+    global CORS_PREFLIGHT_HEADERS
 
     # Set CORS headers for the preflight request
     if request.method == "OPTIONS":
-        headers = {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
-            "Access-Control-Max-Age": "3600",
-        }
-        return ("", 204, headers)
+        return ("", 204, CORS_PREFLIGHT_HEADERS)
 
     # Set CORS headers for main request
     headers = {
@@ -97,6 +117,8 @@ def gateway_function(request: Request):
     }
 
     try:
+        _logger.info(f"Gateway received request: {request.json}")
+
         init_firebase()
         verify_bearer_token(request)
         init_routes()
@@ -106,7 +128,13 @@ def gateway_function(request: Request):
         code = result["status"]
 
         return (
-            {"data": {"requestId": "request-12345"} if code == 200 else {}},
+            {
+                "data": (
+                    {"requestId": "request-12345"}
+                    if code == 200
+                    else {"Internal Server Error": result["message"]}
+                )
+            },
             code,
             headers,
         )
@@ -122,5 +150,21 @@ def gateway_function(request: Request):
         return ({"error": str(e)}, 500, headers)
 
 
+@http
+def gateway_function_staging(request: Request):
+    global CORS_PREFLIGHT_HEADERS
+
+    # Set CORS headers for the preflight request
+    if request.method == "OPTIONS":
+        return ("", 204, CORS_PREFLIGHT_HEADERS)
+
+    return gateway_function(request)
+
+
 if __name__ == "__main__":
-    app = create_app(gateway_function)
+    function_mode = os.getenv("FUNCTION_MODE", "gateway_function")
+    if function_mode == "gateway_function":
+        app = create_app(gateway_function)
+    elif function_mode == "gateway_function_staging":
+        app = create_app(gateway_function_staging)
+    app.run(port=int(os.environ.get("PORT", 8080)), host="0.0.0.0", debug=True)
