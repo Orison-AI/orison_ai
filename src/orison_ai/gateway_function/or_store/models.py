@@ -67,17 +67,6 @@ class BaseModel(Document):
     meta = {"allow_inheritance": True}
 
 
-class QandA(EmbeddedDocument):
-    """
-    MongoDB document class for QandA details of the applicant
-    """
-
-    question = StringField(required=True)
-    answer = StringField(required=True)
-    source = StringField()
-    bucket_name = StringField()
-
-
 class Author(EmbeddedDocument):
     profile_link = StringField(required=True)
     scholar_id = StringField()
@@ -119,6 +108,17 @@ class GoogleScholarDB(BaseModel):
     publications = ListField(EmbeddedDocumentField(Publication))
     homepage = StringField()
     other_details = DictField()
+
+
+class QandA(EmbeddedDocument):
+    """
+    MongoDB document class for QandA details of the applicant
+    """
+
+    question = StringField(required=True)
+    answer = StringField(required=True)
+    source = StringField()
+    bucket_name = StringField()
 
 
 class StoryBuilder(BaseModel):

@@ -86,6 +86,8 @@ class OrisonMessenger(ChatOpenAI):
     You are a helpful, respectful and honest assistant.\
     Always answer as helpfully as possible and follow ALL given instructions.\
     Do not speculate or make up information.\
+    Use bullet points to list multiple items using numbers.\
+    Break your response into paragraphs for better readability.\
     """
 
     MULTI_QUERY_ROLE = """
@@ -329,6 +331,17 @@ class Summarize(RequestHandler):
         await asyncio.gather(*tasks)
         return prompt_docs
 
+    @staticmethod
+    def dict_to_string(dict: dict[str, list]) -> str:
+        # Create a list of key-value pairs formatted as "key: [values]"
+        pairs = [
+            f"{key}. Pages: [{', '.join(map(str, values))}]"
+            for key, values in dict.items()
+        ]
+        # Join the pairs with " and "
+        result = " and ".join(pairs)
+        return result
+
     async def generate_story(
         self,
         prompt_docs: List[tuple[Prompt, List[Document]]],
@@ -338,12 +351,12 @@ class Summarize(RequestHandler):
 
         async def process_result(prompt, retrieved_docs):
             context = "\n".join([doc.page_content for doc in retrieved_docs])
-            source = "\n".join(
-                [
-                    f'Page: {doc.metadata["page"]} and Source:{doc.metadata["source"]}'
-                    for doc in retrieved_docs
-                ]
-            )
+            source = {}
+            for doc in retrieved_docs:
+                if doc.metadata["source"] not in source:
+                    source[doc.metadata["source"]] = []
+                source[doc.metadata["source"]].append(doc.metadata["page"])
+            source = Summarize.dict_to_string(source)
             self.logger.info(
                 f"Prompting llm with context for prompt: {prompt.question}"
             )
@@ -368,13 +381,9 @@ class Summarize(RequestHandler):
         queries = await self.retriever_llm.generate_queries(prompts)
         self.logger.info("Generating queries for prompts...DONE")
 
-        await asyncio.sleep(OPENAI_SLEEP * 5)
-
         self.logger.info("Retrieving chunks for prompts")
         prompt_docs = await self.retrieve_chunks(queries)
         self.logger.info("Retrieving chunks for prompts...DONE")
-
-        await asyncio.sleep(OPENAI_SLEEP * 5)
 
         self.logger.info("Generating screening")
         screening = await self.generate_story(prompt_docs, class_type=ScreeningBuilder)
