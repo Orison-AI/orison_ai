@@ -20,7 +20,7 @@ import asyncio
 from asyncio.locks import Event
 from typing import Callable, Any
 
-OPENAI_SLEEP = 0.5  # Time to sleep between OpenAI requests
+OPENAI_SLEEP = 0.15  # Time to sleep between OpenAI requests
 
 
 def file_extension(file_path: str) -> str:

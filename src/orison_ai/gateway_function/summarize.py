@@ -26,6 +26,7 @@ import json
 from typing import Union, List
 from enum import Enum
 from dataclasses import dataclass
+from qdrant_client.async_qdrant_client import AsyncQdrantClient
 from qdrant_client import QdrantClient
 from langchain_openai import ChatOpenAI
 from langchain_qdrant import Qdrant
@@ -49,6 +50,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 MODEL_NAME = "gpt-4-turbo"
+RETRIEVAL_DOC_LIMIT = 10
 
 
 @dataclass
@@ -88,7 +90,7 @@ class OrisonMessenger(ChatOpenAI):
 
     MULTI_QUERY_ROLE = """
     You are an AI language model assistant. \
-    Your task is to generate 3 different versions of the given user question. \
+    Your task is to generate 5 different versions of the given user question. \
     The questions will be used to retrieve relevant documents from a vector database. \
     By generating multiple perspectives on the user question, your goal is to help the user overcome some of the limitations of distance-based similarity search. \
     Provide these alternative questions separated by newlines.
@@ -243,11 +245,18 @@ class Summarize(RequestHandler):
                 port=6333,
                 grpc_port=6333,
                 https=True,
+                timeout=10.0,
+            )
+            self.async_qdrant_client = AsyncQdrantClient(
+                url=secrets.qdrant_url,
+                api_key=secrets.qdrant_api_key,
+                port=6333,
+                grpc_port=6333,
+                https=True,
+                timeout=10.0,
             )
             # Define the name of the collection
             collection_name = secrets.collection_name
-            # ToDo: Include embedding as part of Postman
-            # Use Postman in vectorization
             self.embedding = OrisonEmbeddings(
                 model="text-embedding-ada-002",
                 api_key=secrets.openai_api_key,
@@ -257,6 +266,7 @@ class Summarize(RequestHandler):
                 client=self.qdrant_client,
                 collection_name=collection_name,
                 embeddings=self.embedding,
+                async_client=self.async_qdrant_client,
             )
         except Exception as e:
             message = f"Error initializing Qdrant. Error: {e}"
@@ -264,7 +274,9 @@ class Summarize(RequestHandler):
             raise QDrant_INITIALIZATION_FAILED(message)
 
         try:
-            self.retriever = self.vectordb.as_retriever(search_kwargs={"k": 10})
+            self.retriever = self.vectordb.as_retriever(
+                search_kwargs={"k": RETRIEVAL_DOC_LIMIT}
+            )
         except Exception as e:
             message = f"Error initializing Retriever. Error: {e}"
             self.logger.error(message)
@@ -309,7 +321,7 @@ class Summarize(RequestHandler):
         async def process_query(prompt, multi_query):
             retrieved_docs = []
             async for query in async_generator_from_list(multi_query):
-                result = self.retriever.invoke(query)
+                result = await self.retriever.ainvoke(query)
                 retrieved_docs.extend(result)
             prompt_docs.append((prompt, retrieved_docs))
 
