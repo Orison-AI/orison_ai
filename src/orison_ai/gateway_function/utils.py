@@ -49,20 +49,37 @@ class ThrottleRequest:
     logger = None
 
     @staticmethod
-    def throttle_call(fn: Callable[..., Any], *args, **kwargs) -> Any:
-        # Wait for the throttle lock to clear
-        start_time = time.time()
-        while not ThrottleRequest.throttle_lock.is_set():
-            if time.time() - start_time > 5.0:
-                raise TimeoutError("Throttle lock not cleared")
-            time.sleep(0.001)
-        time_elapsed = start_time - ThrottleRequest.register_last
-        if time_elapsed <= OPENAI_SLEEP:
-            time.sleep(OPENAI_SLEEP - time_elapsed)
+    def clear_and_log(func_name: str):
+        # Update the time_elapsed to the current time
+        ThrottleRequest.throttle_lock.clear()
+        ThrottleRequest.register_last = time.time()
+
         if ThrottleRequest.logger:
             ThrottleRequest.logger.info(
-                f"Throttling request for {fn.__name__} at time: {time.time()}"
+                f"Throttling request for {func_name} at time: {time.time()}"
             )
+
+    @staticmethod
+    def set_and_log(func_name: str):
+        if ThrottleRequest.logger:
+            ThrottleRequest.logger.info(
+                f"Throttling request for {func_name}....DONE at time: {time.time()}"
+            )
+        ThrottleRequest.throttle_lock.set()
+
+    @staticmethod
+    def throttle_call(fn: Callable[..., Any], *args, **kwargs) -> Any:
+        if ThrottleRequest.register_last is not None:
+            # Wait for the throttle lock to clear
+            start_time = time.time()
+            while not ThrottleRequest.throttle_lock.is_set():
+                if time.time() - start_time > 5.0:
+                    raise TimeoutError("Throttle lock not cleared")
+                time.sleep(0.001)
+            time_elapsed = start_time - ThrottleRequest.register_last
+            if time_elapsed <= OPENAI_SLEEP:
+                time.sleep(OPENAI_SLEEP - time_elapsed)
+        ThrottleRequest.clear_and_log(fn.__name__)
         try:
             result = fn(*args, **kwargs)
         except Exception as e:
@@ -71,10 +88,7 @@ class ThrottleRequest:
                     f"Error occurred in throttled function {fn.__name__}: {e}"
                 )
             raise e
-        if ThrottleRequest.logger:
-            ThrottleRequest.logger.info(
-                f"Throttling request for {fn.__name__}....DONE at time: {time.time()}"
-            )
+        ThrottleRequest.set_and_log(fn.__name__)
         return result
 
     @staticmethod
@@ -92,14 +106,7 @@ class ThrottleRequest:
             if time_elapsed <= OPENAI_SLEEP:
                 await asyncio.sleep(OPENAI_SLEEP - time_elapsed)
 
-        # Update the time_elapsed to the current time
-        ThrottleRequest.throttle_lock.clear()
-        ThrottleRequest.register_last = time.time()
-        # Call the future with the provided arguments
-        if ThrottleRequest.logger:
-            ThrottleRequest.logger.info(
-                f"Throttling request for {future.__name__} at time: {time.time()}"
-            )
+        ThrottleRequest.clear_and_log(future.__name__)
         try:
             result = await future(*args, **kwargs)
         except Exception as e:
@@ -108,10 +115,6 @@ class ThrottleRequest:
                     f"Error occurred in throttled function {future.__name__}: {e}"
                 )
             raise e
-        if ThrottleRequest.logger:
-            ThrottleRequest.logger.info(
-                f"Throttling request for {future.__name__}....DONE at time: {time.time()}"
-            )
-        ThrottleRequest.throttle_lock.set()
+        ThrottleRequest.set_and_log(future.__name__)
         # Return the result
         return result

@@ -35,17 +35,31 @@ from or_store.firebase_storage import FirebaseStorage
 from or_store.firebase import FireStoreDB
 from utils import raise_and_log_error, file_extension
 from or_store.firebase import OrisonSecrets
+from or_llm.openai_interface import (
+    OrisonEmbeddings,
+    EMBEDDING_MODEL,
+)
 
 # Vectorization Imports
 import numpy as np
-from openai import OpenAI
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 
 
 class VectorizeFiles(RequestHandler):
+    embedding_client = None
+
     def __init__(self):
         super().__init__(str(self.__class__.__qualname__))
+
+    @staticmethod
+    def embedding(secrets):
+        if not VectorizeFiles.embedding_client:
+            VectorizeFiles.embedding_client = OrisonEmbeddings(
+                model=EMBEDDING_MODEL,
+                api_key=secrets.openai_api_key,
+                max_retries=5,
+            )
 
     @staticmethod
     def _file_path_builder(
@@ -132,20 +146,11 @@ class VectorizeFiles(RequestHandler):
         return filtered_chunks
 
     @staticmethod
-    async def _get_openai_embedding(text, openaiClient):
-        response = openaiClient.embeddings.create(
-            input=[text], model="text-embedding-ada-002"
-        )  # Use the appropriate OpenAI model)
-        return response.data[0].embedding
-
-    @staticmethod
     async def _store_chunks(
-        chunks, openai_client, qdrant_client, logger, tag, collection_name, filename
+        chunks, qdrant_client, logger, tag, collection_name, filename
     ):
-        async def process_chunk(chunk, openai_client, tag):
-            embedding = await VectorizeFiles._get_openai_embedding(
-                chunk.page_content, openai_client
-            )
+        async def process_chunk(chunk, tag):
+            embedding = VectorizeFiles.embedding_client.embed_query(chunk.page_content)
             payload = {
                 "page_content": chunk.page_content,
                 "metadata": chunk.metadata,
@@ -154,18 +159,19 @@ class VectorizeFiles(RequestHandler):
             }
             return embedding, payload
 
-        tasks = [process_chunk(chunk, openai_client, tag) for chunk in chunks]
+        tasks = [process_chunk(chunk, tag) for chunk in chunks]
         results = await asyncio.gather(*tasks)
         embeddings, payloads = zip(*results)
 
         # Ensure the collection exists
-        qdrant_client.recreate_collection(
-            collection_name=collection_name,
-            vectors_config=models.VectorParams(
-                size=len(embeddings[0]),  # Length of the embedding vectors
-                distance=models.Distance.COSINE,  # Distance metric
-            ),
-        )
+        if not qdrant_client.collection_exists(collection_name=collection_name):
+            qdrant_client.create_collection(
+                collection_name=collection_name,
+                vectors_config=models.VectorParams(
+                    size=len(embeddings[0]),  # Length of the embedding vectors
+                    distance=models.Distance.COSINE,  # Distance metric
+                ),
+            )
 
         # Upload vectors to Qdrant
         logger.info("Uploading vectors to Qdrant")
@@ -206,6 +212,7 @@ class VectorizeFiles(RequestHandler):
             self.logger.info(
                 f"Processing file for attorney {attorney_id} and applicant {applicant_id}"
             )
+            VectorizeFiles.embedding(secrets)
 
             # ToDo: Currently supporting only one file.
             # We should make multiple calls from the frontend instead for scalability
@@ -239,7 +246,6 @@ class VectorizeFiles(RequestHandler):
             )
             await VectorizeFiles._store_chunks(
                 chunks,
-                openai_client=OpenAI(api_key=openai_api_key),
                 qdrant_client=QdrantClient(url=qdrant_url, api_key=qdrant_api_key),
                 logger=self.logger,
                 tag=tag,
@@ -256,3 +262,14 @@ class VectorizeFiles(RequestHandler):
             self.logger.error(f"Error processing files: {e}")
             return ErrorResponse(str(e))
         return OKResponse("Success!")
+
+
+if __name__ == "__main__":
+    request_json = {
+        "attorneyId": "xlMsyQpatdNCTvgRfW4TcysSDgX2",
+        "applicantId": "tYdtBdc7lJHyVCxquubj",
+        "fileIds": ["MalhanCV.pdf"],
+        "bucket_name": "research",
+    }
+    vectorizer = VectorizeFiles()
+    asyncio.run(vectorizer.handle_request(request_json))
