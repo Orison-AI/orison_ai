@@ -238,8 +238,8 @@ class Summarize(RequestHandler):
             # There is a bug in langchain Qdrant which checks for both regular client
             # and async client. It is not possible to use only async client.
             self.qdrant_client = QdrantClient(
-                url=os.getenv("QDRANT_URL"),
-                api_key=os.getenv("QDRANT_API_KEY"),
+                url=secrets.qdrant_url,
+                api_key=secrets.qdrant_api_key,
                 port=6333,
                 grpc_port=6333,
                 https=True,
@@ -309,9 +309,7 @@ class Summarize(RequestHandler):
         async def process_query(prompt, multi_query):
             retrieved_docs = []
             async for query in async_generator_from_list(multi_query):
-                # ToDo: Qdrant refuses connection so change this later.
-                result = []
-                # result = self.retriever.invoke(query)
+                result = self.retriever.invoke(query)
                 retrieved_docs.extend(result)
             prompt_docs.append((prompt, retrieved_docs))
 
