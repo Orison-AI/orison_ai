@@ -99,3 +99,17 @@ gcloud auth list
 ```
 gcloud functions deploy gateway_function --runtime python310 --memory 512 --trigger-http --allow-unauthenticated --entry-point gateway_function --source=gateway_function --gen2 --max-instances 5 --timeout 540
 ```
+
+## Firebase CLI for frontend deployment
+- Install using:
+```
+https://firebase.google.com/docs/cli
+```
+Make sure node is installed to version 22
+- Deployment commands:
+```
+npm run build
+firebase logout
+firebase login (use admin@orison.ai)
+firebase deploy --project orison-ai-visa-apply
+```
