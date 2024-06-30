@@ -21,6 +21,8 @@ import re
 import requests
 import traceback
 import logging
+from urllib.parse import urlparse
+from urllib.parse import parse_qs
 
 
 logging.basicConfig(level=logging.INFO)
@@ -84,8 +86,6 @@ async def extract_user(url: str):
     :param url: The Google Scholar URL
     """
 
-    match = re.search(r"user=([a-zA-Z0-9]+)", url)
-    if match:
-        applicant_id = match.group(1)
-        return applicant_id
-    return None
+    parsed_url = urlparse(url)
+    user_id = parse_qs(parsed_url.query)['user'][0]
+    return user_id
