@@ -86,6 +86,9 @@ async def extract_user(url: str):
     :param url: The Google Scholar URL
     """
 
-    parsed_url = urlparse(url)
-    user_id = parse_qs(parsed_url.query)['user'][0]
-    return user_id
+    try:
+        parsed_url = urlparse(url)
+        user_id = parse_qs(parsed_url.query)['user'][0]
+        return user_id
+    except Exception as e:
+        return None
