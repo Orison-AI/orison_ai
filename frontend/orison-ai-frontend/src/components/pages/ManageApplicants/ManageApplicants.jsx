@@ -39,7 +39,7 @@ const ManageApplicants = ({
 
   // Set the applicants list
   useEffect(() => {
-    let unsubscribe = () => {};
+    let unsubscribe = () => { };
 
     async function fetchApplicants() {
       if (user) {
@@ -60,7 +60,7 @@ const ManageApplicants = ({
         );
       }
     }
-  
+
     // Call the async function
     fetchApplicants();
 
@@ -77,6 +77,7 @@ const ManageApplicants = ({
         name: "",
         email: "",
         files: [],
+        vectorized_files: [],
       });
       startEdit(newDoc.id);
     } catch (error) {
@@ -163,7 +164,7 @@ const ManageApplicants = ({
                   <Td whiteSpace="nowrap">
                     {editId === applicant.id ? (
                       <Input
-                        defaultValue={applicant.email} 
+                        defaultValue={applicant.email}
                         ref={emailRef}
                         onKeyDown={(e) => handleKeyDown(e, applicant)}
                       />
