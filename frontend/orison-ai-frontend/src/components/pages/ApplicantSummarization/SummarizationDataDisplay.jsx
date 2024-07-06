@@ -6,6 +6,9 @@ import React from 'react';
 // Chakra UI
 import { Box, Text, VStack, Heading } from '@chakra-ui/react';
 
+// React Markdown
+import ReactMarkdown from 'react-markdown';
+
 const SummarizationDataDisplay = ({ data }) => {
   const summaries = data.summary || [];
 
@@ -23,15 +26,17 @@ const SummaryCard = ({ item }) => {
   const { question, answer, source } = item;
 
   return (
-    <Box bg="gray.900" p="20px" borderRadius="10px" width="100%">
+    <Box bg="gray.900" p="40px" borderRadius="10px" width="100%">
       <Heading size="md" mb={4}>Question</Heading>
       <Text mb={4}>{question}</Text>
 
       <Heading size="md" mb={4}>Answer</Heading>
-      <Text mb={4}>{answer}</Text>
+      <Box mb={4}>
+        <ReactMarkdown>{answer}</ReactMarkdown>
+      </Box>
 
       <Heading size="md" mb={4}>Sources</Heading>
-      <Text mb={4}>{source}</Text>
+      <Text>{source}</Text>
     </Box>
   );
 };
