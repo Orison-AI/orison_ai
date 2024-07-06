@@ -203,7 +203,7 @@ const FileUploader = ({ selectedApplicant }) => {
       setVectorizingFile(fileName);  // Set the file being vectorized
       setVectorizeStatus('loading'); // Set status to loading
       try {
-        await vectorizeFiles(user.uid, selectedApplicant.id, [fileName]);
+        await vectorizeFiles(user.uid, selectedApplicant.id, selectedBucket, [fileName]);
         toast({
           title: 'Vectorization Completed',
           description: `Vectorization for ${fileName} has completed successfully.`,
