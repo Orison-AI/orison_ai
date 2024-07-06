@@ -7,7 +7,7 @@ import React from 'react';
 import { useDropzone } from 'react-dropzone';
 
 // Chakra UI
-import { VStack, Icon, Text, Link } from '@chakra-ui/react';
+import { VStack, Icon, Link, Spinner, Text } from '@chakra-ui/react';
 import { DownloadIcon } from '@chakra-ui/icons';
 
 const FileDropzone = ({ onDrop, disabled }) => {
@@ -27,16 +27,16 @@ const FileDropzone = ({ onDrop, disabled }) => {
       cursor={disabled ? 'not-allowed' : 'pointer'} // Change cursor when disabled
     >
       <input {...getInputProps()} disabled={disabled} />
-      <Icon as={DownloadIcon} color="gray.500" />
-      <Text fontSize="20px">
-        {disabled ? (
-          <Text>File upload in progress, please wait...</Text>
-        ) : (
-          <>
+      {disabled ? (
+        <Spinner size="xl" />
+      ) : (
+        <>
+          <Icon as={DownloadIcon} color="gray.500" />
+          <Text fontSize="20px">
             <Link as="b" onClick={open} cursor="pointer">Choose a file</Link> or drag it here
-          </>
-        )}
-      </Text>
+          </Text>
+        </>
+      )}
     </VStack>
   );
 };

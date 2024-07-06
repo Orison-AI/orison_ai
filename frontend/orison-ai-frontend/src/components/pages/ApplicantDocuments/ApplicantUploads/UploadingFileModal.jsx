@@ -5,8 +5,8 @@ import React from 'react';
 
 // Chakra
 import {
-  Modal, ModalOverlay, ModalContent, ModalHeader,
-  ModalBody, ModalFooter, Button, Text
+  Button, Modal, ModalOverlay, ModalContent, ModalHeader,
+  ModalBody, ModalFooter, Spinner, Text,
 } from '@chakra-ui/react';
 
 const UploadingFileModal = ({ isOpen, onClose, fileName }) => {
@@ -16,6 +16,7 @@ const UploadingFileModal = ({ isOpen, onClose, fileName }) => {
       <ModalContent>
         <ModalHeader>Uploading File</ModalHeader>
         <ModalBody>
+          <Spinner size="xl" />
           <Text>
             The file <strong>{fileName}</strong> is currently being uploaded. Please wait until the upload is complete.
           </Text>

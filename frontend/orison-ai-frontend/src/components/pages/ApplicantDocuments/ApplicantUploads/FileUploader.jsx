@@ -16,8 +16,7 @@ import {
 import {
   Alert, AlertIcon, AlertDescription,
   Box, HStack, Select, Text,
-  useDisclosure, useToast, VStack, Modal, ModalOverlay,
-  ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Button
+  useDisclosure, useToast, VStack,
 } from '@chakra-ui/react';
 
 // Orison
