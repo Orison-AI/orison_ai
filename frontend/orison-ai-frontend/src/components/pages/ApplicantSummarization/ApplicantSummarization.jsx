@@ -31,9 +31,7 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
     if (user && selectedApplicant) {
       setSummarizationDataStatus('loading');
       const summarizationQuery = query(
-        collection(db, "screening_builder"),
-        where("attorney_id", "==", user.uid),
-        where("applicant_id", "==", selectedApplicant.id),
+        collection(doc(collection(db, "screening_builder"), user.uid), selectedApplicant.id),
         orderBy("date_created", "desc"),
         limit(1)
       );

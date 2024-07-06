@@ -256,8 +256,10 @@ class FirestoreClient(FireStoreDB):
         if k < 1:
             raise ValueError("Number of documents k must be greater than 0")
 
+        attorney_document = self._async_collection.document(attorney_id)
+        applicant_collection = attorney_document.collection(applicant_id)
+
         # Apply filters
-        filters = {"attorney_id": attorney_id, "applicant_id": applicant_id} | filters
         composite_filter = BaseCompositeFilter(
             operator=StructuredQuery.CompositeFilter.Operator.AND,
             filters=[
@@ -267,13 +269,13 @@ class FirestoreClient(FireStoreDB):
 
         if ASCENDING:
             query = (
-                self._async_collection.where(filter=composite_filter)
+                applicant_collection.where(filter=composite_filter)
                 .order_by("date_created", direction=firestore.Query.ASCENDING)
                 .limit(k)
             )
         else:
             query = (
-                self._async_collection.where(filter=composite_filter)
+                applicant_collection.where(filter=composite_filter)
                 .order_by("date_created", direction=firestore.Query.DESCENDING)
                 .limit(k)
             )
@@ -283,7 +285,12 @@ class FirestoreClient(FireStoreDB):
             async for item in query.stream()
         ]
 
-    async def insert(self, doc: Union[EmbeddedDocument, Document]) -> ObjectId:
+    async def insert(
+        self,
+        attorney_id: str,
+        applicant_id: str,
+        doc: Union[EmbeddedDocument, Document],
+    ) -> ObjectId:
         """
         Inserts a mongo doc object into the firestore
 
@@ -304,7 +311,9 @@ class FirestoreClient(FireStoreDB):
         doc.date_created = datetime.datetime.utcnow()
         # Tried async collection but it has issues with event loop closures.
         # Switching to regular collection
-        _, doc_ref = self._collection.add(doc.to_mongo().to_dict())
+        attorney_document = self._collection.document(attorney_id)
+        applicant_collection = attorney_document.collection(applicant_id)
+        _, doc_ref = applicant_collection.add(doc.to_mongo().to_dict())
         _logger.info(f"Document inserted. Firestore id: {doc_ref.id}")
 
         return doc_ref.id

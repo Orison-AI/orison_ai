@@ -35,9 +35,7 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
     if (user && selectedApplicant) {
       setScholarDataStatus('loading');
       const scholarQuery = query(
-        collection(db, "google_scholar"),
-        where("attorney_id", "==", user.uid),
-        where("applicant_id", "==", selectedApplicant.id),
+        collection(doc(collection(db, "google_scholar"), user.uid), selectedApplicant.id),
         orderBy("date_created", "desc"),
         limit(1)
       );
@@ -115,8 +113,8 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
         <form onSubmit={handleScholarSearchRequest}>
           <HStack>
             <InputGroup>
-              <Input 
-                placeholder="Enter Google Scholar URL" 
+              <Input
+                placeholder="Enter Google Scholar URL"
                 value={scholarLink}
                 onChange={(e) => setScholarLink(e.target.value)}
                 isDisabled={scholarDataStatus === 'loading'}
