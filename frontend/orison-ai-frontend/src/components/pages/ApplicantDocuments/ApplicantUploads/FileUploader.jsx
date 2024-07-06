@@ -27,6 +27,7 @@ import ViewFileModal from './ViewFileModal';
 import FileDropzone from './FileDropzone';
 import FileTable from './FileTable';
 import OverwriteFileModal from './OverwriteFileModal';
+import UploadingFileModal from './UploadingFileModal';
 
 const buckets = ["research", "reviews", "awards", "feedback"];
 
@@ -317,19 +318,11 @@ const FileUploader = ({ selectedApplicant }) => {
         fileName={fileToView}
         fileContent={fileContent}
       />
-      <Modal isOpen={isUploadModalOpen} onClose={onUploadModalClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>File Upload In Progress</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Text>Uploading: {uploadingFileName}</Text>
-          </ModalBody>
-          <ModalFooter>
-            <Button onClick={onUploadModalClose}>Close</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <UploadingFileModal
+        isOpen={isUploadModalOpen}
+        onClose={onUploadModalClose}
+        fileName={uploadingFileName}
+      />
     </VStack>
   );
 };
