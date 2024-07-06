@@ -4,25 +4,34 @@
 import React from 'react';
 
 // Chakra UI
-import { Box, Text } from '@chakra-ui/react';
-
-// Orison AI
-import StructuredData from '../../StructuredData';
+import { Box, Text, VStack, Heading } from '@chakra-ui/react';
 
 const SummarizationDataDisplay = ({ data }) => {
-  const keys = [
-    { key: "summary", collapsible: true, dynamic: true, dynamic_collapsible: true, subKeys: [
-        { key: "answer" },
-        { key: "question" },
-        { key: "source" },
-      ]
-    }
-  ];
+  const summaries = data.summary || [];
 
   return (
-    <Box bg="gray.900" p="20px" overflowY="auto" borderRadius="20px" width="100%">
-      <Text fontSize="2xl" mb="4">Summary</Text>
-      <StructuredData data={data} keys={keys} />
+    <VStack spacing={4} width="100%">
+      {summaries.map((item, index) => (
+        <SummaryCard key={index} item={item} />
+      ))}
+    </VStack>
+  );
+};
+
+// Individual card for each summary item
+const SummaryCard = ({ item }) => {
+  const { question, answer, source } = item;
+
+  return (
+    <Box bg="gray.900" p="20px" borderRadius="10px" width="100%">
+      <Heading size="md" mb={4}>Question</Heading>
+      <Text mb={4}>{question}</Text>
+
+      <Heading size="md" mb={4}>Answer</Heading>
+      <Text mb={4}>{answer}</Text>
+
+      <Heading size="md" mb={4}>Sources</Heading>
+      <Text mb={4}>{source}</Text>
     </Box>
   );
 };

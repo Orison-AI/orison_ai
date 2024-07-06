@@ -60,7 +60,7 @@ export const vectorizeFiles = async (attorneyId, applicantId, bucket, fileIds) =
     fileIds,
   });
 
-  console.log(`DEBUG: vectorizeFiles: response=${JSON.stringify(response)}`);
+  console.log(`INFO: vectorizeFiles: response=${JSON.stringify(response)}`);
 
   if (!response.data) {
     throw new Error('Failed to start file vectorization');
@@ -75,7 +75,7 @@ export const summarize = async (attorneyId, applicantId) => {
     applicantId,
   });
 
-  console.log(`DEBUG: summarize: response=${JSON.stringify(response)}`);
+  console.log(`INFO: summarize: response=${JSON.stringify(response)}`);
 
   if (!response.data) {
     throw new Error('Failed to start summarization');
