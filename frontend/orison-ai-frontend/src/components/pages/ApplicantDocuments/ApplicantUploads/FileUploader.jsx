@@ -26,6 +26,7 @@ import ViewFileModal from './ViewFileModal';
 import FileDropzone from './FileDropzone';
 import FileTable from './FileTable';
 import OverwriteFileModal from './OverwriteFileModal';
+import UploadingFileModal from './UploadingFileModal';
 
 const buckets = ["research", "reviews", "awards", "feedback"];
 
@@ -43,6 +44,9 @@ const FileUploader = ({ selectedApplicant }) => {
   const [vectorizingFile, setVectorizingFile] = useState(null);
   const [vectorizeStatus, setVectorizeStatus] = useState('');
   const [vectorizedFiles, setVectorizedFiles] = useState([]);
+  const [uploadInProgress, setUploadInProgress] = useState(false);
+  const [uploadingFileName, setUploadingFileName] = useState('');
+  const { isOpen: isUploadModalOpen, onOpen: onUploadModalOpen, onClose: onUploadModalClose } = useDisclosure();
   const toast = useToast();
 
   const fetchVectorizedFiles = useCallback(async () => {
@@ -110,13 +114,18 @@ const FileUploader = ({ selectedApplicant }) => {
         contentType: contentType,
       };
   
-      if (documents.includes(file.name)) {
+      if (documents.some(doc => doc.fileName === file.name)) {
         setFileToOverwrite(file);
         onOverwriteModalOpen();
       } else {
         try {
+          setUploadingFileName(file.name);
+          setUploadInProgress(true);
+          onUploadModalOpen();
           await uploadBytes(storageRef, file, metadata);
           fetchDocuments();
+          setUploadInProgress(false);
+          onUploadModalClose();
         } catch (error) {
           console.error(`Error uploading file: ${error.message}`);
           toast({
@@ -126,6 +135,8 @@ const FileUploader = ({ selectedApplicant }) => {
             duration: 5000,
             isClosable: true,
           });
+          setUploadInProgress(false);
+          onUploadModalClose();
         }
       }
     }
@@ -278,7 +289,7 @@ const FileUploader = ({ selectedApplicant }) => {
             Support for multiple files will be added in a future version.
           </AlertDescription>
         </Alert>
-        <FileDropzone onDrop={onDrop} />
+        <FileDropzone onDrop={onDrop} disabled={uploadInProgress} />
         <FileTable
           documents={documents}
           vectorizeFile={vectorizeFile}
@@ -306,8 +317,14 @@ const FileUploader = ({ selectedApplicant }) => {
         fileName={fileToView}
         fileContent={fileContent}
       />
+      <UploadingFileModal
+        isOpen={isUploadModalOpen}
+        onClose={onUploadModalClose}
+        fileName={uploadingFileName}
+      />
     </VStack>
   );
 };
 
 export default FileUploader;
+
