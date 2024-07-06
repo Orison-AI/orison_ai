@@ -16,7 +16,8 @@ import {
 import {
   Alert, AlertIcon, AlertDescription,
   Box, HStack, Select, Text,
-  useDisclosure, useToast, VStack,
+  useDisclosure, useToast, VStack, Modal, ModalOverlay,
+  ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, Button
 } from '@chakra-ui/react';
 
 // Orison
@@ -43,6 +44,9 @@ const FileUploader = ({ selectedApplicant }) => {
   const [vectorizingFile, setVectorizingFile] = useState(null);
   const [vectorizeStatus, setVectorizeStatus] = useState('');
   const [vectorizedFiles, setVectorizedFiles] = useState([]);
+  const [uploadInProgress, setUploadInProgress] = useState(false);
+  const [uploadingFileName, setUploadingFileName] = useState('');
+  const { isOpen: isUploadModalOpen, onOpen: onUploadModalOpen, onClose: onUploadModalClose } = useDisclosure();
   const toast = useToast();
 
   const fetchVectorizedFiles = useCallback(async () => {
@@ -110,13 +114,18 @@ const FileUploader = ({ selectedApplicant }) => {
         contentType: contentType,
       };
   
-      if (documents.includes(file.name)) {
+      if (documents.some(doc => doc.fileName === file.name)) {
         setFileToOverwrite(file);
         onOverwriteModalOpen();
       } else {
         try {
+          setUploadingFileName(file.name);
+          setUploadInProgress(true);
+          onUploadModalOpen();
           await uploadBytes(storageRef, file, metadata);
           fetchDocuments();
+          setUploadInProgress(false);
+          onUploadModalClose();
         } catch (error) {
           console.error(`Error uploading file: ${error.message}`);
           toast({
@@ -126,6 +135,8 @@ const FileUploader = ({ selectedApplicant }) => {
             duration: 5000,
             isClosable: true,
           });
+          setUploadInProgress(false);
+          onUploadModalClose();
         }
       }
     }
@@ -278,7 +289,7 @@ const FileUploader = ({ selectedApplicant }) => {
             Support for multiple files will be added in a future version.
           </AlertDescription>
         </Alert>
-        <FileDropzone onDrop={onDrop} />
+        <FileDropzone onDrop={onDrop} disabled={uploadInProgress} />
         <FileTable
           documents={documents}
           vectorizeFile={vectorizeFile}
@@ -306,8 +317,22 @@ const FileUploader = ({ selectedApplicant }) => {
         fileName={fileToView}
         fileContent={fileContent}
       />
+      <Modal isOpen={isUploadModalOpen} onClose={onUploadModalClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>File Upload In Progress</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>Uploading: {uploadingFileName}</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button onClick={onUploadModalClose}>Close</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </VStack>
   );
 };
 
 export default FileUploader;
+
