@@ -10,6 +10,7 @@ const endpoints = {
   processScholarLink: "process-scholar-link",
   vectorizeFiles: "vectorize-files",
   summarize: "summarize",
+  deleteFileVectors: "delete-file-vectors",
 }
 
 // Default timeout 5 minutes * 60 seconds/minute * 1000 milliseconds/second
@@ -60,10 +61,27 @@ export const vectorizeFiles = async (attorneyId, applicantId, bucket, fileIds) =
     fileIds,
   });
 
-  console.log(`DEBUG: vectorizeFiles: response=${JSON.stringify(response)}`);
+  console.log(`INFO: vectorizeFiles: response=${JSON.stringify(response)}`);
 
   if (!response.data) {
     throw new Error('Failed to start file vectorization');
+  }
+
+  return response.data;
+};
+
+export const deleteFileVectors = async (attorneyId, applicantId, bucket, fileId) => {
+  const response = await gateway(endpoints.deleteFileVectors, {
+    attorneyId,
+    applicantId,
+    bucket,
+    fileId,
+  });
+
+  console.log(`INFO: deleteFileVectors: response=${JSON.stringify(response)}`);
+
+  if (!response.data) {
+    throw new Error('Failed to delete file vectors');
   }
 
   return response.data;
@@ -75,7 +93,7 @@ export const summarize = async (attorneyId, applicantId) => {
     applicantId,
   });
 
-  console.log(`DEBUG: summarize: response=${JSON.stringify(response)}`);
+  console.log(`INFO: summarize: response=${JSON.stringify(response)}`);
 
   if (!response.data) {
     throw new Error('Failed to start summarization');

@@ -20,13 +20,15 @@ import {
 } from '@chakra-ui/react';
 
 // Orison
-import { vectorizeFiles } from '../../../../api/api';
-import DeleteFileModal from './DeleteFileModal';
-import ViewFileModal from './ViewFileModal';
+import { vectorizeFiles, deleteFileVectors } from '../../../../api/api';
 import FileDropzone from './FileDropzone';
 import FileTable from './FileTable';
 import OverwriteFileModal from './OverwriteFileModal';
 import UploadingFileModal from './UploadingFileModal';
+import ViewFileModal from './ViewFileModal';
+import DeleteFileModal from './DeleteFileModal';
+import DeletingFileModal from './DeletingFileModal';
+
 
 const buckets = ["research", "reviews", "awards", "feedback"];
 
@@ -35,18 +37,40 @@ const FileUploader = ({ selectedApplicant }) => {
   const [documents, setDocuments] = useState([]);
   const [selectedBucket, setSelectedBucket] = useState(buckets[0]);
   const [fileToOverwrite, setFileToOverwrite] = useState(null);
-  const { isOpen: isOverwriteModalOpen, onOpen: onOverwriteModalOpen, onClose: onOverwriteModalClose } = useDisclosure();
+  const {
+    isOpen: isOverwriteModalOpen,
+    onOpen: onOverwriteModalOpen,
+    onClose: onOverwriteModalClose,
+  } = useDisclosure();
   const [fileToDelete, setFileToDelete] = useState(null);
-  const { isOpen: isDeleteModalOpen, onOpen: onDeleteModalOpen, onClose: onDeleteModalClose } = useDisclosure();
+  const {
+    isOpen: isDeleteModalOpen,
+    onOpen: onDeleteModalOpen,
+    onClose: onDeleteModalClose,
+  } = useDisclosure();
   const [fileToView, setFileToView] = useState(null);
   const [fileContent, setFileContent] = useState('');
-  const { isOpen: isViewModalOpen, onOpen: onViewModalOpen, onClose: onViewModalClose } = useDisclosure();
+  const {
+    isOpen: isViewModalOpen,
+    onOpen: onViewModalOpen,
+    onClose: onViewModalClose,
+  } = useDisclosure();
   const [vectorizingFile, setVectorizingFile] = useState(null);
   const [vectorizeStatus, setVectorizeStatus] = useState('');
   const [vectorizedFiles, setVectorizedFiles] = useState([]);
   const [uploadInProgress, setUploadInProgress] = useState(false);
   const [uploadingFileName, setUploadingFileName] = useState('');
-  const { isOpen: isUploadModalOpen, onOpen: onUploadModalOpen, onClose: onUploadModalClose } = useDisclosure();
+  const {
+    isOpen: isUploadModalOpen,
+    onOpen: onUploadModalOpen,
+    onClose: onUploadModalClose,
+  } = useDisclosure();
+  const [deletingFileName, setDeletingFileName] = useState('');
+  const {
+    isOpen: isDeleteInProgressModalOpen,
+    onOpen: onDeleteInProgressModalOpen,
+    onClose: onDeleteInProgressModalClose,
+  } = useDisclosure();
   const toast = useToast();
 
   const fetchVectorizedFiles = useCallback(async () => {
@@ -175,7 +199,11 @@ const FileUploader = ({ selectedApplicant }) => {
     const storageRef = ref(storage, filePath);
   
     try {
+      setDeletingFileName(fileToDelete);
+      onDeleteInProgressModalOpen();
+  
       await deleteObject(storageRef);
+  
       toast({
         title: 'File Deleted',
         description: `File ${fileToDelete} deleted successfully.`,
@@ -185,7 +213,12 @@ const FileUploader = ({ selectedApplicant }) => {
       });
       fetchDocuments();
       onDeleteModalClose();
+
+      // Can move this up later, once the backend works.
+      // For now it will raise an error.
+      await deleteFileVectors(user.uid, selectedApplicant.id, selectedBucket, fileToDelete);
       setFileToDelete(null);
+      onDeleteInProgressModalClose();
     } catch (error) {
       console.error(`Error deleting file: ${error.message}`);
       toast({
@@ -195,6 +228,7 @@ const FileUploader = ({ selectedApplicant }) => {
         duration: 5000,
         isClosable: true,
       });
+      onDeleteInProgressModalClose();
     }
   };
 
@@ -223,7 +257,7 @@ const FileUploader = ({ selectedApplicant }) => {
         setVectorizeStatus('error'); // Set status to error
       }
     }
-  }, [selectedApplicant, toast, user]);
+  }, [selectedApplicant, selectedBucket, toast, user]);
 
   const viewFile = useCallback(async (fileName) => {
     const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileName}`;
@@ -321,6 +355,11 @@ const FileUploader = ({ selectedApplicant }) => {
         isOpen={isUploadModalOpen}
         onClose={onUploadModalClose}
         fileName={uploadingFileName}
+      />
+      <DeletingFileModal
+        isOpen={isDeleteInProgressModalOpen}
+        onClose={onDeleteInProgressModalClose}
+        fileName={deletingFileName}
       />
     </VStack>
   );
