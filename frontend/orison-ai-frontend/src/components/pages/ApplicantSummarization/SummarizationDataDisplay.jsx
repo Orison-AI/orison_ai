@@ -31,9 +31,20 @@ const SummaryCard = ({ item }) => {
   return (
     <Box bg="gray.900" p="20px" borderRadius="10px" width="100%">
       <HStack spacing={4} align="start">
-        <Button onClick={toggleCollapse} size="sm" variant="link">
-          {isOpen ? '▼' : '▶'}
-        </Button>
+      <Button
+        onClick={toggleCollapse}
+        size="lg"
+        variant="link"
+        fontSize="2xl"
+        padding="0"
+        height="auto"
+        sx={{
+          textDecoration: 'none',
+          _hover: { textDecoration: 'none', color: 'blue.500' }, // Remove underline and change color on hover
+        }}
+      >
+        {isOpen ? '▼' : '▶'}
+      </Button>
         <Box>
           <Heading size="md" mb={4}>Question</Heading>
           <Text mb={4}>{question}</Text>
