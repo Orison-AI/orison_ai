@@ -1,10 +1,10 @@
 // ./components/pages/ApplicantSummarization/SummarizationDataDisplay.jsx
 
 // React
-import React from 'react';
+import React, { useState } from 'react';
 
 // Chakra UI
-import { Box, Text, VStack, Heading } from '@chakra-ui/react';
+import { Box, Text, VStack, Heading, Collapse, Button, HStack } from '@chakra-ui/react';
 
 // React Markdown
 import ReactMarkdown from 'react-markdown';
@@ -24,19 +24,33 @@ const SummarizationDataDisplay = ({ data }) => {
 // Individual card for each summary item
 const SummaryCard = ({ item }) => {
   const { question, answer, source } = item;
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleCollapse = () => setIsOpen(!isOpen);
 
   return (
-    <Box bg="gray.900" p="40px" borderRadius="10px" width="100%">
-      <Heading size="md" mb={4}>Question</Heading>
-      <Text mb={4}>{question}</Text>
+    <Box bg="gray.900" p="20px" borderRadius="10px" width="100%">
+      <HStack spacing={4} align="start">
+        <Button onClick={toggleCollapse} size="sm" variant="link">
+          {isOpen ? '▼' : '▶'}
+        </Button>
+        <Box>
+          <Heading size="md" mb={4}>Question</Heading>
+          <Text mb={4}>{question}</Text>
 
-      <Heading size="md" mb={4}>Answer</Heading>
-      <Box mb={4}>
-        <ReactMarkdown>{answer}</ReactMarkdown>
-      </Box>
+          <Collapse in={isOpen} animateOpacity>
+            <Box>
+              <Heading size="md" mb={4}>Answer</Heading>
+              <Box mb={4}>
+                <ReactMarkdown>{answer}</ReactMarkdown>
+              </Box>
 
-      <Heading size="md" mb={4}>Sources</Heading>
-      <Text>{source}</Text>
+              <Heading size="md" mb={4}>Sources</Heading>
+              <Text mb={4}>{source}</Text>
+            </Box>
+          </Collapse>
+        </Box>
+      </HStack>
     </Box>
   );
 };
