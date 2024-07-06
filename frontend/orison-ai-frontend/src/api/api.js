@@ -12,11 +12,15 @@ const endpoints = {
   summarize: "summarize",
 }
 
-
-const gateway = async (orRequestType, orRequestPayload) => {
+// Default timeout 5 minutes * 60 seconds/minute * 1000 milliseconds/second
+const gateway = async (orRequestType, orRequestPayload, timeout=5 * 60 * 1000) => {
   console.log(`Fetching cloud endpoint: ${endpoints.gateway}, orRequestType=${orRequestType}`);
 
-  const gatewayFunction = httpsCallable(functions, endpoints.gateway);
+  const options = {
+    timeout,
+  };
+
+  const gatewayFunction = httpsCallable(functions, endpoints.gateway, options);
   try {
     return await gatewayFunction({
       "or_request_type": orRequestType,
