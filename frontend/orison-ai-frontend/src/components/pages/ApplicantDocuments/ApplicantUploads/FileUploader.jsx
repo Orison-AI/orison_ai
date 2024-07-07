@@ -223,7 +223,7 @@ const FileUploader = ({ selectedApplicant }) => {
         setVectorizeStatus('error'); // Set status to error
       }
     }
-  }, [selectedApplicant, toast, user]);
+  }, [selectedApplicant, selectedBucket, toast, user]);
 
   const viewFile = useCallback(async (fileName) => {
     const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileName}`;
