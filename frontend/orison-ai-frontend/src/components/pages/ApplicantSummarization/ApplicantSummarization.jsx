@@ -93,6 +93,7 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
             colorScheme="green"
             isDisabled={summarizationProgress === 'loading'}
             mr="10px"
+            mb="8px"
           >
             Generate Summary
           </Button>
