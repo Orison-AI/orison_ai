@@ -13,7 +13,7 @@ const endpoints = {
 }
 
 // Default timeout 5 minutes * 60 seconds/minute * 1000 milliseconds/second
-const gateway = async (orRequestType, orRequestPayload, timeout=5 * 60 * 1000) => {
+const gateway = async (orRequestType, orRequestPayload, timeout = 5 * 60 * 1000) => {
   console.log(`Fetching cloud endpoint: ${endpoints.gateway}, orRequestType=${orRequestType}`);
 
   const options = {

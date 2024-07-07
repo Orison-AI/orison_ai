@@ -78,7 +78,11 @@ class FetchScholar(RequestHandler):
         # Download the Google Scholar page
         try:
             scholar_info = await self.fetch_scholar_helper_(user_request)
-            id = await client.insert(scholar_info)
+            id = await client.insert(
+                attorney_id=user_request.attorney_id,
+                applicant_id=user_request.applicant_id,
+                doc=scholar_info,
+            )
             return OKResponse(
                 f"Scholar info:\n{scholar_info.to_json()} \nsaved with ID: {id}."
             )

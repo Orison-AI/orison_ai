@@ -8,8 +8,6 @@ WORKDIR /app/frontend/orison-frontend
 COPY ./frontend/orison-ai-frontend .
 COPY ./frontend/orison-ai-frontend/package*.json ./
 RUN npm install
-ENV NODE_ENV=production
-RUN npm run build
 
 # Expose the port the app runs on
 EXPOSE 3000

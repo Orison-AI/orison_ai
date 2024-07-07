@@ -231,7 +231,9 @@ class Summarize(RequestHandler):
             screening.applicant_id = applicant_id
             screening.bucket_name = bucket_name
             self.logger.info("Storing screening in Firestore")
-            id = await self._screening_client.insert(screening)
+            id = await self._screening_client.insert(
+                attorney_id=attorney_id, applicant_id=applicant_id, doc=screening
+            )
             self.logger.info(f"Screening stored in Firestore with ID: {id}")
         except Exception as e:
             message = f"Error processing files. Error code: {type(e).__name__}. Error message: {e}"

@@ -31,7 +31,7 @@ from google.cloud.secretmanager_v1 import SecretManagerServiceClient
 import firebase_admin
 from firebase_admin import firestore
 from firebase_admin import credentials
-from firebase_admin import firestore_async, firestore
+from firebase_admin import firestore
 from bson import ObjectId
 from typing import Optional
 from mongoengine import Document, EmbeddedDocument
@@ -144,7 +144,6 @@ class FireStoreDB:
         connect to a FireStoreDB database
         """
         app = get_firebase_admin_app()
-        self.async_client = firestore_async.client(app)
         self.client = firestore.client(app)
 
     async def update_collection_document(
@@ -216,7 +215,10 @@ class FirestoreClient(FireStoreDB):
                 converted to a mongo object
         """
         result = await self.find_top_k(attorney_id, applicant_id, filters, 1, order)
-        return result[0]
+        if result:
+            return result[0]
+        else:
+            return []
 
     async def find_top_k(
         self,
@@ -256,7 +258,7 @@ class FirestoreClient(FireStoreDB):
         if k < 1:
             raise ValueError("Number of documents k must be greater than 0")
 
-        attorney_document = self._async_collection.document(attorney_id)
+        attorney_document = self._collection.document(attorney_id)
         applicant_collection = attorney_document.collection(applicant_id)
 
         # Apply filters
@@ -282,7 +284,7 @@ class FirestoreClient(FireStoreDB):
 
         return [
             self._model(**{k: v for k, v in item.to_dict().items() if k != "id"})
-            async for item in query.stream()
+            for item in query.stream()
         ]
 
     async def insert(
