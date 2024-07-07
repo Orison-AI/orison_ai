@@ -131,3 +131,69 @@ async def get_google_scholar_info(
         cited_each_year=stringify_keys(author.get("cites_per_year")),
         publications=publications,
     )
+
+
+from dataclasses import dataclass
+from typing import List, Dict
+
+
+@dataclass
+class ScholarSummary:
+    scholar_id: str
+    publication_count: int
+    hindex: int
+    hindex_5y: int
+    citedby: int
+    citedby_5y: int
+    coauthor_ids: List[str]
+
+
+def simplified_scholar_summary(summary: ScholarSummary) -> Dict[str, dict]:
+    d = {}
+    d[summary.scholar_id] = {
+        "citations": summary.citedby,
+        "hindex": summary.hindex,
+        "publication_count": summary.publication_count
+    }
+    return d
+
+
+def summarize_scholar(scholar_id: str) -> ScholarSummary:
+    # Fetch data from the Google Scholar profile
+    data = scholarly.search_author_id(scholar_id)
+    # Fill the author object with more detailed information, including publications
+    data = scholarly.fill(data, sections=['basics', 'indices', 'coauthors'])
+    
+    return ScholarSummary(
+        scholar_id=scholar_id,
+        publication_count=0,#len(data.get("publications")),
+        hindex=data.get("hindex"),
+        hindex_5y=data.get("hindex5y"),
+        citedby=data.get("citedby"),
+        citedby_5y=data.get("citedby5y"),
+        coauthor_ids=[co_author.get("scholar_id") for co_author in data.get("coauthors")]
+    )
+
+
+async def gather_network(scholar_id: str, depth: int):
+    if depth == 0:
+        return [summarize_scholar(scholar_id)]
+    elif depth > 0:
+        scholar_summary = summarize_scholar(scholar_id)
+        summary = [scholar_summary]
+        tasks = list(map(lambda x: gather_network(x, depth-1), scholar_summary.coauthor_ids))
+        others = await asyncio.gather(*tasks)
+        return summary + others
+
+
+async def main():
+    url = "https://scholar.google.com/citations?user=pXQ4_EUAAAAJ"
+    scholar_id = await extract_user(url)
+    # summary = summarize_scholar(scholar_id)
+    network = await gather_network(scholar_id, 1)
+    # import json
+    # json.dump(summary, open("author_summary.json", "w"))
+    print(network)
+
+if __name__ == "__main__":
+    asyncio.run(main())
