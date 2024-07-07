@@ -4,7 +4,10 @@
 import React, { useState } from 'react';
 
 // Chakra UI
-import { Box, Text, VStack, Heading, Collapse, Button, HStack } from '@chakra-ui/react';
+import {
+  Box, Divider, Text, VStack, Heading,
+  Collapse, Button, HStack,
+} from '@chakra-ui/react';
 
 // React Markdown
 import ReactMarkdown from 'react-markdown';
@@ -48,14 +51,23 @@ const SummaryCard = ({ item }) => {
         <Box>
           <Heading size="md" mb={4}>Question</Heading>
           <Text mb={4}>{question}</Text>
-
           <Collapse in={isOpen} animateOpacity>
             <Box>
+              <Divider my={4} borderWidth="2px" />
               <Heading size="md" mb={4}>Answer</Heading>
               <Box mb={4}>
-                <ReactMarkdown>{answer}</ReactMarkdown>
+              <ReactMarkdown
+                  components={{
+                    p: ({ node, ...props }) => <Text mb={4} {...props} />,
+                    ul: ({ node, ...props }) => <Box as="ul" mb={4} pl={4} {...props} />,
+                    ol: ({ node, ...props }) => <Box as="ol" mb={4} pl={4} {...props} />,
+                    li: ({ node, ...props }) => <Box as="li" mb={2} {...props} />,
+                  }}
+                >
+                {answer}
+                </ReactMarkdown>
               </Box>
-
+              <Divider my={4} borderWidth="2px" />
               <Heading size="md" mb={4}>Sources</Heading>
               <Text mb={4}>{source}</Text>
             </Box>
