@@ -88,7 +88,7 @@ async def extract_user(url: str):
 
     try:
         parsed_url = urlparse(url)
-        user_id = parse_qs(parsed_url.query)['user'][0]
+        user_id = parse_qs(parsed_url.query)["user"][0]
         return user_id
     except Exception as e:
         return None
