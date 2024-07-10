@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../../../common/firebaseConfig';
 import {
-  collection, getDocs, orderBy, query, where, limit,
+  collection, getDocs, orderBy, query, where, limit, doc,
 } from 'firebase/firestore';
 
 // Chakra UI
@@ -31,9 +31,7 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
     if (user && selectedApplicant) {
       setSummarizationDataStatus('loading');
       const summarizationQuery = query(
-        collection(db, "screening_builder"),
-        where("attorney_id", "==", user.uid),
-        where("applicant_id", "==", selectedApplicant.id),
+        collection(doc(collection(db, "screening_builder"), user.uid), selectedApplicant.id),
         orderBy("date_created", "desc"),
         limit(1)
       );
@@ -95,6 +93,7 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
             colorScheme="green"
             isDisabled={summarizationProgress === 'loading'}
             mr="10px"
+            mb="8px"
           >
             Generate Summary
           </Button>

@@ -32,5 +32,4 @@ class GoogleScholarClient(FirestoreClient):
         """
         super(GoogleScholarClient, self).__init__()
         self._model = GoogleScholarDB
-        self._async_collection = self.async_client.collection("google_scholar")
         self._collection = self.client.collection("google_scholar")
