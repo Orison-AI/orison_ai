@@ -35,10 +35,7 @@ from or_store.firebase_storage import FirebaseStorage
 from or_store.firebase import FireStoreDB
 from utils import raise_and_log_error, file_extension
 from or_store.firebase import OrisonSecrets
-from or_llm.openai_interface import (
-    OrisonEmbeddings,
-    EMBEDDING_MODEL,
-)
+from or_llm.openai_interface import OrisonEmbeddings, EMBEDDING_MODEL, OrisonMessenger
 
 # Vectorization Imports
 import numpy as np
@@ -124,7 +121,7 @@ class VectorizeFiles(RequestHandler):
     @staticmethod
     def _apply_semantic_splitter(documents, openai_api_key, logger):
 
-        MIN_CHUNK_SIZE = 256
+        MIN_TOKEN_SIZE = 144
 
         # Initialize the text splitter
         text_splitter = SemanticChunker(
@@ -141,7 +138,9 @@ class VectorizeFiles(RequestHandler):
         chunks = text_splitter.split_documents(documents)
         logger.info("Splitting documents....DONE")
         filtered_chunks = [
-            chunk for chunk in chunks if len(chunk.page_content) >= MIN_CHUNK_SIZE
+            chunk
+            for chunk in chunks
+            if OrisonMessenger.number_tokens(chunk.page_content) >= MIN_TOKEN_SIZE
         ]
         return filtered_chunks
 
