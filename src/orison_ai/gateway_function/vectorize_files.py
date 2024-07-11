@@ -199,7 +199,7 @@ class VectorizeFiles(RequestHandler):
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
             file_id = request_json["fileId"]
-            bucket_name = request_json["bucket_name"]
+            bucket_name = request_json["bucket"]
             tag = bucket_name  # Change to something else if needed
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info(
@@ -292,7 +292,7 @@ class DeleteFileVectors(RequestHandler):
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
             file_id = request_json["fileId"]
-            bucket_name = request_json["bucket_name"]
+            bucket_name = request_json["bucket"]
             tag = bucket_name  # Change to something else if needed
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info(

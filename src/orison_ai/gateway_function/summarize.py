@@ -218,7 +218,7 @@ class Summarize(RequestHandler):
             self.logger.info(f"Handling summarize request: {request_json}")
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
-            bucket_name = request_json["bucket_name"]
+            bucket_name = request_json["bucket"]
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info("Initializing summarizer with secrets")
             self.initialize(secrets)

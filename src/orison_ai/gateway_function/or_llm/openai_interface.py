@@ -98,7 +98,7 @@ class OrisonMessenger(ChatOpenAI):
         )
 
     @staticmethod
-    async def number_tokens(text: str) -> int:
+    def number_tokens(text: str) -> int:
         """
         Calculate the number of tokens in the input text
         :param text: Input text
