@@ -146,6 +146,38 @@ class FireStoreDB:
         app = get_firebase_admin_app()
         self.client = firestore.client(app)
 
+    async def remove_value_from_field(
+        self,
+        collection_name: str,
+        document_name: str,
+        field: str,
+        value: Union[Any, List[Any]],
+    ):
+        """
+        Deletes the value associated with field from a document in a collection in the Firestore DB
+
+        :param collection_name: the name of the collection to delete from
+        :param document_name: the name of the document to delete from
+        :param field: the field to delete
+        """
+        collection = self.client.collection(collection_name)
+        document = collection.document(document_name)
+        # Check if field value is instance of a list. In that case append to list.
+        current_value = document.get().to_dict().get(field)
+        # Check if field exists in document
+        if current_value is None:
+            logging.error("Field does not exist in document. Cannot update field")
+            return None
+        if isinstance(current_value, list):
+            current_value.remove(value)
+            document.update({field: current_value})
+        else:
+            document.update({field: None})
+        logging.info(
+            f"Deleted field {field} from document {document_name} in collection {collection_name}"
+        )
+        return True
+
     async def update_collection_document(
         self,
         collection_name: str,

@@ -98,6 +98,19 @@ class OrisonMessenger(ChatOpenAI):
         )
 
     @staticmethod
+    def number_tokens(text: str) -> int:
+        """
+        Calculate the number of tokens in the input text
+        :param text: Input text
+        :return: Number of tokens
+        """
+        # Initialize the tokenizer for the specific model
+        tokenizer = tiktoken.encoding_for_model(MODEL_NAME)
+        # Tokenize the input text
+        tokens = tokenizer.encode(text)
+        return len(tokens)
+
+    @staticmethod
     async def truncate_to_max_tokens(text: str, max_tokens: int = 120000) -> str:
         """
         Truncate the input text to the maximum allowed tokens

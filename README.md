@@ -44,7 +44,7 @@ python send_curl_request --url https://us-central1-orison-ai-visa-apply.cloudfun
       "or_request_payload": {
         "attorneyId": "<attorney_hash>",
         "applicantId": "<applicant_hash>", 
-        "fileIds" : ["<filename>.pdf"],
+        "fileId" : "<filename>.pdf",
         "bucket_name": "<bucket_name>"
       }
   }}' 
