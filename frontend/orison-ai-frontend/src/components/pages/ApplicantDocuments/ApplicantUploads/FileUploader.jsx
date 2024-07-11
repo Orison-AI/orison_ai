@@ -88,7 +88,7 @@ const FileUploader = ({ selectedApplicant }) => {
       const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/`;
       const storage = getStorage();
       const listRef = ref(storage, filePath);
-      
+
       try {
         const res = await listAll(listRef);
         const docs = res.items.map(itemRef => ({
@@ -121,7 +121,7 @@ const FileUploader = ({ selectedApplicant }) => {
 
   const onDrop = async (acceptedFiles) => {
     const storage = getStorage();
-  
+
     for (const file of acceptedFiles) {
       const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${file.name}`;
       const storageRef = ref(storage, filePath);
@@ -137,7 +137,7 @@ const FileUploader = ({ selectedApplicant }) => {
       const metadata = {
         contentType: contentType,
       };
-  
+
       if (documents.some(doc => doc.fileName === file.name)) {
         setFileToOverwrite(file);
         onOverwriteModalOpen();
@@ -170,7 +170,7 @@ const FileUploader = ({ selectedApplicant }) => {
     const storage = getStorage();
     const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileToOverwrite.name}`;
     const storageRef = ref(storage, filePath);
-  
+
     try {
       await uploadBytes(storageRef, fileToOverwrite);
       fetchDocuments();
@@ -192,18 +192,18 @@ const FileUploader = ({ selectedApplicant }) => {
     setFileToDelete(fileName);
     onDeleteModalOpen();
   };
-  
+
   const handleDeleteConfirm = async () => {
     const storage = getStorage();
     const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileToDelete}`;
     const storageRef = ref(storage, filePath);
-  
+
     try {
       setDeletingFileName(fileToDelete);
       onDeleteInProgressModalOpen();
-  
+
       await deleteObject(storageRef);
-  
+
       toast({
         title: 'File Deleted',
         description: `File ${fileToDelete} deleted successfully.`,
@@ -237,7 +237,7 @@ const FileUploader = ({ selectedApplicant }) => {
       setVectorizingFile(fileName);  // Set the file being vectorized
       setVectorizeStatus('loading'); // Set status to loading
       try {
-        await vectorizeFiles(user.uid, selectedApplicant.id, selectedBucket, [fileName]);
+        await vectorizeFiles(user.uid, selectedApplicant.id, selectedBucket, fileName);
         toast({
           title: 'Vectorization Completed',
           description: `Vectorization for ${fileName} has completed successfully.`,
@@ -262,7 +262,7 @@ const FileUploader = ({ selectedApplicant }) => {
   const viewFile = useCallback(async (fileName) => {
     const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileName}`;
     const storageRef = ref(getStorage(), filePath);
-    
+
     try {
       // Get file metadata, which includes the content type
       const metadata = await getMetadata(storageRef);
@@ -274,7 +274,7 @@ const FileUploader = ({ selectedApplicant }) => {
         'application/json', 'application/xml', 'text/xml', 'text/markdown', 'text/csv',
         'application/x-yaml', 'text/yaml', 'text/x-vcard', 'text/x-vcalendar'
       ];
-      
+
       const isTextFile = (mimeType) => textMimeTypes.includes(mimeType);
       let text = `Unable to display file of type: [${contentType}]`;
 
@@ -283,7 +283,7 @@ const FileUploader = ({ selectedApplicant }) => {
         const response = await fetch(fileUrl);
         text = await response.text();
       }
-      
+
       setFileToView(fileName);
       setFileContent(text);
       onViewModalOpen();

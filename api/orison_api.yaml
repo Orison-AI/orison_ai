@@ -122,10 +122,8 @@ components:
         applicantId:
           $ref: '#/components/schemas/ApplicantId'
         fileIds:
-          type: array
-          items:
-            type: string
-            example: "file-12345"
+          type: string
+          example: "file-12345"
       required:
         - attorneyId
         - applicantId

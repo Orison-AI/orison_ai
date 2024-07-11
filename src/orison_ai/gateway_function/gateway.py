@@ -46,6 +46,7 @@ class GatewayRequestType(Enum):
     # TODO: Violating DRY principle. This enum is also defined in the OpenAPI spec.
     GOOGLE_SCHOLAR = "process-scholar-link"
     VECTORIZE_FILES = "vectorize-files"
+    DELETE_FILE_VECTORS = "delete-file-vectors"
     SUMMARIZE = "summarize"
 
 

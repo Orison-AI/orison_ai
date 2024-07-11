@@ -53,12 +53,12 @@ export const processScholarLink = async (attorneyId, applicantId, scholarLink) =
   return response.data;
 };
 
-export const vectorizeFiles = async (attorneyId, applicantId, bucket, fileIds) => {
+export const vectorizeFiles = async (attorneyId, applicantId, bucket, fileId) => {
   const response = await gateway(endpoints.vectorizeFiles, {
     attorneyId,
     applicantId,
     bucket,
-    fileIds,
+    fileId,
   });
 
   console.log(`INFO: vectorizeFiles: response=${JSON.stringify(response)}`);

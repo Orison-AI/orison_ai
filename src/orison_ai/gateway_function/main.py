@@ -31,7 +31,7 @@ from or_store.firebase import get_firebase_admin_app
 from fetch_scholar import FetchScholar
 
 from summarize import Summarize
-from vectorize_files import VectorizeFiles
+from vectorize_files import VectorizeFiles, DeleteFileVectors
 from gateway import GatewayRequestType, router
 
 
@@ -59,6 +59,7 @@ def init_routes():
         routes = {
             GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
             GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
+            GatewayRequestType.DELETE_FILE_VECTORS: DeleteFileVectors(),
             GatewayRequestType.SUMMARIZE: Summarize(),
         }
         _logger.info("Initializing routes....DONE")
@@ -73,21 +74,6 @@ def init_firebase():
         _logger.info("Getting firebase admin app.")
         firebase_app = get_firebase_admin_app()
     _logger.info("Getting firebase admin app....DONE")
-
-
-def init_routes():
-    global routes
-
-    if routes:
-        _logger.info("Routes already created")
-    else:
-        _logger.info("Initializing routes")
-        routes = {
-            GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
-            GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
-            GatewayRequestType.SUMMARIZE: Summarize(),
-        }
-        _logger.info("Initializing routes....DONE")
 
 
 def verify_bearer_token(request: Request):

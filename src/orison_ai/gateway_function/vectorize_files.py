@@ -199,15 +199,9 @@ class VectorizeFiles(RequestHandler):
             client = FireStoreDB()
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
-            file_ids = request_json["fileIds"]
-            if len(file_ids) != 1:
-                raise ValueError("Only one file per request is supported ATM")
-            file_id = file_ids[0]
-            bucket_name = "research"  # Hardcoding for now
-            tag = bucket_name
-            # bucket_name = request_json["bucket_name"]
-            # tag = request_json["tag"]
-
+            file_id = request_json["fileId"]
+            bucket_name = request_json["bucket_name"]
+            tag = bucket_name  # Change to something else if needed
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info(
                 f"Processing file for attorney {attorney_id} and applicant {applicant_id}"
@@ -256,7 +250,7 @@ class VectorizeFiles(RequestHandler):
                 collection_name="applicants",
                 document_name=applicant_id,
                 field="vectorized_files",
-                value=file_ids,
+                value=file_id,
             )
         except Exception as e:
             self.logger.error(f"Error processing files: {e}")
@@ -264,11 +258,74 @@ class VectorizeFiles(RequestHandler):
         return OKResponse("Success!")
 
 
+class DeleteFileVectors(RequestHandler):
+    def __init__(self):
+        super().__init__(str(self.__class__.__qualname__))
+
+    @staticmethod
+    async def _delete_vectors(qdrant_client, collection_name, file_name, tag, logger):
+        if not qdrant_client.collection_exists(collection_name=collection_name):
+            logger.error(
+                f"Error deleting vector-files. Collection {collection_name} does not exist"
+            )
+            return
+        points_selector = models.FilterSelector(
+            filter=models.Filter(
+                must=[
+                    models.FieldCondition(
+                        key="tag",
+                        match=models.MatchValue(value=tag),
+                    ),
+                    models.FieldCondition(
+                        key="filename",
+                        match=models.MatchValue(value=file_name),
+                    ),
+                ],
+            )
+        )
+        qdrant_client.delete(
+            collection_name=collection_name, points_selector=points_selector
+        )
+
+    async def handle_request(self, request_json):
+        try:
+            client = FireStoreDB()
+            attorney_id = request_json["attorneyId"]
+            applicant_id = request_json["applicantId"]
+            file_id = request_json["fileId"]
+            bucket_name = request_json["bucket_name"]
+            tag = bucket_name  # Change to something else if needed
+            secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
+            self.logger.info(
+                f"Processing delete file vectors for attorney {attorney_id}, applicant {applicant_id}, and file: {file_id}"
+            )
+            await DeleteFileVectors._delete_vectors(
+                qdrant_client=QdrantClient(
+                    url=secrets.qdrant_url, api_key=secrets.qdrant_api_key
+                ),
+                collection_name=secrets.collection_name,
+                file_name=file_id,
+                tag=tag,
+                logger=self.logger,
+            )
+            await client.remove_value_from_field(
+                collection_name="applicants",
+                document_name=applicant_id,
+                field="vectorized_files",
+                value=file_id,
+            )
+        except Exception as e:
+            self.logger.error(f"Error deleting file vectors: {e}")
+            return ErrorResponse(str(e))
+
+        return OKResponse("Success!")
+
+
 if __name__ == "__main__":
     request_json = {
         "attorneyId": "xlMsyQpatdNCTvgRfW4TcysSDgX2",
         "applicantId": "tYdtBdc7lJHyVCxquubj",
-        "fileIds": ["MalhanCV.pdf"],
+        "fileId": "MalhanCV.pdf",
         "bucket_name": "research",
     }
     vectorizer = VectorizeFiles()
