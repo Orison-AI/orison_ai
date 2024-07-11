@@ -218,7 +218,6 @@ class Summarize(RequestHandler):
             self.logger.info(f"Handling summarize request: {request_json}")
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
-            bucket_name = request_json["bucket"]
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info("Initializing summarizer with secrets")
             self.initialize(secrets)
@@ -227,7 +226,6 @@ class Summarize(RequestHandler):
             screening = await self.summarize(prompts)
             screening.attorney_id = attorney_id
             screening.applicant_id = applicant_id
-            screening.bucket_name = bucket_name
             self.logger.info("Storing screening in Firestore")
             id = await self._screening_client.insert(
                 attorney_id=attorney_id, applicant_id=applicant_id, doc=screening
@@ -244,7 +242,6 @@ if __name__ == "__main__":
     request_json = {
         "attorneyId": "xlMsyQpatdNCTvgRfW4TcysSDgX2",
         "applicantId": "tYdtBdc7lJHyVCxquubj",
-        "bucket_name": "research",
     }
     summarize = Summarize()
     asyncio.run(summarize.handle_request(request_json))

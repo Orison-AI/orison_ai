@@ -118,7 +118,6 @@ class QandA(EmbeddedDocument):
     question = StringField(required=True)
     answer = StringField(required=True)
     source = StringField()
-    bucket_name = StringField()
 
 
 class StoryBuilder(BaseModel):
