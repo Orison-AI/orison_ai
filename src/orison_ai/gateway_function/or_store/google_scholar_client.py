@@ -17,7 +17,10 @@
 # External
 
 import logging
-from or_store.models import GoogleScholarDB
+from or_store.models import (
+    GoogleScholarDB,
+    GoogleScholarNetworkDB,
+)
 from or_store.firebase import FirestoreClient
 
 logging.basicConfig(level=logging.INFO)
@@ -33,3 +36,15 @@ class GoogleScholarClient(FirestoreClient):
         super(GoogleScholarClient, self).__init__()
         self._model = GoogleScholarDB
         self._collection = self.client.collection("google_scholar")
+
+
+class GoogleScholarNetworkClient(FirestoreClient):
+    def __init__(self):
+        """
+        Initializes an instance of a GoogleScholarNetworkClient object, which can be used
+        to insert into or update a database collection given a file
+        """
+        super(GoogleScholarNetworkClient, self).__init__()
+        self._model = GoogleScholarNetworkDB
+        self._async_collection = self.async_client.collection("google_scholar_network")
+        self._collection = self.client.collection("google_scholar_network")
