@@ -139,6 +139,7 @@ from typing import List, Dict, Set
 
 @dataclass
 class ScholarSummary:
+    name: str
     scholar_id: str
     publication_count: int
     hindex: int
@@ -155,6 +156,7 @@ def summarize_scholar(scholar_id: str) -> ScholarSummary:
     data = scholarly.fill(data, sections=['basics', 'indices', 'coauthors', 'publications'])
     
     return ScholarSummary(
+        name = data.get("name"),
         scholar_id=scholar_id,
         publication_count=len(data.get("publications")),
         hindex=data.get("hindex"),
@@ -188,14 +190,15 @@ async def gather_network(scholar_id: str, depth: int, seen_scholar_ids: Set[str]
 async def main():
     url = "https://scholar.google.com/citations?user=pXQ4_EUAAAAJ"
     scholar_id = extract_user(url)
-    # summary = summarize_scholar(scholar_id)
-    seen = set()
-    network = await gather_network(scholar_id, 1, seen)
+    summary = summarize_scholar(scholar_id)
+    print(summary)
+    # seen = set()
+    # network = await gather_network(scholar_id, 1, seen)
     # import json
     # json.dump(summary, open("author_summary.json", "w"))
-    print(network)
-    print("\n")
-    print(seen)
+    # print(network)
+    # print("\n")
+    # print(seen)
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -53,6 +53,7 @@ class FetchScholarNetwork(RequestHandler):
             seen_scholar_ids = set()
             scholar_summaries_tmp = await gather_network(scholar_id, depth=1, seen_scholar_ids=seen_scholar_ids)
             simplified_scholar_summaries = list(map(lambda summary: SimplifiedScholarSummary(
+                name = summary.name,
                 scholar_id = summary.scholar_id,
                 hindex = summary.hindex,
                 citations = summary.citedby,

@@ -111,6 +111,7 @@ class GoogleScholarDB(BaseModel):
 
 
 class SimplifiedScholarSummary(EmbeddedDocument):
+    name = StringField()
     scholar_id = StringField()
     citations = IntField()
     hindex = IntField()
