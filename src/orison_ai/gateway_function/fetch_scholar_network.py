@@ -77,7 +77,11 @@ class FetchScholarNetwork(RequestHandler):
         try:
             scholar_network_entry.attorney_id = attorney_id
             scholar_network_entry.applicant_id = applicant_id
-            id = await client.insert(scholar_network_entry)
+            id = await client.insert(
+                attorney_id=attorney_id,
+                applicant_id=applicant_id,
+                doc=scholar_network_entry,
+            )
             return OKResponse(
                 f"Scholar info:\n{scholar_network_entry.to_json()} \nsaved with ID: {id}."
             )
