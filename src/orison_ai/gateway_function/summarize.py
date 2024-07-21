@@ -17,6 +17,7 @@
 # External
 
 import os
+import numpy as np
 import asyncio
 import json
 from typing import Union, List
@@ -158,7 +159,7 @@ class Summarize(RequestHandler):
     def dict_to_string(dict: dict[str, list]) -> str:
         # Create a list of key-value pairs formatted as "key: [values]"
         pairs = [
-            f"{key}. Pages: [{', '.join(map(str, values))}]"
+            f"{key}. Pages: [{', '.join(map(str, np.array(np.unique(values), dtype=int)))}]"
             for key, values in dict.items()
         ]
         # Join the pairs with " and "
