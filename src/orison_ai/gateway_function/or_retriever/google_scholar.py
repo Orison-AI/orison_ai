@@ -177,7 +177,12 @@ async def gather_network(scholar_id: str, depth: int, seen_scholar_ids: Set[str]
         summary = [scholar_summary]
         tasks = list(map(lambda x: gather_network(x, depth-1, seen_scholar_ids), scholar_summary.coauthor_ids))
         others = await asyncio.gather(*tasks)
-        return summary + others
+        retval = []
+        for item_list in others:
+            for item in item_list:
+                retval.append(item)
+        retval.append(scholar_summary)
+        return retval
 
 
 async def main():

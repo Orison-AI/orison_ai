@@ -46,5 +46,4 @@ class GoogleScholarNetworkClient(FirestoreClient):
         """
         super(GoogleScholarNetworkClient, self).__init__()
         self._model = GoogleScholarNetworkDB
-        self._async_collection = self.async_client.collection("google_scholar_network")
         self._collection = self.client.collection("google_scholar_network")

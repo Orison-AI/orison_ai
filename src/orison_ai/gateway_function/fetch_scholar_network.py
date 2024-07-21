@@ -52,13 +52,15 @@ class FetchScholarNetwork(RequestHandler):
             scholar_id = extract_user(scholar_link)
             seen_scholar_ids = set()
             scholar_summaries_tmp = await gather_network(scholar_id, depth=1, seen_scholar_ids=seen_scholar_ids)
+            simplified_scholar_summaries = list(map(lambda summary: SimplifiedScholarSummary(
+                scholar_id = summary.scholar_id,
+                hindex = summary.hindex,
+                citations = summary.citedby,
+                publication_count = summary.publication_count
+                ), scholar_summaries_tmp))
             # scholar_summaries = list(map(simplified_scholar_summary, scholar_summaries_tmp))
             scholar_network_entry = GoogleScholarNetworkDB(
-                network = list(map(lambda summary: SimplifiedScholarSummary(
-                    scholar_id = summary.scholar_id,
-                    citations = summary.citedby,
-                    publication_count = summary.publication_count
-                    ), scholar_summaries_tmp))
+                network = simplified_scholar_summaries
             )
         else:
             return ErrorResponse("Could not parse input to JSON")
