@@ -51,7 +51,7 @@ class FetchScholarNetwork(RequestHandler):
 
             scholar_id = extract_user(scholar_link)
             seen_scholar_ids = set()
-            scholar_summaries_tmp = gather_network(scholar_id, depth=1, seen=seen_scholar_ids)
+            scholar_summaries_tmp = gather_network(scholar_id, depth=1, seen_scholar_ids=seen_scholar_ids)
             # scholar_summaries = list(map(simplified_scholar_summary, scholar_summaries_tmp))
             scholar_network_entry = GoogleScholarNetworkDB(
                 network = list(map(lambda summary: SimplifiedScholarSummary(
