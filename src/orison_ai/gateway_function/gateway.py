@@ -45,6 +45,7 @@ class GatewayRequestType(Enum):
     # See api/orison_api.yaml for more information
     # TODO: Violating DRY principle. This enum is also defined in the OpenAPI spec.
     GOOGLE_SCHOLAR = "process-scholar-link"
+    GOOGLE_SCHOLAR_NETWORK = "process-scholar-network"
     VECTORIZE_FILES = "vectorize-files"
     DELETE_FILE_VECTORS = "delete-file-vectors"
     SUMMARIZE = "summarize"

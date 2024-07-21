@@ -110,6 +110,20 @@ class GoogleScholarDB(BaseModel):
     other_details = DictField()
 
 
+class SimplifiedScholarSummary(EmbeddedDocument):
+    name = StringField()
+    scholar_id = StringField()
+    citations = IntField()
+    hindex = IntField()
+    publication_count = IntField()
+
+class GoogleScholarNetworkDB(BaseModel):
+    """
+    MongoDB document class for Google scholar details of the applicant
+    """
+    network = ListField(EmbeddedDocumentField(SimplifiedScholarSummary), default=[])
+
+
 class QandA(EmbeddedDocument):
     """
     MongoDB document class for QandA details of the applicant

@@ -80,7 +80,7 @@ async def url_exists(url: str):
         raise INVALID_URL(message)
 
 
-async def extract_user(url: str):
+def extract_user(url: str):
     """
     Extract the user ID from a Google Scholar URL.
     :param url: The Google Scholar URL
