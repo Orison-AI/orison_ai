@@ -20,6 +20,7 @@ import os
 import numpy as np
 import asyncio
 import json
+from or_store.firebase_storage import FirebaseStorage
 from typing import Union, List
 from qdrant_client.async_qdrant_client import AsyncQdrantClient
 from qdrant_client import QdrantClient
@@ -110,30 +111,44 @@ class Summarize(RequestHandler):
         self._screening_client = ScreeningClient()
 
     @staticmethod
-    def prompts(
-        file_path: str = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "templates",
-            "eb1_a_questionnaire.json",
-        ),
-    ) -> List[Prompt]:
+    async def _download_file(remote_file_path: str, local_file_path: str, logger):
+        # Download file from Firebase Storage
+        await FirebaseStorage.download_file(
+            remote_file_path=remote_file_path, local_file_path=local_file_path
+        )
+        if os.path.exists(local_file_path):
+            logger.debug(f"File written to {local_file_path}")
+        else:
+            logger.error(f"Could not download file to {local_file_path}")
+
+    @staticmethod
+    async def prompts(attorney_id: str, logger) -> List[Prompt]:
         """
         Load prompts from a JSON file
         :param file_path: Path to the JSON file
+        :param logger: Logger object
         :return: List of prompts
         """
 
+        firestore_file_path: str = os.path.join(
+            "documents",
+            "attorneys",
+            attorney_id,
+            "eb1_a_questionnaire.json",
+        )
+        local_path = "/tmp/eb1_a_questionnaire.json"
+        await Summarize._download_file(firestore_file_path, local_path, logger)
+
         prompts = []
-        with open(file=file_path, mode="r") as file:
+        with open(file=local_path, mode="r") as file:
             js = json.load(file)
             for question, detail_level in zip(
-                js["prompt"]["research"]["question"],
-                js["prompt"]["research"]["detail_level"],
+                js["question"],
+                js["detail_level"],
             ):
                 prompts.append(
                     Prompt(
-                        question=question,
-                        detail_level=detail_level,
+                        question=question, detail_level=detail_level, tag=js["bucket"]
                     )
                 )
             file.close()
@@ -222,7 +237,7 @@ class Summarize(RequestHandler):
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info("Initializing summarizer with secrets")
             self.initialize(secrets)
-            prompts = self.prompts()
+            prompts = await self.prompts(attorney_id=attorney_id, logger=self.logger)
             self.logger.info("Initializing summarizer with secrets...done")
             screening = await self.summarize(prompts)
             screening.attorney_id = attorney_id
