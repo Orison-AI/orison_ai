@@ -29,6 +29,7 @@ from firebase_admin import auth
 # Internal
 from or_store.firebase import get_firebase_admin_app
 from fetch_scholar import FetchScholar
+from fetch_scholar_network import FetchScholarNetwork
 
 from summarize import Summarize
 from vectorize_files import VectorizeFiles, DeleteFileVectors
@@ -58,6 +59,7 @@ def init_routes():
         _logger.info("Initializing routes")
         routes = {
             GatewayRequestType.GOOGLE_SCHOLAR: FetchScholar(),
+            GatewayRequestType.GOOGLE_SCHOLAR_NETWORK: FetchScholarNetwork(),
             GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
             GatewayRequestType.DELETE_FILE_VECTORS: DeleteFileVectors(),
             GatewayRequestType.SUMMARIZE: Summarize(),
