@@ -8,6 +8,7 @@ import { httpsCallable } from "firebase/functions";
 const endpoints = {
   gateway: "gateway_function",
   processScholarLink: "process-scholar-link",
+  processScholarNetwork: "process-scholar-network",
   vectorizeFiles: "vectorize-files",
   summarize: "summarize",
   deleteFileVectors: "delete-file-vectors",
@@ -48,6 +49,22 @@ export const processScholarLink = async (attorneyId, applicantId, scholarLink) =
 
   if (!response.data) {
     throw new Error('Failed to process Google Scholar link');
+  }
+
+  return response.data;
+};
+
+export const processScholarNetwork = async (attorneyId, applicantId, scholarLink) => {
+  const response = await gateway(endpoints.processScholarNetwork, {
+    attorneyId,
+    applicantId,
+    scholarLink,
+  });
+
+  console.log(`INFO: processScholarNetwork: response=${JSON.stringify(response)}`);
+
+  if (!response.data) {
+    throw new Error('Failed to process Google Scholar Network');
   }
 
   return response.data;
