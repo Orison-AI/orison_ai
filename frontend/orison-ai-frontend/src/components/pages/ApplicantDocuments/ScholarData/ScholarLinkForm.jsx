@@ -21,6 +21,7 @@ import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 
 // Orison AI
 import { processScholarLink } from '../../../../api/api';
+import { processScholarNetwork } from '../../../../api/api';
 import ScholarDataModal from './ScholarDataModal';
 
 const ScholarLinkForm = ({ selectedApplicant }) => {
@@ -39,13 +40,21 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
         orderBy("date_created", "desc"),
         limit(1)
       );
+      const scholarNetworkQuery = query(
+        collection(doc(collection(db, "google_scholar_network"), user.uid), selectedApplicant.id),
+        orderBy("date_created", "desc"),
+        limit(1)
+      );
       const querySnapshot = await getDocs(scholarQuery);
-      if (querySnapshot.empty) {
+      const networkSnapshot = await getDocs(scholarNetworkQuery);
+      if (querySnapshot.empty || networkSnapshot.empty) {
         setScholarData(null);
         setScholarDataStatus('not_found');
       } else {
         const data = querySnapshot.docs[0].data();
-        setScholarData(data);
+        const networkData = networkSnapshot.docs[0].data();
+        const mergedData = {...data, ...networkData};
+        setScholarData(mergedData);
         setScholarDataStatus('found');
       }
     }
@@ -82,6 +91,7 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
         });
         setScholarDataStatus('loading');
         await processScholarLink(user.uid, selectedApplicant.id, scholarLink);
+        await processScholarNetwork(user.uid, selectedApplicant.id, scholarLink);
         toast({
           title: 'Google Scholar Data Found',
           description: `Link: ${scholarLink}`,

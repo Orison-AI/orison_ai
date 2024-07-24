@@ -28,6 +28,13 @@ const ScholarDataModal = ({ isOpen, onClose, data }) => {
     { key: "cited_by" },
     { key: "cited_by_5y" },
     { key: "cited_each_year", collapsible: true, dynamic: true },
+    { key: "network", collapsible: true, dynamic: true, dynamic_collapsible: true, subKeys: [
+        {key: "name"},
+        {key: "citations"},
+        {key: "hindex"},
+        {key: "publication_count"},
+      ]
+    },
     { key: "co_authors", collapsible: true, dynamic: true, dynamic_collapsible: true, subKeys: [
         { key: "name" },
         { key: "affiliation" },
