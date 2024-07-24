@@ -90,8 +90,11 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
           isClosable: true,
         });
         setScholarDataStatus('loading');
-        await processScholarLink(user.uid, selectedApplicant.id, scholarLink);
-        await processScholarNetwork(user.uid, selectedApplicant.id, scholarLink);
+        await Promise.all([
+          processScholarLink(user.uid, selectedApplicant.id, scholarLink),
+          processScholarNetwork(user.uid, selectedApplicant.id, scholarLink)
+        ]);
+        
         toast({
           title: 'Google Scholar Data Found',
           description: `Link: ${scholarLink}`,
