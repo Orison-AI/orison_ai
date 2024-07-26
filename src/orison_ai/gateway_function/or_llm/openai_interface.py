@@ -39,6 +39,7 @@ EMBEDDING_MODEL = "text-embedding-ada-002"
 class Prompt:
     question: list
     detail_level: str
+    tag: str  # Qdrant tag
     id: str = uuid.uuid4().hex
 
 
