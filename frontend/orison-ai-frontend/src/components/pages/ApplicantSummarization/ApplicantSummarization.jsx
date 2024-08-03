@@ -7,12 +7,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../../../common/firebaseConfig';
 import {
-  collection, getDocs, orderBy, query, where, limit, doc,
+  collection, getDocs, orderBy, query, limit, doc,
 } from 'firebase/firestore';
 
 // Chakra UI
 import {
-  Box, Button, HStack, Text, useToast, VStack, Spinner,
+  Box, Button, HStack, Text, useToast, Spinner,
 } from '@chakra-ui/react';
 import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 
@@ -79,53 +79,45 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
   };
 
   return (
-    <VStack height="100%" width="100%" padding="16px">
-      <HStack width="100%" mb="32px">
-        <Text fontSize="32px" ml="16px" color="gray.400">Summary &gt;</Text>
-        <Text fontSize="32px" color="green.300" as="strong">
-          {selectedApplicant ? selectedApplicant.name : "None"}
-        </Text>
+    <Box height="100%" width="80%" >
+      <HStack width="100%" mb="20px" justifyContent="flex-start">
+        <Button
+          onClick={handleSummarize}
+          colorScheme="green"
+          isDisabled={summarizationProgress === 'loading'}
+          mr="10px"
+          mb="8px"
+        >
+          Generate Summary
+        </Button>
+        {summarizationProgress === 'loading' && (
+          <Spinner color="blue.500" size="sm" />
+        )}
+        {summarizationProgress === 'success' && (
+          <Box boxSize="24px">
+            <CheckCircleIcon color="green.500" boxSize="100%" />
+          </Box>
+        )}
+        {summarizationProgress === 'error' && (
+          <Box boxSize="24px">
+            <WarningIcon color="red.500" boxSize="100%" />
+          </Box>
+        )}
       </HStack>
-      <Box height="100%" width="80%" >
-        <HStack width="100%" mb="20px" justifyContent="flex-start">
-          <Button
-            onClick={handleSummarize}
-            colorScheme="green"
-            isDisabled={summarizationProgress === 'loading'}
-            mr="10px"
-            mb="8px"
-          >
-            Generate Summary
-          </Button>
-          {summarizationProgress === 'loading' && (
-            <Spinner color="blue.500" size="sm" />
-          )}
-          {summarizationProgress === 'success' && (
-            <Box boxSize="24px">
-              <CheckCircleIcon color="green.500" boxSize="100%" />
-            </Box>
-          )}
-          {summarizationProgress === 'error' && (
-            <Box boxSize="24px">
-              <WarningIcon color="red.500" boxSize="100%" />
-            </Box>
-          )}
-        </HStack>
-        {summarizationDataStatus === 'found' && (
-          <SummarizationDataDisplay data={summarizationData} />
-        )}
-        {summarizationDataStatus === 'loading' && (
-          <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
-            <Text>Loading summary data...</Text>
-          </Box>
-        )}
-        {summarizationDataStatus === 'not_found' && (
-          <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
-            <Text>No summary data found.</Text>
-          </Box>
-        )}
-      </Box>
-    </VStack>
+      {summarizationDataStatus === 'found' && (
+        <SummarizationDataDisplay data={summarizationData} />
+      )}
+      {summarizationDataStatus === 'loading' && (
+        <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
+          <Text>Loading summary data...</Text>
+        </Box>
+      )}
+      {summarizationDataStatus === 'not_found' && (
+        <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
+          <Text>No summary data found.</Text>
+        </Box>
+      )}
+    </Box>
   );
 };
 

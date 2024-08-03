@@ -11,20 +11,19 @@ import { Box, Text, useDisclosure, VStack } from '@chakra-ui/react';
 
 // Internal
 import { auth } from './common/firebaseConfig';
-import Views from './common/views';
-import Header from './components/Header';
-import MainMenu from './components/MainMenu';
-import Settings from './components/settings/Settings';
-import Auth from './components/auth/Auth';
-import ManageApplicants from './components/pages/ManageApplicants/ManageApplicants';
 import ApplicantDocuments from './components/pages/ApplicantDocuments/ApplicantDocuments';
 import ApplicantSummarization from './components/pages/ApplicantSummarization/ApplicantSummarization';
+import Auth from './components/auth/Auth';
+import Header from './components/Header';
+import ManageApplicants from './components/pages/ManageApplicants/ManageApplicants';
+import Navigation from './components/Navigation';
+import Settings from './components/settings/Settings';
+import Views from './common/views';
 
 const App = () => {
-  const [isMenuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const [currentView, setCurrentView] = useState('manageApplicants');
+  const { isSettingsOpen, onSettingsOpen, onSettingsClose } = useDisclosure();
+  const [currentView, setCurrentView] = useState(Views.MANAGE_APPLICANTS);
   const [applicants, setApplicants] = useState([]);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
 
@@ -42,22 +41,6 @@ const App = () => {
     // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
-
-  const toggleMenu = () => {
-    setMenuOpen(!isMenuOpen);
-  };
-
-  const setSelectedApplicantCustom = (newApplicant) => {
-    if (!newApplicant && currentView !== Views.MANAGE_APPLICANTS) {
-      changeView(Views.MANAGE_APPLICANTS);
-    }
-    setSelectedApplicant(newApplicant);
-  };
-
-  const changeView = (viewName) => {
-    setCurrentView(viewName);
-    toggleMenu();  // Close menu
-  };
 
   if (!user) {
     return <Auth />;
@@ -84,16 +67,17 @@ const App = () => {
 
   return (
     <VStack height="100vh" width="100vw">
-      <Header toggleMenu={toggleMenu} onSettingsOpen={onOpen} />
-      <MainMenu
-        isOpen={isMenuOpen}
-        onClose={toggleMenu}
-        changeView={changeView}
-        applicants={applicants}
-        selectedApplicant={selectedApplicant}
-        setSelectedApplicant={setSelectedApplicantCustom}
-      />
-      <Settings isOpen={isOpen} onClose={onClose} />
+      <Header onSettingsOpen={onSettingsOpen} />
+      {currentView !== Views.MANAGE_APPLICANTS && (
+        <Navigation
+          applicants={applicants}
+          selectedApplicant={selectedApplicant}
+          setSelectedApplicant={setSelectedApplicant}
+          currentView={currentView}
+          setCurrentView={setCurrentView}
+        />
+      )}
+      <Settings isOpen={isSettingsOpen} onClose={onSettingsClose} />
       <Box width="100%" flex="1" overflowY="auto">
         {renderCurrentView()}
       </Box>
