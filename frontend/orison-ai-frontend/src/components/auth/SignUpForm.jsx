@@ -14,7 +14,6 @@ import {
 
 // Internal
 import { auth } from '../../common/firebaseConfig';
-import copyFile from '../../common/copyFile';
 
 const SignUpForm = () => {
   const [email, setEmail] = useState('');
@@ -51,13 +50,7 @@ const SignUpForm = () => {
     validatePassword();
     if (error) return;
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-      const user = userCredential.user;
-      // Copy the template questionnaires after user creation
-      await copyFile(
-        'documents/attorneys/templates/eb1_a_questionnaire.json',
-        `documents/attorneys/${user.uid}/eb1_a_questionnaire.json`
-      );
+      await createUserWithEmailAndPassword(auth, email, password)
       toast({
         title: "Account created.",
         description: "Your account has been successfully created.",

@@ -79,7 +79,7 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
   };
 
   return (
-    <Box height="100%" width="80%" >
+    <Box m="0 50px" height="100%" width="80%" >
       <HStack width="100%" mb="20px" justifyContent="flex-start">
         <Button
           onClick={handleSummarize}
