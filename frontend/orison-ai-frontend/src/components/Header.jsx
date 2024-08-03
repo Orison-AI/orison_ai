@@ -5,33 +5,31 @@ import React from 'react';
 
 // Chakra
 import {
-  Box, Center, HStack, Icon, IconButton,
-  useColorModeValue,
+  Box, Center, HStack, IconButton, useColorModeValue,
 } from '@chakra-ui/react';
-import { HamburgerIcon, SettingsIcon } from '@chakra-ui/icons';
+import { SettingsIcon } from '@chakra-ui/icons';
+import { AiFillHome } from 'react-icons/ai';
 
-function Header({ toggleMenu, onSettingsOpen }) {
+const Header = React.forwardRef(({ goHome, onSettingsOpen }, ref) => {
   const headerColor = useColorModeValue("rgba(23, 25, 35, 0.10)", "rgba(23, 25, 35, 0.90)");
 
   return (
-    <HStack width="100%" bg={headerColor} p="8px" pl="16px" pr="16px">
+    <HStack className="oai-header" ref={ref} width="100%" bg={headerColor} p="8px" pl="16px" pr="16px">
       <IconButton 
-        aria-label="Open menu" 
-        icon={<Icon as={HamburgerIcon} />} 
-        onClick={toggleMenu} 
-        variant="outline" 
+        aria-label="Home" 
+        icon={<AiFillHome />} 
+        onClick={goHome}
       />
       <Center width="100%">
         <Box fontSize="32px">orison.ai</Box>
       </Center>
       <IconButton 
         aria-label="Open settings" 
-        icon={<Icon as={SettingsIcon} />}
-        onClick={onSettingsOpen} 
-        variant="outline" 
+        icon={<SettingsIcon />}
+        onClick={onSettingsOpen}
       />
     </HStack>
   );
-}
+});
 
 export default Header;

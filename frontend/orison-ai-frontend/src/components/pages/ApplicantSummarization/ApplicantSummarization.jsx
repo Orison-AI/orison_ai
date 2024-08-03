@@ -12,7 +12,7 @@ import {
 
 // Chakra UI
 import {
-  Box, Button, HStack, Text, useToast, Spinner,
+  Box, Button, Center, HStack, Text, useToast, VStack, Spinner,
 } from '@chakra-ui/react';
 import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 
@@ -79,44 +79,48 @@ const ApplicantSummarization = ({ selectedApplicant }) => {
   };
 
   return (
-    <Box m="0 50px" height="100%" width="80%" >
-      <HStack width="100%" mb="20px" justifyContent="flex-start">
-        <Button
-          onClick={handleSummarize}
-          colorScheme="green"
-          isDisabled={summarizationProgress === 'loading'}
-          mr="10px"
-          mb="8px"
-        >
-          Generate Summary
-        </Button>
-        {summarizationProgress === 'loading' && (
-          <Spinner color="blue.500" size="sm" />
-        )}
-        {summarizationProgress === 'success' && (
-          <Box boxSize="24px">
-            <CheckCircleIcon color="green.500" boxSize="100%" />
-          </Box>
-        )}
-        {summarizationProgress === 'error' && (
-          <Box boxSize="24px">
-            <WarningIcon color="red.500" boxSize="100%" />
-          </Box>
-        )}
-      </HStack>
-      {summarizationDataStatus === 'found' && (
-        <SummarizationDataDisplay data={summarizationData} />
-      )}
-      {summarizationDataStatus === 'loading' && (
-        <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
-          <Text>Loading summary data...</Text>
-        </Box>
-      )}
-      {summarizationDataStatus === 'not_found' && (
-        <Box bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
-          <Text>No summary data found.</Text>
-        </Box>
-      )}
+    <Box className="oai-appsum" height="100%" width="100%" >
+      <Center width="100%" flex="1">
+        <VStack height="100%" width="100%">
+          <HStack className="oai-appsum-generate-stack" mb="20px" justifyContent="flex-start">
+            <Button
+              onClick={handleSummarize}
+              colorScheme="green"
+              isDisabled={summarizationProgress === 'loading'}
+              mr="10px"
+              mb="8px"
+            >
+              Generate Summary
+            </Button>
+            {summarizationProgress === 'loading' && (
+              <Spinner color="blue.500" size="sm" />
+            )}
+            {summarizationProgress === 'success' && (
+              <Box boxSize="24px">
+                <CheckCircleIcon color="green.500" boxSize="100%" />
+              </Box>
+            )}
+            {summarizationProgress === 'error' && (
+              <Box boxSize="24px">
+                <WarningIcon color="red.500" boxSize="100%" />
+              </Box>
+            )}
+          </HStack>
+          {summarizationDataStatus === 'found' && (
+            <SummarizationDataDisplay data={summarizationData} />
+          )}
+          {summarizationDataStatus === 'loading' && (
+            <Box className="oai-appsum-loading" bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
+              <Text>Loading summary data...</Text>
+            </Box>
+          )}
+          {summarizationDataStatus === 'not_found' && (
+            <Box className="oai-appsum-not-found" bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">
+              <Text>No summary data found.</Text>
+            </Box>
+          )}
+        </VStack>
+      </Center>
     </Box>
   );
 };

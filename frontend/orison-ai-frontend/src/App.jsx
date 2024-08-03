@@ -1,13 +1,15 @@
 // ./App.jsx
 
 // React
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 // Firebase
 import { onAuthStateChanged } from "firebase/auth";
 
 // Chakra
-import { Box, Text, useDisclosure, VStack } from '@chakra-ui/react';
+import {
+  Box, Text, useDisclosure, VStack,
+} from '@chakra-ui/react';
 
 // Internal
 import { auth } from './common/firebaseConfig';
@@ -26,6 +28,11 @@ const App = () => {
   const [currentView, setCurrentView] = useState(Views.MANAGE_APPLICANTS);
   const [applicants, setApplicants] = useState([]);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const headerRef = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const navRef = useRef(null);
+  const [navHeight, setNavHeight] = useState(0);
+  const viewRef = useRef(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -40,6 +47,22 @@ const App = () => {
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
+  }, []);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.clientHeight);
+      }
+      if (navRef.current) {
+        setNavHeight(navRef.current.clientHeight);
+      }
+    };
+  
+    handleResize(); // Call once on mount
+    window.addEventListener('resize', handleResize); // Adjust on window resize
+  
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   if (!user) {
@@ -66,21 +89,34 @@ const App = () => {
   };
 
   return (
-    <VStack height="100vh" width="100vw">
-      <Header onSettingsOpen={onSettingsOpen} />
-      {currentView !== Views.MANAGE_APPLICANTS && (
+    <VStack className="oai-app" height="100vh" width="100vw" pb="20px">
+      <Header
+        ref={headerRef}
+        goHome={() => setCurrentView(Views.MANAGE_APPLICANTS)}
+        onSettingsOpen={onSettingsOpen}
+      />
+      <VStack className="oai-nav-and-view" height="100%" width="100%" padding="0 40px">
         <Navigation
+          ref={navRef}
           applicants={applicants}
           selectedApplicant={selectedApplicant}
           setSelectedApplicant={setSelectedApplicant}
           currentView={currentView}
           setCurrentView={setCurrentView}
         />
-      )}
+        <Box
+          className="oai-view"
+          ref={viewRef}
+          width="100%"
+          flex="1"
+          overflowY="auto"
+          maxH={`calc(100vh - ${headerHeight}px - ${navHeight}px - 40px)`}
+          pb="20px"
+        >
+          {renderCurrentView()}
+        </Box>
+      </VStack>
       <Settings isOpen={isSettingsOpen} onClose={onSettingsClose} />
-      <Box width="100%" flex="1" overflowY="auto">
-        {renderCurrentView()}
-      </Box>
     </VStack>
   );
 }

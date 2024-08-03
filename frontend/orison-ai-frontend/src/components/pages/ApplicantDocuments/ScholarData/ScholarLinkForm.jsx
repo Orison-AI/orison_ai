@@ -8,7 +8,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../../../../common/firebaseConfig';
 import {
   collection, doc, getDoc, getDocs,
-  limit, orderBy, query, setDoc, where,
+  limit, orderBy, query, setDoc,
 } from 'firebase/firestore';
 
 // Chakra UI

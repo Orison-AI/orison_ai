@@ -13,7 +13,7 @@ import {
 // Chakra
 import {
   Box, Button, Center, IconButton, Input,
-  Table, Thead, Tbody, Tr, Th, Td, Text,
+  Table, Thead, Tbody, Tr, Th, Td,
   useDisclosure,
 } from '@chakra-ui/react';
 import { EditIcon, CloseIcon, CheckIcon } from '@chakra-ui/icons';
@@ -137,19 +137,18 @@ const ManageApplicants = ({
   }
 
   return (
-    <Box width="100%">
-      <Text fontSize="32px" m="16px" mb="32px" color="gray.400">Manage Applicants</Text>
-      <Center>
-        <Box overflowX="auto" minWidth="60%" maxWidth="90%" border="1px" borderColor="gray.600" borderRadius="8px">
-          <Table variant="simple">
-            <Thead>
+    <Box className="oai-manage-view" width="100%">
+      <Center className="oai-manage-table-center">
+        <Box className="oai-manage-table-container" overflowX="auto" minWidth="60%" maxWidth="90%" border="1px" borderColor="gray.600" borderRadius="8px">
+          <Table className="oai-manage-table" variant="simple">
+            <Thead className="oai-manage-thead">
               <Tr>
                 <Th>Name</Th>
                 <Th>Email</Th>
                 <Th></Th>
               </Tr>
             </Thead>
-            <Tbody>
+            <Tbody className="oai-manage-tbody">
               {applicants.map(applicant => (
                 <Tr key={applicant.id}>
                   <Td whiteSpace="nowrap">
@@ -191,7 +190,7 @@ const ManageApplicants = ({
           </Table>
         </Box>
       </Center>
-      <Center>
+      <Center className="oai-manage-addnewapp-button-center">
         <Button mt="16px" colorScheme="blue" onClick={addNewApplicant}>Add New Applicant</Button>
       </Center>
       <DeleteApplicantModal
