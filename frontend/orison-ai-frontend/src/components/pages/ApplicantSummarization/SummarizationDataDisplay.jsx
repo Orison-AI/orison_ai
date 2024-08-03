@@ -16,7 +16,7 @@ const SummarizationDataDisplay = ({ data }) => {
   const summaries = data.summary || [];
 
   return (
-    <VStack spacing={4} width="100%">
+    <VStack className="oai-appsum-data-display" spacing={4} width="100%">
       {summaries.map((item, index) => (
         <SummaryCard key={index} item={item} />
       ))}
@@ -32,7 +32,7 @@ const SummaryCard = ({ item }) => {
   const toggleCollapse = () => setIsOpen(!isOpen);
 
   return (
-    <Box bg="gray.900" p="20px" borderRadius="10px" width="100%">
+    <Box className="oai-appsum-summary-card" bg="gray.900" p="20px" borderRadius="10px" width="100%">
       <HStack spacing={4} align="start">
       <Button
         onClick={toggleCollapse}
