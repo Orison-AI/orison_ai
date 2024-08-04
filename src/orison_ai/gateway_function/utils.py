@@ -17,10 +17,8 @@
 import time
 import os
 import asyncio
-from asyncio.locks import Event
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Callable, Any
-
-OPENAI_SLEEP = 0.15  # Time to sleep between OpenAI requests
 
 
 def file_extension(file_path: str) -> str:
@@ -45,76 +43,105 @@ async def async_generator_from_list(data_list: list):
 
 class ThrottleRequest:
     register_last = None  # Class variable to track the time of the last call
-    throttle_lock = Event()  # Lock to throttle the requests
-    logger = None
+    SLEEP_SECONDS = 0.15  # Time to sleep between OpenAI requests
+    executor = ThreadPoolExecutor(max_workers=1)
 
-    @staticmethod
-    def clear_and_log(func_name: str):
-        # Update the time_elapsed to the current time
-        ThrottleRequest.throttle_lock.clear()
-        ThrottleRequest.register_last = time.time()
+    def __init__(self, logger):
+        self._logger = logger
+        self._request_queue = asyncio.Queue()  # Async queue to manage requests
+        self._worker_task = asyncio.create_task(self._process_requests())
 
-        if ThrottleRequest.logger:
-            ThrottleRequest.logger.info(
-                f"Throttling request for {func_name} at time: {time.time()}"
-            )
+    async def _process_requests(self):
+        if self._logger:
+            self._logger.info("Starting ThrottleRequest worker")
+        while True:
+            fn, args, kwargs, result_future = await self._request_queue.get()
 
-    @staticmethod
-    def set_and_log(func_name: str):
-        if ThrottleRequest.logger:
-            ThrottleRequest.logger.info(
-                f"Throttling request for {func_name}....DONE at time: {time.time()}"
-            )
-        ThrottleRequest.throttle_lock.set()
+            if ThrottleRequest.register_last is not None:
+                time_elapsed = time.time() - ThrottleRequest.register_last
+                if time_elapsed <= ThrottleRequest.SLEEP_SECONDS:
+                    await asyncio.sleep(ThrottleRequest.SLEEP_SECONDS - time_elapsed)
 
-    @staticmethod
-    def throttle_call(fn: Callable[..., Any], *args, **kwargs) -> Any:
-        if ThrottleRequest.register_last is not None:
-            # Wait for the throttle lock to clear
-            start_time = time.time()
-            while not ThrottleRequest.throttle_lock.is_set():
-                if time.time() - start_time > 5.0:
-                    raise TimeoutError("Throttle lock not cleared")
-                time.sleep(0.001)
-            time_elapsed = start_time - ThrottleRequest.register_last
-            if time_elapsed <= OPENAI_SLEEP:
-                time.sleep(OPENAI_SLEEP - time_elapsed)
-        ThrottleRequest.clear_and_log(fn.__name__)
-        try:
-            result = fn(*args, **kwargs)
-        except Exception as e:
-            if ThrottleRequest.logger:
-                ThrottleRequest.logger.error(
-                    f"Error occurred in throttled function {fn.__name__}: {e}"
+            if self._logger:
+                self._logger.info(
+                    f"Throttling request for {fn.__name__} at time: {time.time()}"
                 )
-            raise e
-        ThrottleRequest.set_and_log(fn.__name__)
-        return result
 
-    @staticmethod
-    async def athrottle_call(future: Callable[..., Any], *args, **kwargs) -> Any:
-        # Check if future is truly a future. Else convert it to one.
-        if not asyncio.iscoroutinefunction(future):
-            future = asyncio.coroutine(future)
-
-        if ThrottleRequest.register_last is not None:
-            # Wait for event to clear
-            await ThrottleRequest.throttle_lock.wait()
-            # Calculate the time since the last call
-            time_elapsed = time.time() - ThrottleRequest.register_last
-            # If the time since the last call is less than the limit, wait for the remaining time
-            if time_elapsed <= OPENAI_SLEEP:
-                await asyncio.sleep(OPENAI_SLEEP - time_elapsed)
-
-        ThrottleRequest.clear_and_log(future.__name__)
-        try:
-            result = await future(*args, **kwargs)
-        except Exception as e:
-            if ThrottleRequest.logger:
-                ThrottleRequest.logger.error(
-                    f"Error occurred in throttled function {future.__name__}: {e}"
+            try:
+                result = (
+                    await fn(*args, **kwargs)
+                    if asyncio.iscoroutinefunction(fn)
+                    else await asyncio.get_running_loop().run_in_executor(
+                        ThrottleRequest.executor, fn, *args, **kwargs
+                    )
                 )
-            raise e
-        ThrottleRequest.set_and_log(future.__name__)
-        # Return the result
-        return result
+                result_future.set_result(result)
+            except Exception as e:
+                if self._logger:
+                    self._logger.error(
+                        f"Error occurred in throttled function {fn.__name__}: {e}"
+                    )
+                result_future.set_exception(e)
+
+            if self._logger:
+                self._logger.info(
+                    f"Throttling request for {fn.__name__}....DONE at time: {time.time()}"
+                )
+            ThrottleRequest.register_last = time.time()
+            self._request_queue.task_done()
+
+    # @staticmethod
+    # def throttle_call(fn: Callable[..., Any], *args, **kwargs) -> Any:
+    #     if not ThrottleRequest.worker_start:
+    #         threading.Thread(target=ThrottleRequest.start_worker).start()
+    #     loop = asyncio.get_running_loop()
+    #     result_future = Future()
+    #     asyncio.run_coroutine_threadsafe(
+    #         ThrottleRequest.request_queue.put((fn, args, kwargs, result_future)), loop
+    #     )
+    #     return result_future.result()
+
+    async def athrottle_call(self, fn: Callable[..., Any], *args, **kwargs) -> Any:
+        result_future = Future()
+        await self._request_queue.put((fn, args, kwargs, result_future))
+        return result_future.result()
+
+
+if __name__ == "__main__":
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    async def atest_fn():
+        await asyncio.sleep(0.1)
+        return "Async test function called"
+
+    def test_fn():
+        time.sleep(0.1)
+        return "Test function called"
+
+    async def main():
+        throttle_requester = ThrottleRequest(logger)
+        logger.info("Testing ThrottleRequest with one async call")
+        result = await throttle_requester.athrottle_call(atest_fn)
+        logger.info(f"Test complete. Result: {result}")
+        # logger.info("Testing ThrottleRequest with one sync call")
+        # result = ThrottleRequest.throttle_call(test_fn)
+        # logger.info(f"Test complete. Result: {result}")
+
+        # logger.info("Testing ThrottleRequest with multiple async calls")
+        # result = await asyncio.gather(
+        #     *[
+        #         asyncio.create_task(ThrottleRequest.athrottle_call(atest_fn))
+        #         for i in range(3)
+        #     ]
+        # )
+        # logger.info(f"Test complete. Result: {result}")
+        # logger.info("Testing ThrottleRequest with multiple sync calls")
+        # results = []
+        # for i in range(3):
+        #     results.append(ThrottleRequest.throttle_call(test_fn))
+        # logger.info(f"Test complete. Result: {results}")
+
+    asyncio.run(main())
