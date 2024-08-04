@@ -15,7 +15,6 @@ import {
 
 // Internal
 import { auth } from '../../common/firebaseConfig';
-import deleteFolder from '../../common/deleteFolder';
 // import ColorModeToggle from "../settings/ColorModeToggle";
 
 function Settings({ isOpen, onClose }) {
@@ -43,9 +42,7 @@ function Settings({ isOpen, onClose }) {
   };
 
   const handleDeleteAccount = () => {
-    try {
-      deleteUser(auth.currentUser);
-      deleteFolder(`documents/attorneys/${auth.currentUser.uid}`);
+    deleteUser(auth.currentUser).then(() => {
       toast({
         title: "Account deleted",
         description: "Your account has been successfully deleted.",
@@ -54,7 +51,7 @@ function Settings({ isOpen, onClose }) {
         isClosable: true
       });
       onClose();
-    } catch (error) {
+    }).catch((error) => {
       toast({
         title: "Deletion failed",
         description: error.message,
@@ -62,7 +59,7 @@ function Settings({ isOpen, onClose }) {
         duration: 5000,
         isClosable: true
       });
-    };
+    });
   };
 
   return (
