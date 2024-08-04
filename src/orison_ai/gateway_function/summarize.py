@@ -111,34 +111,18 @@ class Summarize(RequestHandler):
         self._screening_client = ScreeningClient()
 
     @staticmethod
-    async def _download_file(remote_file_path: str, local_file_path: str, logger):
-        # Download file from Firebase Storage
-        await FirebaseStorage.download_file(
-            remote_file_path=remote_file_path, local_file_path=local_file_path
-        )
-        if os.path.exists(local_file_path):
-            logger.debug(f"File written to {local_file_path}")
-        else:
-            logger.error(f"Could not download file to {local_file_path}")
-
-    @staticmethod
-    async def prompts(attorney_id: str, logger) -> List[Prompt]:
+    async def prompts(logger) -> List[Prompt]:
         """
         Load prompts from a JSON file
-        :param file_path: Path to the JSON file
         :param logger: Logger object
         :return: List of prompts
         """
 
-        firestore_file_path: str = os.path.join(
-            "documents",
-            "attorneys",
-            attorney_id,
+        local_path: str = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "templates",
             "eb1_a_questionnaire.json",
         )
-        local_path = "/tmp/eb1_a_questionnaire.json"
-        await Summarize._download_file(firestore_file_path, local_path, logger)
-
         prompts = []
         with open(file=local_path, mode="r") as file:
             js = json.load(file)
@@ -147,9 +131,7 @@ class Summarize(RequestHandler):
                 js["detail_level"],
             ):
                 prompts.append(
-                    Prompt(
-                        question=question, detail_level=detail_level, tag=js["bucket"]
-                    )
+                    Prompt(question=question, detail_level=detail_level, tag=js["tag"])
                 )
             file.close()
         return prompts
@@ -237,7 +219,7 @@ class Summarize(RequestHandler):
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info("Initializing summarizer with secrets")
             self.initialize(secrets)
-            prompts = await self.prompts(attorney_id=attorney_id, logger=self.logger)
+            prompts = await self.prompts(logger=self.logger)
             self.logger.info("Initializing summarizer with secrets...done")
             screening = await self.summarize(prompts)
             screening.attorney_id = attorney_id
