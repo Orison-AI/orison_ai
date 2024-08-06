@@ -17,6 +17,7 @@ import ApplicantDocuments from './components/pages/ApplicantDocuments/ApplicantD
 import ApplicantSummarization from './components/pages/ApplicantSummarization/ApplicantSummarization';
 import Auth from './components/auth/Auth';
 import Header from './components/Header';
+import QuestionaireEditor from './components/pages/QuestionaireEditor/QuestionaireEditor';
 import ManageApplicants from './components/pages/ManageApplicants/ManageApplicants';
 import Navigation from './components/Navigation';
 import Settings from './components/settings/Settings';
@@ -79,6 +80,8 @@ const App = () => {
           setSelectedApplicant={setSelectedApplicant}
           setCurrentView={setCurrentView}
         />;
+      case Views.QUESTIONAIRE:
+        return <QuestionaireEditor/>;
       case Views.APPLICANT_DOCUMENTS:
         return <ApplicantDocuments selectedApplicant={selectedApplicant} />;
       case Views.APPLICANT_SUMMARIZATION:
@@ -93,6 +96,7 @@ const App = () => {
       <Header
         ref={headerRef}
         goHome={() => setCurrentView(Views.MANAGE_APPLICANTS)}
+        editQuestionaire={() => setCurrentView(Views.QUESTIONAIRE)}
         onSettingsOpen={onSettingsOpen}
       />
       <VStack className="oai-nav-and-view" height="100%" width="100%" padding="0 40px">
