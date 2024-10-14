@@ -16,8 +16,6 @@
 
 # External
 
-import re
-import asyncio
 import uuid
 import numpy as np
 import logging
@@ -207,6 +205,12 @@ class OrisonMessenger:
 
     @staticmethod
     def dict_to_string(dict: dict[str, list]) -> str:
+        """
+        Convert a dictionary to a string
+        :param dict: Dictionary
+        :return: String representation of the dictionary
+        """
+
         # Create a list of key-value pairs formatted as "key: [values]"
         pairs = [
             f"{key}. Pages: [{', '.join(map(str, np.array(np.unique(values), dtype=int)))}]"
@@ -216,23 +220,6 @@ class OrisonMessenger:
         result = " and ".join(pairs)
         return result
 
-    async def context(
-        self,
-        prompt: Prompt,
-    ):
-        """
-        Retrieve documents from the Qdrant database
-        :param prompt: Prompt object
-        :return: Context string
-        """
-
-        query = prompt.question
-        retrieved_docs = await self._retriever.ainvoke(query)
-        logger.info(
-            f"Retrieved {len(retrieved_docs)} documents from the query: {query}"
-        )
-        return "\n".join([doc.text for doc in retrieved_docs])
-
     async def request(
         self,
         prompt: Prompt,
@@ -241,6 +228,7 @@ class OrisonMessenger:
         Request the LLM to answer a question
         :param prompt: Prompt object
         :return: Answer to the question
+        :rtype: QandA
         """
 
         query = prompt.question
