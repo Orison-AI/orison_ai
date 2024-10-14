@@ -117,10 +117,12 @@ class SimplifiedScholarSummary(EmbeddedDocument):
     hindex = IntField()
     publication_count = IntField()
 
+
 class GoogleScholarNetworkDB(BaseModel):
     """
     MongoDB document class for Google scholar details of the applicant
     """
+
     network = ListField(EmbeddedDocumentField(SimplifiedScholarSummary), default=[])
 
 
