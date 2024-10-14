@@ -35,7 +35,7 @@ from or_store.firebase_storage import FirebaseStorage
 from or_store.firebase import FireStoreDB
 from utils import raise_and_log_error, file_extension
 from or_store.firebase import OrisonSecrets
-from or_llm.openai_interface import OrisonEmbeddings, EMBEDDING_MODEL, OrisonMessenger
+from or_llm.openai_interface import OrisonMessenger
 
 # Vectorization Imports
 import numpy as np
@@ -52,11 +52,9 @@ class VectorizeFiles(RequestHandler):
     @staticmethod
     def embedding(secrets):
         if not VectorizeFiles.embedding_client:
-            VectorizeFiles.embedding_client = OrisonEmbeddings(
-                model=EMBEDDING_MODEL,
+            VectorizeFiles.embedding_client = OrisonMessenger(
                 api_key=secrets.openai_api_key,
-                max_retries=5,
-            )
+            )._embeddings
 
     @staticmethod
     def _file_path_builder(
@@ -202,10 +200,10 @@ class VectorizeFiles(RequestHandler):
             bucket_name = request_json["bucket"]
             tag = bucket_name  # Change to something else if needed
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
+            VectorizeFiles.embedding(secrets)
             self.logger.info(
                 f"Processing file for attorney {attorney_id} and applicant {applicant_id}"
             )
-            VectorizeFiles.embedding(secrets)
 
             # ToDo: Currently supporting only one file.
             # We should make multiple calls from the frontend instead for scalability

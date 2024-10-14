@@ -23,6 +23,9 @@ import logging
 import tiktoken
 from typing import Union, List
 from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.rate_limiters import InMemoryRateLimiter
 from langchain_openai import OpenAIEmbeddings
 from utils import ThrottleRequest
 from dataclasses import dataclass
@@ -64,7 +67,7 @@ class DetailLevel(Enum):
         raise ValueError(f"No matching DetailLevel for keyword: {keyword}")
 
 
-class OrisonMessenger(ChatOpenAI):
+class OrisonMessenger:
     ROLE = """
     You are a helpful, respectful and honest assistant.\
     Always answer as helpfully as possible and follow ALL given instructions.\
@@ -85,17 +88,39 @@ class OrisonMessenger(ChatOpenAI):
         self,
         api_key: str,
         model: str = MODEL_NAME,
+        embedding_model: str = EMBEDDING_MODEL,
         temperature: float = 0.2,
         max_tokens: int = 4096,
+        max_retries: int = 5,
         **kwargs,
     ):
-        super().__init__(
+        self._system_prompt = ChatPromptTemplate(
+            messages=[("system", self.ROLE), ("user", "{text}")]
+        )
+        self._multi_query_prompt = ChatPromptTemplate(
+            messages=[("system", self.ROLE + self.MULTI_QUERY_ROLE), ("user", "{text}")]
+        )
+        self._rate_limiter = InMemoryRateLimiter(
+            requests_per_second=7,
+            check_every_n_seconds=1.0,  # Wake up every 100 ms to check whether allowed to make a request,
+            max_bucket_size=10,  # Controls the maximum burst size.
+        )
+        self._chat_bot = ChatOpenAI(
             api_key=api_key,
             model=model,
             temperature=temperature,
             max_tokens=max_tokens,
             timeout=90.0,
+            rate_limiter=self._rate_limiter,
             **kwargs,
+        )
+        self._parser = StrOutputParser()
+        self._system_chain = self._system_prompt | self._chat_bot | self._parser
+        self._multi_query_chain = (
+            self._multi_query_prompt | self._chat_bot | self._parser
+        )
+        self._embeddings = OpenAIEmbeddings(
+            model=embedding_model, api_key=api_key, max_retries=max_retries
         )
 
     @staticmethod
@@ -152,20 +177,8 @@ class OrisonMessenger(ChatOpenAI):
             logger.info(
                 f"Generating multi-query chunks through retriever invocation for prompt: {prompt.question}"
             )
-            request = [
-                (
-                    "system",
-                    self.MULTI_QUERY_ROLE,
-                ),
-                (
-                    "human",
-                    f"Original question: {prompt.question}.",
-                ),
-            ]
-            result = await ThrottleRequest.athrottle_call(self.ainvoke, request)
-            questions = [
-                q.strip() for q in re.split(r"\d+\.\s+", result.content) if q.strip()
-            ]
+            result = await self._multi_query_chain.ainvoke(prompt.question)
+            questions = [q.strip() for q in re.split(r"\d+\.\s+", result) if q.strip()]
             questions.append(prompt.question)
             logger.info(
                 f"Generated multi-queries for prompt: {prompt.question} \n{questions}"
@@ -198,23 +211,12 @@ class OrisonMessenger(ChatOpenAI):
         logger.info(
             "Checking if context exceeds max tokens. Truncating if required...DONE"
         )
-        prompt = [
-            (
-                "system",
-                self.ROLE,
-            ),
-            (
-                "human",
-                f"Given the context: \n{context}, \n answer the following: {query} in {detail_level.value}.",
-            ),
-        ]
-        result = await ThrottleRequest.athrottle_call(self.ainvoke, prompt)
-        return result.content
-
-
-class OrisonEmbeddings(OpenAIEmbeddings):
-    def __init__(self, model: str, api_key: str, max_retries: int = 5):
-        super().__init__(model=model, api_key=api_key, max_retries=max_retries)
+        text = f"Given the context: \n{context}, \n answer the following: {query} in {detail_level.value}."
+        result = await self._system_chain.ainvoke(text)
+        return result
 
     def embed_query(self, text: str) -> List[float]:
-        return ThrottleRequest.throttle_call(super().embed_query, text)
+        return self._embeddings.embed_query(text)
+
+    async def embed_query(self, text: str) -> List[float]:
+        return self._embeddings.aembed_query(text)

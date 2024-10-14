@@ -153,17 +153,21 @@ def summarize_scholar(scholar_id: str) -> ScholarSummary:
     # Fetch data from the Google Scholar profile
     data = scholarly.search_author_id(scholar_id)
     # Fill the author object with more detailed information, including publications
-    data = scholarly.fill(data, sections=['basics', 'indices', 'coauthors', 'publications'])
-    
+    data = scholarly.fill(
+        data, sections=["basics", "indices", "coauthors", "publications"]
+    )
+
     return ScholarSummary(
-        name = data.get("name"),
+        name=data.get("name"),
         scholar_id=scholar_id,
         publication_count=len(data.get("publications")),
         hindex=data.get("hindex"),
         hindex_5y=data.get("hindex5y"),
         citedby=data.get("citedby"),
         citedby_5y=data.get("citedby5y"),
-        coauthor_ids=[co_author.get("scholar_id") for co_author in data.get("coauthors")]
+        coauthor_ids=[
+            co_author.get("scholar_id") for co_author in data.get("coauthors")
+        ],
     )
 
 
@@ -177,7 +181,12 @@ async def gather_network(scholar_id: str, depth: int, seen_scholar_ids: Set[str]
     elif depth > 0:
         scholar_summary = summarize_scholar(scholar_id)
         summary = [scholar_summary]
-        tasks = list(map(lambda x: gather_network(x, depth-1, seen_scholar_ids), scholar_summary.coauthor_ids))
+        tasks = list(
+            map(
+                lambda x: gather_network(x, depth - 1, seen_scholar_ids),
+                scholar_summary.coauthor_ids,
+            )
+        )
         others = await asyncio.gather(*tasks)
         retval = []
         for item_list in others:
@@ -199,6 +208,7 @@ async def main():
     # print(network)
     # print("\n")
     # print(seen)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

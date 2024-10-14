@@ -20,7 +20,6 @@ import os
 import numpy as np
 import asyncio
 import json
-from or_store.firebase_storage import FirebaseStorage
 from typing import Union, List
 from qdrant_client.async_qdrant_client import AsyncQdrantClient
 from qdrant_client import QdrantClient
@@ -41,8 +40,6 @@ from or_store.firebase import OrisonSecrets
 from utils import async_generator_from_list, ThrottleRequest
 from or_llm.openai_interface import (
     OrisonMessenger,
-    OrisonEmbeddings,
-    EMBEDDING_MODEL,
     Prompt,
 )
 
@@ -56,8 +53,7 @@ class Summarize(RequestHandler):
 
     def initialize(self, secrets):
         try:
-            self.retriever_llm = OrisonMessenger(api_key=secrets.openai_api_key)
-            self.prompter_llm = OrisonMessenger(api_key=secrets.openai_api_key)
+            self._orison_messenger = OrisonMessenger(api_key=secrets.openai_api_key)
         except Exception as e:
             message = f"Error initializing OrisonMessenger. Error: {e}"
             self.logger.error(message)
@@ -84,15 +80,10 @@ class Summarize(RequestHandler):
             )
             # Define the name of the collection
             collection_name = secrets.collection_name
-            self.embedding = OrisonEmbeddings(
-                model=EMBEDDING_MODEL,
-                api_key=secrets.openai_api_key,
-                max_retries=5,
-            )
             self.vectordb = Qdrant(
                 client=self.qdrant_client,
                 collection_name=collection_name,
-                embeddings=self.embedding,
+                embeddings=self._orison_messenger._embeddings,
                 async_client=self.async_qdrant_client,
             )
         except Exception as e:
@@ -181,7 +172,7 @@ class Summarize(RequestHandler):
             self.logger.info(
                 f"Prompting llm with context for prompt: {prompt.question}"
             )
-            response = await self.prompter_llm.request(
+            response = await self._orison_messenger.request(
                 prompt.question, context, prompt.detail_level
             )
             self.logger.info(
@@ -199,7 +190,7 @@ class Summarize(RequestHandler):
 
     async def summarize(self, prompts: List[Prompt]):
         self.logger.info("Generating queries for prompts")
-        queries = await self.retriever_llm.generate_queries(prompts)
+        queries = await self._orison_messenger.generate_queries(prompts)
         self.logger.info("Generating queries for prompts...DONE")
 
         self.logger.info("Retrieving chunks for prompts")
