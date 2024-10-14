@@ -15,37 +15,55 @@
 # ==========================================================================
 
 
+class OrisonMessenger_INITIALIZATION_FAILED(Exception):
+    def __init__(
+        self, message="Failed to initialize OrisonMessenger", exception="UNKNOWN"
+    ):
+        self.message = message + " . Error: " + str(exception)
+        super().__init__(self.message)
+
+
 class CREDENTIALS_NOT_FOUND(ValueError):
-    def __init__(self, message="Credentials not found"):
-        self.message = message
+    def __init__(self, message="Credentials not found", exception="UNKNOWN"):
+        self.message = message + " . Error: " + str(exception)
         super().__init__(self.message)
 
 
 class INVALID_CREDENTIALS(Exception):
-    def __init__(self, message="Invalid Credentials"):
-        self.message = message
+    def __init__(self, message="Invalid Credentials", exception="UNKNOWN"):
+        self.message = message + " . Error: " + str(exception)
         super().__init__(self.message)
 
 
 class FIRESTORE_CONNECTION_FAILED(Exception):
-    def __init__(self, message="Failed to connect to Firestore"):
-        self.message = message
+    def __init__(self, message="Failed to connect to Firestore", exception="UNKNOWN"):
+        self.message = message + " . Error: " + str(exception)
         super().__init__(self.message)
 
 
 class LLM_INITIALIZATION_FAILED(Exception):
-    def __init__(self, message="Failed to initialize LLM model"):
-        self.message = message
+    def __init__(self, message="Failed to initialize LLM model", exception="UNKNOWN"):
+        self.message = message + " . Error: " + str(exception)
         super().__init__(self.message)
 
 
 class QDrant_INITIALIZATION_FAILED(Exception):
-    def __init__(self, message="Failed to initialize QDrant client"):
-        self.message = message
+    def __init__(
+        self, message="Failed to initialize QDrant client", exception="UNKNOWN"
+    ):
+        self.message = message + " . Error: " + str(exception)
         super().__init__(self.message)
 
 
 class Retriever_INITIALIZATION_FAILED(Exception):
-    def __init__(self, message="Failed to initialize Retriever"):
-        self.message = message
+    def __init__(self, message="Failed to initialize Retriever", exception="UNKNOWN"):
+        self.message = message + " . Error: " + str(exception)
+        super().__init__(self.message)
+
+
+class RateLimiter_INITIALIZATION_FAILED(Exception):
+    def __init__(
+        self, message="Failed to initialize Rate Limiter", exception="UNKNOWN"
+    ):
+        self.message = message + " . Error: " + str(exception)
         super().__init__(self.message)

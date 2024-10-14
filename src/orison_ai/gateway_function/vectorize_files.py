@@ -35,7 +35,7 @@ from or_store.firebase_storage import FirebaseStorage
 from or_store.firebase import FireStoreDB
 from utils import raise_and_log_error, file_extension
 from or_store.firebase import OrisonSecrets
-from or_llm.openai_interface import OrisonMessenger
+from or_llm.orison_messenger import OrisonMessenger
 
 # Vectorization Imports
 import numpy as np
@@ -53,7 +53,7 @@ class VectorizeFiles(RequestHandler):
     def embedding(secrets):
         if not VectorizeFiles.embedding_client:
             VectorizeFiles.embedding_client = OrisonMessenger(
-                api_key=secrets.openai_api_key,
+                secrets=secrets
             )._embeddings
 
     @staticmethod
@@ -151,7 +151,7 @@ class VectorizeFiles(RequestHandler):
             payload = {
                 "page_content": chunk.page_content,
                 "metadata": chunk.metadata,
-                "tag": tag,
+                "tag": tag.lower(),
                 "filename": filename,
             }
             return embedding, payload
@@ -271,7 +271,7 @@ class DeleteFileVectors(RequestHandler):
                 must=[
                     models.FieldCondition(
                         key="tag",
-                        match=models.MatchValue(value=tag),
+                        match=models.MatchValue(value=tag.lower()),
                     ),
                     models.FieldCondition(
                         key="filename",

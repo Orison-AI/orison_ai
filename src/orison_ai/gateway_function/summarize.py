@@ -17,88 +17,32 @@
 # External
 
 import os
-import numpy as np
 import asyncio
 import json
-from typing import Union, List
-from qdrant_client.async_qdrant_client import AsyncQdrantClient
-from qdrant_client import QdrantClient
-from langchain_qdrant import Qdrant
-from langchain_core.documents import Document
+from typing import List
 
 # Internal
 
 from request_handler import RequestHandler, OKResponse, ErrorResponse
-from exceptions import (
-    LLM_INITIALIZATION_FAILED,
-    QDrant_INITIALIZATION_FAILED,
-    Retriever_INITIALIZATION_FAILED,
-)
-from or_store.models import ScreeningBuilder, StoryBuilder, QandA
+from or_store.models import ScreeningBuilder
 from or_store.story_client import ScreeningClient
 from or_store.firebase import OrisonSecrets
-from utils import async_generator_from_list, ThrottleRequest
-from or_llm.openai_interface import (
+from exceptions import OrisonMessenger_INITIALIZATION_FAILED
+from or_llm.orison_messenger import (
     OrisonMessenger,
     Prompt,
 )
-
-RETRIEVAL_DOC_LIMIT = 10
 
 
 class Summarize(RequestHandler):
     def __init__(self):
         super().__init__(str(self.__class__.__qualname__))
-        ThrottleRequest.logger = self.logger
 
     def initialize(self, secrets):
         try:
-            self._orison_messenger = OrisonMessenger(api_key=secrets.openai_api_key)
+            self._orison_messenger = OrisonMessenger(secrets=secrets)
         except Exception as e:
-            message = f"Error initializing OrisonMessenger. Error: {e}"
-            self.logger.error(message)
-            raise LLM_INITIALIZATION_FAILED(message)
-
-        try:
-            # There is a bug in langchain Qdrant which checks for both regular client
-            # and async client. It is not possible to use only async client.
-            self.qdrant_client = QdrantClient(
-                url=secrets.qdrant_url,
-                api_key=secrets.qdrant_api_key,
-                port=6333,
-                grpc_port=6333,
-                https=True,
-                timeout=10.0,
-            )
-            self.async_qdrant_client = AsyncQdrantClient(
-                url=secrets.qdrant_url,
-                api_key=secrets.qdrant_api_key,
-                port=6333,
-                grpc_port=6333,
-                https=True,
-                timeout=10.0,
-            )
-            # Define the name of the collection
-            collection_name = secrets.collection_name
-            self.vectordb = Qdrant(
-                client=self.qdrant_client,
-                collection_name=collection_name,
-                embeddings=self._orison_messenger._embeddings,
-                async_client=self.async_qdrant_client,
-            )
-        except Exception as e:
-            message = f"Error initializing Qdrant. Error: {e}"
-            self.logger.error(message)
-            raise QDrant_INITIALIZATION_FAILED(message)
-
-        try:
-            self.retriever = self.vectordb.as_retriever(
-                search_kwargs={"k": RETRIEVAL_DOC_LIMIT}
-            )
-        except Exception as e:
-            message = f"Error initializing Retriever. Error: {e}"
-            self.logger.error(message)
-            raise Retriever_INITIALIZATION_FAILED(message)
+            raise OrisonMessenger_INITIALIZATION_FAILED(exception=e)
         self._screening_client = ScreeningClient()
 
     @staticmethod
@@ -127,78 +71,13 @@ class Summarize(RequestHandler):
             file.close()
         return prompts
 
-    async def retrieve_chunks(
-        self, queries: List[tuple[Prompt, List[str]]]
-    ) -> List[tuple[Prompt, List[Document]]]:
-        prompt_docs = []
-
-        async def process_query(prompt, multi_query):
-            retrieved_docs = []
-            async for query in async_generator_from_list(multi_query):
-                result = await self.retriever.ainvoke(query)
-                retrieved_docs.extend(result)
-            prompt_docs.append((prompt, retrieved_docs))
-
-        tasks = [process_query(prompt, multi_query) for prompt, multi_query in queries]
-        await asyncio.gather(*tasks)
-        return prompt_docs
-
-    @staticmethod
-    def dict_to_string(dict: dict[str, list]) -> str:
-        # Create a list of key-value pairs formatted as "key: [values]"
-        pairs = [
-            f"{key}. Pages: [{', '.join(map(str, np.array(np.unique(values), dtype=int)))}]"
-            for key, values in dict.items()
-        ]
-        # Join the pairs with " and "
-        result = " and ".join(pairs)
-        return result
-
-    async def generate_story(
-        self,
-        prompt_docs: List[tuple[Prompt, List[Document]]],
-        class_type: Union[ScreeningBuilder, StoryBuilder],
-    ):
-        story = class_type()
-
-        async def process_result(prompt, retrieved_docs):
-            context = "\n".join([doc.page_content for doc in retrieved_docs])
-            source = {}
-            for doc in retrieved_docs:
-                if doc.metadata["source"] not in source:
-                    source[doc.metadata["source"]] = []
-                source[doc.metadata["source"]].append(doc.metadata["page"])
-            source = Summarize.dict_to_string(source)
-            self.logger.info(
-                f"Prompting llm with context for prompt: {prompt.question}"
-            )
-            response = await self._orison_messenger.request(
-                prompt.question, context, prompt.detail_level
-            )
-            self.logger.info(
-                f"Prompting llm with context for prompt: {prompt.question}....DONE"
-            )
-            qna = QandA(question=prompt.question, answer=response, source=source)
-            story.summary.append(qna)
-
-        tasks = [
-            process_result(prompt, retrieved_docs)
-            for prompt, retrieved_docs in prompt_docs
-        ]
-        await asyncio.gather(*tasks)
-        return story
-
     async def summarize(self, prompts: List[Prompt]):
-        self.logger.info("Generating queries for prompts")
-        queries = await self._orison_messenger.generate_queries(prompts)
-        self.logger.info("Generating queries for prompts...DONE")
-
-        self.logger.info("Retrieving chunks for prompts")
-        prompt_docs = await self.retrieve_chunks(queries)
-        self.logger.info("Retrieving chunks for prompts...DONE")
-
         self.logger.info("Generating screening")
-        screening = await self.generate_story(prompt_docs, class_type=ScreeningBuilder)
+        tasks = [self._orison_messenger.request(prompt) for prompt in prompts]
+        results = await asyncio.gather(*tasks)
+        screening = ScreeningBuilder()
+        for result in results:
+            screening.summary.append(result)
         self.logger.info("Generating screening...DONE")
         return screening
 
