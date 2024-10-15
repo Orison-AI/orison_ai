@@ -77,8 +77,7 @@ def environment_or_secret(key: str):
             value = read_remote_secret_url_as_string(build_secret_url(key.lower()))
             _logger.info(f"{key.lower()} found in secret manager.")
         except Exception as e:
-            message = f"{key.lower()} not found in secret manager. Error: {e}"
-            raise CREDENTIALS_NOT_FOUND(message=message)
+            raise CREDENTIALS_NOT_FOUND(exception=e)
     return value
 
 
@@ -107,8 +106,8 @@ def get_firebase_admin_app():
             f"No Firebase credentials found in environment variables or secret manager. Error: {e}"
         )
         raise e
-    except json.JSONDecodeError:
-        raise INVALID_CREDENTIALS("Invalid JSON in FIREBASE_CREDENTIALS")
+    except json.JSONDecodeError as e:
+        raise INVALID_CREDENTIALS(exception=e)
     except Exception as e:
         _logger.error(f"Unknown error: {e}")
     options = {}
@@ -134,7 +133,7 @@ def get_firebase_admin_app():
         _logger.info(f"Firestore client created with name: {app.name}")
         return app
     except Exception as e:
-        raise FIRESTORE_CONNECTION_FAILED("Failed to connect to Firestore")
+        raise FIRESTORE_CONNECTION_FAILED(exception=e)
 
 
 class FireStoreDB:
