@@ -9,7 +9,7 @@ const DocAssist = ({ selectedApplicant }) => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
-    const [timeoutDuration, setTimeoutDuration] = useState(30000); // Timeout duration (in milliseconds)
+    const [timeoutDuration, setTimeoutDuration] = useState(60000); // Timeout duration (in milliseconds)
     const toast = useToast(); // Toast for showing error messages
     const [user] = useAuthState(auth);
 
