@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Box, Button, Input, VStack, Text, HStack, Flex, Spinner, useToast } from '@chakra-ui/react';
-import { docassist } from '../../../api/api.jsx';  // Import your API function here
+import { docassist } from '../../../api/api';  // Import your API function here
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../../../common/firebaseConfig';
+import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown for markdown support
 
 const DocAssist = ({ selectedApplicant }) => {
     const [messages, setMessages] = useState([]);
@@ -78,18 +79,7 @@ const DocAssist = ({ selectedApplicant }) => {
                 bg="gray.800"
             >
                 {messages.map((msg, idx) => (
-                    <HStack key={idx} justify={msg.sender === 'user' ? 'flex-end' : 'flex-start'}>
-                        <Text
-                            bg={msg.sender === 'user' ? 'blue.500' : 'gray.600'}
-                            color="white"
-                            borderRadius="md"
-                            p="3"
-                            maxWidth="75%"
-                            wordBreak="break-word"
-                        >
-                            {msg.text}
-                        </Text>
-                    </HStack>
+                    <MessageCard key={idx} message={msg} />
                 ))}
                 {isStreaming && (
                     <HStack justify="flex-start">
@@ -130,3 +120,35 @@ const DocAssist = ({ selectedApplicant }) => {
 };
 
 export default DocAssist;
+
+// Individual message card component
+const MessageCard = ({ message }) => {
+    const { text, sender } = message;
+
+    return (
+        <HStack justify={sender === 'user' ? 'flex-end' : 'flex-start'} width="100%">
+            <Box
+                bg={sender === 'user' ? 'blue.700' : 'gray.900'} // Adjusted colors to match SummarizationDataDisplay
+                color="white"
+                borderRadius="md"
+                p="3"
+                pl="4"  // Added extra padding to the left
+                maxWidth={sender === 'user' ? "75%" : "100%"}  // User message: 75%, Bot message: 100%
+                wordBreak="break-word"
+            >
+                <ReactMarkdown
+                    components={{
+                        p: ({ node, ...props }) => <Text mb={2} {...props} />,
+                        strong: ({ node, ...props }) => <Text as="b" {...props} />,
+                        em: ({ node, ...props }) => <Text as="i" {...props} />,
+                        ul: ({ node, ...props }) => <Box as="ul" pl="4" mb={2} {...props} />,
+                        li: ({ node, ...props }) => <Text as="li" mb={1} {...props} />,
+                        ol: ({ node, ...props }) => <Box as="ol" pl="4" mb={2} {...props} />,  // For ordered lists (numbers)
+                    }}
+                >
+                    {text}
+                </ReactMarkdown>
+            </Box>
+        </HStack>
+    );
+};
