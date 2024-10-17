@@ -1,5 +1,3 @@
-// ./components/pages/ManageApplicants/ManageApplicants.jsx
-
 // React
 import React, { useEffect, useState, useRef } from 'react';
 
@@ -14,9 +12,9 @@ import {
 import {
   Box, Button, Center, IconButton, Input,
   Table, Thead, Tbody, Tr, Th, Td,
-  useDisclosure,
+  useDisclosure, Menu, MenuButton, MenuItem, MenuList
 } from '@chakra-ui/react';
-import { EditIcon, CloseIcon, CheckIcon } from '@chakra-ui/icons';
+import { EditIcon, CloseIcon, CheckIcon, ChevronDownIcon } from '@chakra-ui/icons';
 
 // Internal
 import { db, auth } from '../../../common/firebaseConfig';
@@ -126,15 +124,11 @@ const ManageApplicants = ({
     }
   };
 
-  const viewDocs = (applicant) => {
+  // Handle navigation to views when menu items are clicked
+  const handleNavigate = (view, applicant) => {
     setSelectedApplicant(applicant);
-    setCurrentView(Views.APPLICANT_DOCUMENTS);
-  }
-
-  const viewSummarization = (applicant) => {
-    setSelectedApplicant(applicant);
-    setCurrentView(Views.APPLICANT_SUMMARIZATION);
-  }
+    setCurrentView(view);
+  };
 
   return (
     <Box className="oai-manage-view" width="100%">
@@ -180,8 +174,28 @@ const ManageApplicants = ({
                         <IconButton icon={<EditIcon />} onClick={() => startEdit(applicant.id)} colorScheme="blue" />
                       </>
                     )}
-                    <Button ml="8px" onClick={() => viewDocs(applicant)}>Documents</Button>
-                    <Button ml="4px" onClick={() => viewSummarization(applicant)}>Summary</Button>
+
+                    {/* Dropdown Menu for all options */}
+                    <Menu>
+                      <MenuButton as={Button} rightIcon={<ChevronDownIcon />} ml="8px">
+                        AI ToolBox
+                      </MenuButton>
+                      <MenuList>
+                        <MenuItem onClick={() => handleNavigate(Views.APPLICANT_DOCUMENTS, applicant)}>
+                          Documents
+                        </MenuItem>
+                        <MenuItem onClick={() => handleNavigate(Views.APPLICANT_SUMMARIZATION, applicant)}>
+                          Summarization
+                        </MenuItem>
+                        <MenuItem onClick={() => handleNavigate(Views.QUESTIONAIRE, applicant)}>
+                          Questionnaire Editor
+                        </MenuItem>
+                        <MenuItem onClick={() => handleNavigate(Views.DOCASSIST, applicant)}>
+                          DocAssist
+                        </MenuItem>
+                      </MenuList>
+                    </Menu>
+
                     <IconButton ml="8px" icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />
                   </Td>
                 </Tr>

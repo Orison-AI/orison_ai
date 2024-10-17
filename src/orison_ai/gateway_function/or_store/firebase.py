@@ -33,9 +33,8 @@ from firebase_admin import firestore
 from firebase_admin import credentials
 from firebase_admin import firestore
 from bson import ObjectId
-from typing import Optional
 from mongoengine import Document, EmbeddedDocument
-from typing import List, Union, Any
+from typing import List, Union, Any, Optional
 from pymongo import DESCENDING, ASCENDING
 
 logging.basicConfig(level=logging.INFO)
@@ -57,28 +56,16 @@ class OrisonSecrets:
         _logger.debug(
             f"Processing file for attorney {attorney_id} and applicant {applicant_id}"
         )
+        openai_api_key, qdrant_url, qdrant_api_key = environment_or_secret(
+            ["OPENAI_API_KEY", "QDRANT_URL", "QDRANT_API_KEY"]
+        )
         return cls(
-            openai_api_key=environment_or_secret("OPENAI_API_KEY"),
-            qdrant_url=environment_or_secret("QDRANT_URL"),
-            qdrant_api_key=environment_or_secret("QDRANT_API_KEY"),
+            openai_api_key=openai_api_key,
+            qdrant_url=qdrant_url,
+            qdrant_api_key=qdrant_api_key,
             # TODO: Need to sanitize the path to avoid path traversal attacks
             collection_name=f"{attorney_id}_{applicant_id}_collection",
         )
-
-
-def environment_or_secret(key: str):
-    value = os.getenv(key.upper())
-    if value is None:
-        _logger.info(
-            f"Missing {key.upper()} in environment variable. Attempting secret manager"
-        )
-        try:
-            # Getting secrets
-            value = read_remote_secret_url_as_string(build_secret_url(key.lower()))
-            _logger.info(f"{key.lower()} found in secret manager.")
-        except Exception as e:
-            raise CREDENTIALS_NOT_FOUND(exception=e)
-    return value
 
 
 def build_secret_url(
@@ -87,9 +74,37 @@ def build_secret_url(
     return project_prefix + secret_name + "/versions/latest"
 
 
-def read_remote_secret_url_as_string(secret_url: str) -> str:
-    # Create the Secret Manager client.
-    client = SecretManagerServiceClient()
+def environment_or_secret(keys: Union[str, List[str]]):
+    client = None
+    if isinstance(keys, str):
+        keys = [keys]
+    values = []
+    for key in keys:
+        value = os.getenv(key.upper())
+        if value is None:
+            if client is None:
+                client = SecretManagerServiceClient()
+            _logger.info(
+                f"Missing {key.upper()} in environment variable. Attempting secret manager"
+            )
+            try:
+                # Getting secrets
+                value = read_remote_secret_url_as_string(
+                    client, build_secret_url(key.lower())
+                )
+                _logger.info(f"{key.lower()} found in secret manager.")
+                values.append(value)
+            except Exception as e:
+                _logger.error(
+                    f"Error getting {key.lower()} from secret manager. Error: {e}"
+                )
+                values.append(None)
+    return values if len(values) > 1 else values[0]
+
+
+def read_remote_secret_url_as_string(
+    client: SecretManagerServiceClient, secret_url: str
+) -> str:
     # Access the secret version.
     response = client.access_secret_version(request={"name": secret_url})
     # Get the payload as a JSON string.

@@ -12,6 +12,7 @@ const endpoints = {
   vectorizeFiles: "vectorize-files",
   summarize: "summarize",
   deleteFileVectors: "delete-file-vectors",
+  docassist: "docassist",
 }
 
 // Default timeout 5 minutes * 60 seconds/minute * 1000 milliseconds/second
@@ -114,6 +115,23 @@ export const summarize = async (attorneyId, applicantId) => {
 
   if (!response.data) {
     throw new Error('Failed to start summarization');
+  }
+
+  return response.data;
+};
+
+export const docassist = async (attorneyId, applicantId, bucket, message) => {
+  const response = await gateway(endpoints.docassist, {
+    attorneyId,
+    applicantId,
+    bucket,
+    message,
+  });
+
+  console.log(`INFO: docassist: response=${JSON.stringify(response)}`);
+
+  if (!response.data) {
+    throw new Error('Failed to start docassist');
   }
 
   return response.data;

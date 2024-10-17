@@ -30,9 +30,10 @@ const Navigation = React.forwardRef(({
 
   const viewDisplayNames = {
     [Views.MANAGE_APPLICANTS]: "Manage Applicants",
-    [Views.QUESTIONAIRE]: "Questionaire",
     [Views.APPLICANT_DOCUMENTS]: "Documents",
+    [Views.QUESTIONAIRE]: "Questionaire",
     [Views.APPLICANT_SUMMARIZATION]: "Summarization",
+    [Views.DOCASSIST]: "DocAssist",
   };
 
   // Map the actual view values to user-friendly names
@@ -41,7 +42,7 @@ const Navigation = React.forwardRef(({
   ));
 
   const renderCurrentViewNav = () => {
-    switch(currentView) {
+    switch (currentView) {
       case Views.MANAGE_APPLICANTS:
         return (
           <Text className="oai-nav-manage" alignSelf="flex-start" m="0" fontSize="32px">

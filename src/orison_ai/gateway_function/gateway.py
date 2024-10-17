@@ -49,6 +49,7 @@ class GatewayRequestType(Enum):
     VECTORIZE_FILES = "vectorize-files"
     DELETE_FILE_VECTORS = "delete-file-vectors"
     SUMMARIZE = "summarize"
+    DOCASSIST = "docassist"
 
 
 @dataclass

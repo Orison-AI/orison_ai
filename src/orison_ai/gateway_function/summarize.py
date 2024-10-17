@@ -125,7 +125,7 @@ class Summarize(RequestHandler):
             )
             self.logger.info(f"Screening stored in Firestore with ID: {id}")
         except Exception as e:
-            message = f"Error processing files. Error code: {type(e).__name__}. Error message: {e}"
+            message = f"Error generating summary. Error code: {type(e).__name__}. Error message: {e}"
             self.logger.error(message, exc_info=True)
             return ErrorResponse(message)
         return OKResponse("Success!")
