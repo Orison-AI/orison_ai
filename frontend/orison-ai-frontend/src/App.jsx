@@ -88,7 +88,7 @@ const App = () => {
       case Views.APPLICANT_SUMMARIZATION:
         return <ApplicantSummarization selectedApplicant={selectedApplicant} />;
       case Views.DOCASSIST:
-        return <DocAssist />;
+        return <DocAssist selectedApplicant={selectedApplicant} />;
       default:
         return <Text>Invalid View</Text>
     }

@@ -34,20 +34,20 @@ const SummaryCard = ({ item }) => {
   return (
     <Box className="oai-appsum-summary-card" bg="gray.900" p="20px" borderRadius="10px" width="100%">
       <HStack spacing={4} align="start">
-      <Button
-        onClick={toggleCollapse}
-        size="lg"
-        variant="link"
-        fontSize="2xl"
-        padding="0"
-        height="auto"
-        sx={{
-          textDecoration: 'none',
-          _hover: { textDecoration: 'none', color: 'blue.500' }, // Remove underline and change color on hover
-        }}
-      >
-        {isOpen ? '▼' : '▶'}
-      </Button>
+        <Button
+          onClick={toggleCollapse}
+          size="lg"
+          variant="link"
+          fontSize="2xl"
+          padding="0"
+          height="auto"
+          sx={{
+            textDecoration: 'none',
+            _hover: { textDecoration: 'none', color: 'blue.500' }, // Remove underline and change color on hover
+          }}
+        >
+          {isOpen ? '▼' : '▶'}
+        </Button>
         <Box>
           <Heading size="md" mb={4}>Question</Heading>
           <Text mb={4}>{question}</Text>
@@ -56,7 +56,7 @@ const SummaryCard = ({ item }) => {
               <Divider my={4} borderWidth="2px" />
               <Heading size="md" mb={4}>Answer</Heading>
               <Box mb={4}>
-              <ReactMarkdown
+                <ReactMarkdown
                   components={{
                     p: ({ node, ...props }) => <Text mb={4} {...props} />,
                     ul: ({ node, ...props }) => <Box as="ul" mb={4} pl={4} {...props} />,
@@ -64,7 +64,7 @@ const SummaryCard = ({ item }) => {
                     li: ({ node, ...props }) => <Box as="li" mb={2} {...props} />,
                   }}
                 >
-                {answer}
+                  {answer}
                 </ReactMarkdown>
               </Box>
               <Divider my={4} borderWidth="2px" />

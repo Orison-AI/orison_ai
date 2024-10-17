@@ -8,7 +8,7 @@ const DocAssist = ({ selectedApplicant }) => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
-    const [timeoutDuration, setTimeoutDuration] = useState(10000); // Timeout duration (in milliseconds)
+    const [timeoutDuration, setTimeoutDuration] = useState(30000); // Timeout duration (in milliseconds)
     const toast = useToast(); // Toast for showing error messages
     const [user] = useAuthState(auth);
 
@@ -17,6 +17,17 @@ const DocAssist = ({ selectedApplicant }) => {
             toast({
                 title: "Error",
                 description: "Please enter a message.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        if (!user || !selectedApplicant) {
+            toast({
+                title: "Error",
+                description: "User or selected applicant not found.",
                 status: "error",
                 duration: 3000,
                 isClosable: true,

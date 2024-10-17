@@ -121,7 +121,7 @@ export const summarize = async (attorneyId, applicantId) => {
 };
 
 export const docassist = async (attorneyId, applicantId, bucket, message) => {
-  const response = await gateway(endpoints.summarize, {
+  const response = await gateway(endpoints.docassist, {
     attorneyId,
     applicantId,
     bucket,
