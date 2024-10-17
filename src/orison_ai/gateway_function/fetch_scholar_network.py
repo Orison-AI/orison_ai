@@ -26,7 +26,7 @@ from request_handler import (
 # Internal
 
 from or_store.models import SimplifiedScholarSummary, GoogleScholarNetworkDB
-from or_store.google_scholar_client import (
+from or_store.db_interfaces import (
     GoogleScholarNetworkClient,
 )
 from or_retriever.google_scholar import gather_network, extract_user
