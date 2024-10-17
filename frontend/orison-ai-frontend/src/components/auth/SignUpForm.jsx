@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 
 // Firebase
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 // Chakra
 import {
@@ -13,7 +14,7 @@ import {
 } from "@chakra-ui/react";
 
 // Internal
-import { auth } from '../../common/firebaseConfig';
+import { auth, db } from '../../common/firebaseConfig';
 
 const SignUpForm = () => {
   const [email, setEmail] = useState('');
@@ -50,7 +51,25 @@ const SignUpForm = () => {
     validatePassword();
     if (error) return;
     try {
-      await createUserWithEmailAndPassword(auth, email, password)
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      const taskDocRef = doc(db, "templates", "eb1_a_questionnaire");  // Reference to the default JSON document
+      const taskDoc = await getDoc(taskDocRef);
+
+      if (taskDoc.exists()) {
+        const taskData = taskDoc.data();
+        const attorneyDocRef = doc(db, "templates", "attorneys", user.uid, "eb1_a_questionnaire");
+        await setDoc(attorneyDocRef, taskData);
+      } else {
+        console.error("Questionnaire document not found!");
+        toast({
+          title: "Error",
+          description: "Questionnaire document not found.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      }
       toast({
         title: "Account created.",
         description: "Your account has been successfully created.",

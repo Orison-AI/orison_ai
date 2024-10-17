@@ -1,24 +1,22 @@
-// ./components/settings/Settings.jsx
-
 // React
 import React from 'react';
 
 // Firebase
 import { signOut, deleteUser } from "firebase/auth";
+import { doc, deleteDoc } from "firebase/firestore";  // Add Firestore imports
 
 // Chakra
 import {
-  Button, Center, // Box, HStack,
-  Modal, ModalOverlay, ModalContent,
+  Button, Center, Modal, ModalOverlay, ModalContent,
   Text, useToast, VStack
 } from '@chakra-ui/react';
 
 // Internal
-import { auth } from '../../common/firebaseConfig';
-// import ColorModeToggle from "../settings/ColorModeToggle";
+import { auth, db } from '../../common/firebaseConfig';  // Ensure Firestore (db) is imported
 
 function Settings({ isOpen, onClose }) {
   const toast = useToast();
+  const user = auth.currentUser;  // Get the current user for account deletion
 
   const handleLogout = () => {
     signOut(auth).then(() => {
@@ -41,17 +39,30 @@ function Settings({ isOpen, onClose }) {
     });
   };
 
-  const handleDeleteAccount = () => {
-    deleteUser(auth.currentUser).then(() => {
-      toast({
-        title: "Account deleted",
-        description: "Your account has been successfully deleted.",
-        status: "success",
-        duration: 5000,
-        isClosable: true
-      });
-      onClose();
-    }).catch((error) => {
+  const handleDeleteAccount = async () => {
+    try {
+      if (user) {
+        // Step 1: Delete the attorney's document from Firestore
+        const attorneyDocRef = doc(db, "templates", "attorneys", user.uid, "eb1_a_questionnaire");
+        await deleteDoc(attorneyDocRef);
+        console.log("Attorney data deleted from Firestore.");
+
+        // Step 2: Delete the user account from Firebase Auth
+        await deleteUser(user);
+        console.log("User account deleted from Firebase Auth.");
+
+        toast({
+          title: "Account deleted",
+          description: "Your account has been successfully deleted.",
+          status: "success",
+          duration: 5000,
+          isClosable: true
+        });
+
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error deleting account or data:", error);
       toast({
         title: "Deletion failed",
         description: error.message,
@@ -59,7 +70,7 @@ function Settings({ isOpen, onClose }) {
         duration: 5000,
         isClosable: true
       });
-    });
+    }
   };
 
   return (
@@ -71,11 +82,6 @@ function Settings({ isOpen, onClose }) {
             <Text fontSize="20px" mb="20px">
               Settings
             </Text>
-            {/* Temporarily removing, since don't have time to support light mode
-            <Box mb="10px">
-              <ColorModeToggle />
-            </Box>
-            */}
             <Button colorScheme="blue" width="116px" mb="10px" onClick={handleLogout}>Logout</Button>
             <Button colorScheme="red" width="116px" mb="10px" onClick={handleDeleteAccount}>Delete Account</Button>
           </VStack>

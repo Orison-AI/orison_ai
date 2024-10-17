@@ -25,7 +25,7 @@ import Views from './common/views';
 
 const App = () => {
   const [user, setUser] = useState(null);
-  const { isSettingsOpen, onSettingsOpen, onSettingsClose } = useDisclosure();
+  const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onClose: onSettingsClose } = useDisclosure();
   const [currentView, setCurrentView] = useState(Views.MANAGE_APPLICANTS);
   const [applicants, setApplicants] = useState([]);
   const [selectedApplicant, setSelectedApplicant] = useState(null);
@@ -49,7 +49,7 @@ const App = () => {
     // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
-  
+
   useEffect(() => {
     const handleResize = () => {
       if (headerRef.current) {
@@ -59,10 +59,10 @@ const App = () => {
         setNavHeight(navRef.current.clientHeight);
       }
     };
-  
+
     handleResize(); // Call once on mount
     window.addEventListener('resize', handleResize); // Adjust on window resize
-  
+
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -71,7 +71,7 @@ const App = () => {
   }
 
   const renderCurrentView = () => {
-    switch(currentView) {
+    switch (currentView) {
       case Views.MANAGE_APPLICANTS:
         return <ManageApplicants
           applicants={applicants}
@@ -81,7 +81,7 @@ const App = () => {
           setCurrentView={setCurrentView}
         />;
       case Views.QUESTIONAIRE:
-        return <QuestionaireEditor/>;
+        return <QuestionaireEditor />;
       case Views.APPLICANT_DOCUMENTS:
         return <ApplicantDocuments selectedApplicant={selectedApplicant} />;
       case Views.APPLICANT_SUMMARIZATION:
