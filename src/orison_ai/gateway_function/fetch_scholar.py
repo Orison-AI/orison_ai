@@ -26,7 +26,7 @@ from request_handler import (
 # Internal
 
 from or_store.models import GoogleScholarRequest
-from or_store.google_scholar_client import (
+from or_store.db_interfaces import (
     GoogleScholarClient,
 )
 from or_retriever.google_scholar import (

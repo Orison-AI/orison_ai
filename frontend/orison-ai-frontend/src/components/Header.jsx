@@ -8,9 +8,9 @@ import {
   Box, Center, HStack, IconButton, useColorModeValue,
 } from '@chakra-ui/react';
 import { SettingsIcon } from '@chakra-ui/icons';
-import { AiFillHome } from 'react-icons/ai';
+import { AiFillHome, AiFillEdit } from 'react-icons/ai';
 
-const Header = React.forwardRef(({ goHome, onSettingsOpen }, ref) => {
+const Header = React.forwardRef(({ goHome, editQuestionaire, onSettingsOpen }, ref) => {
   const headerColor = useColorModeValue("rgba(23, 25, 35, 0.10)", "rgba(23, 25, 35, 0.90)");
 
   return (
@@ -19,6 +19,11 @@ const Header = React.forwardRef(({ goHome, onSettingsOpen }, ref) => {
         aria-label="Home" 
         icon={<AiFillHome />} 
         onClick={goHome}
+      />
+      <IconButton 
+        aria-label="EditQuestionaire" 
+        icon={<AiFillEdit />} 
+        onClick={editQuestionaire}
       />
       <Center width="100%">
         <Box fontSize="32px">orison.ai</Box>

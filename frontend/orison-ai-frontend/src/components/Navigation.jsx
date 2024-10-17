@@ -30,6 +30,7 @@ const Navigation = React.forwardRef(({
 
   const viewDisplayNames = {
     [Views.MANAGE_APPLICANTS]: "Manage Applicants",
+    [Views.QUESTIONAIRE]: "Questionaire",
     [Views.APPLICANT_DOCUMENTS]: "Documents",
     [Views.APPLICANT_SUMMARIZATION]: "Summarization",
   };
@@ -39,37 +40,50 @@ const Navigation = React.forwardRef(({
     <option key={viewValue} value={viewValue}>{viewDisplayNames[viewValue]}</option>
   ));
 
-  const navContent = currentView === Views.MANAGE_APPLICANTS ? (
-    <Text className="oai-nav-manage" alignSelf="flex-start" m="0" fontSize="32px">
-      {viewDisplayNames[Views.MANAGE_APPLICANTS]}
-    </Text>
-  ) : (
-    <HStack className="oai-nav-non-manage" width="100%" m="0">
-      <Select
-        size='lg'
-        width="200px"
-        value={selectedApplicant ? selectedApplicant.id : ""}
-        onChange={handleApplicantChange}
-      >
-        {applicants.map((app) => (
-          <option key={app.id} value={app.id}>{app.name}</option>
-        ))}
-      </Select>
-      <ChevronRightIcon w="32px" h="32px" />
-      <Select
-        size='lg'
-        width="200px"
-        value={currentView}
-        onChange={handleViewChange}
-      >
-        {viewOptions}
-      </Select>
-    </HStack>
-  );
+  const renderCurrentViewNav = () => {
+    switch(currentView) {
+      case Views.MANAGE_APPLICANTS:
+        return (
+          <Text className="oai-nav-manage" alignSelf="flex-start" m="0" fontSize="32px">
+            {viewDisplayNames[Views.MANAGE_APPLICANTS]}
+          </Text>
+        );
+      case Views.QUESTIONAIRE:
+        return (
+          <Text className="oai-nav-questionaire" alignSelf="flex-start" m="0" fontSize="32px">
+            {viewDisplayNames[Views.QUESTIONAIRE]}
+          </Text>
+        );
+      default:
+        return (
+          <HStack className="oai-nav-non-manage" width="100%" m="0">
+            <Select
+              size='lg'
+              width="200px"
+              value={selectedApplicant ? selectedApplicant.id : ""}
+              onChange={handleApplicantChange}
+            >
+              {applicants.map((app) => (
+                <option key={app.id} value={app.id}>{app.name}</option>
+              ))}
+            </Select>
+            <ChevronRightIcon w="32px" h="32px" />
+            <Select
+              size='lg'
+              width="200px"
+              value={currentView}
+              onChange={handleViewChange}
+            >
+              {viewOptions}
+            </Select>
+          </HStack>
+        );
+    }
+  };
 
   return (
     <Box className="oai-nav" ref={ref} width="100%" mb="24px" color="blue.100">
-      {navContent}
+      {renderCurrentViewNav()}
     </Box>
   );
 });

@@ -16,17 +16,16 @@
 
 # External
 
-import os
 import asyncio
-import json
 from typing import List
 
 # Internal
 
 from request_handler import RequestHandler, OKResponse, ErrorResponse
 from or_store.models import ScreeningBuilder
-from or_store.story_client import ScreeningClient
+from or_store.db_interfaces import ScreeningClient
 from or_store.firebase import OrisonSecrets
+from or_store.firebase import FireStoreDB
 from exceptions import OrisonMessenger_INITIALIZATION_FAILED
 from or_llm.orison_messenger import (
     OrisonMessenger,
@@ -46,29 +45,51 @@ class Summarize(RequestHandler):
         self._screening_client = ScreeningClient()
 
     @staticmethod
-    async def prompts(logger) -> List[Prompt]:
+    async def prompts(logger, attorney_id: str) -> List[Prompt]:
         """
-        Load prompts from a JSON file
+        Load prompts from Firestore using attorney ID.
         :param logger: Logger object
+        :param attorney_id: Attorney ID
         :return: List of prompts
         """
 
-        local_path: str = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            "templates",
-            "eb1_a_questionnaire.json",
-        )
         prompts = []
-        with open(file=local_path, mode="r") as file:
-            js = json.load(file)
-            for question, detail_level in zip(
-                js["question"],
-                js["detail_level"],
-            ):
-                prompts.append(
-                    Prompt(question=question, detail_level=detail_level, tag=js["tag"])
-                )
-            file.close()
+
+        try:
+            # Initialize Firestore client
+            client = FireStoreDB().client
+
+            # Reference the document in Firestore
+            doc_ref = (
+                client.collection("templates")
+                .document("attorneys")
+                .collection(attorney_id)
+                .document("eb1_a_questionnaire")
+            )
+            doc = doc_ref.get()
+
+            if doc.exists:
+                # Extract data from Firestore document
+                js = doc.to_dict()
+
+                # Loop through the task array in the document to extract question, detail_level, and tag
+                for task in js.get("task", []):
+                    question = task.get("question")
+                    detail_level = task.get("detail_level")
+                    tag = task.get("tag")
+
+                    # Create a Prompt object and append to the prompts list
+                    prompts.append(
+                        Prompt(question=question, detail_level=detail_level, tag=tag)
+                    )
+            else:
+                logger.error(f"No questionnaire found for attorney ID: {attorney_id}")
+
+        except Exception as e:
+            logger.error(
+                f"Error fetching questionnaire for attorney ID {attorney_id}: {e}"
+            )
+
         return prompts
 
     async def summarize(self, prompts: List[Prompt]):
@@ -89,8 +110,12 @@ class Summarize(RequestHandler):
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info("Initializing summarizer with secrets")
             self.initialize(secrets)
-            prompts = await self.prompts(logger=self.logger)
+            prompts = await self.prompts(logger=self.logger, attorney_id=attorney_id)
             self.logger.info("Initializing summarizer with secrets...done")
+            if not prompts:
+                message = f"No prompts found for attorney ID: {attorney_id}"
+                self.logger.error(message)
+                return ErrorResponse(message)
             screening = await self.summarize(prompts)
             screening.attorney_id = attorney_id
             screening.applicant_id = applicant_id
