@@ -12,6 +12,7 @@ const endpoints = {
   vectorizeFiles: "vectorize-files",
   summarize: "summarize",
   deleteFileVectors: "delete-file-vectors",
+  docassist: "docassist",
 }
 
 // Default timeout 5 minutes * 60 seconds/minute * 1000 milliseconds/second
@@ -118,3 +119,39 @@ export const summarize = async (attorneyId, applicantId) => {
 
   return response.data;
 };
+
+// New SSE connection function for DocAssist
+export const docassist = (attorneyId, applicantId, message, onChunkReceived, onComplete, onError, onStop) => {
+  const url = `${endpoints.docassist}?attorneyId=${encodeURIComponent(attorneyId)}&applicantId=${encodeURIComponent(applicantId)}&message=${encodeURIComponent(message)}`;
+
+  // Create a Server-Sent Events connection
+  const eventSource = new EventSource(url);
+
+  // Triggered when a new chunk of data is received
+  eventSource.onmessage = function (event) {
+    const dataChunk = event.data;
+    onChunkReceived(dataChunk); // Pass chunk to UI to display
+  };
+
+  // Triggered when the server completes the event stream
+  eventSource.addEventListener('complete', function () {
+    eventSource.close(); // Close the connection when complete
+    onComplete(); // Notify UI
+  });
+
+  // Handle errors from the SSE connection
+  eventSource.onerror = function (error) {
+    console.error('SSE error:', error);
+    onError(error); // Notify UI about error
+    eventSource.close(); // Close connection on error
+  };
+
+  // Function to stop the event stream manually
+  const stopStream = () => {
+    eventSource.close();
+    onStop(); // Trigger stop callback
+  };
+
+  return stopStream; // Return stop function
+};
+

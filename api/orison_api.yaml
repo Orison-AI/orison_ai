@@ -12,8 +12,8 @@ tags:
     description: Operations related to Google Scholar processing
   - name: file
     description: Operations related to file vectorization
-  - name: summarization
-    description: Operations related to summarization
+  - name: llm
+    description: Operations related to AI summary or chat messages
 paths:
   /process-scholar-link:
     post:
@@ -54,7 +54,7 @@ paths:
   /summarize:
     post:
       tags:
-        - summarization
+        - llm
       summary: Start summarization
       requestBody:
         required: true
@@ -69,29 +69,73 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ResponseWithRequestId'
+  /process-scholar-network:
+    post:
+      tags:
+        - scholar
+      summary: Process a Google Scholar network
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScholarNetworkRequest'
+      responses:
+        '202':
+          description: Processing started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseWithRequestId'
+  /delete-file-vectors:
+    post:
+      tags:
+        - file
+      summary: Delete file vectors
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteFileVectorsRequest'
+      responses:
+        '202':
+          description: File vectors deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseWithRequestId'
+  /docassist:
+    post:
+      tags:
+        - llm
+      summary: Chat bot to communicate questions related to documents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocAssistRequest'
+      responses:
+        '202':
+          description: Document generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseWithRequestId'
   /gateway:
     post:
       tags:
         - scholar
         - file
-        - summarization
+        - llm
       summary: Redirect request to the correct function
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                or_request_type:
-                  type: string
-                  enum: [process-scholar-link, vectorize-files, summarize]
-                  example: "process-scholar-link"
-                or_request_payload:
-                  oneOf:
-                    - $ref: '#/components/schemas/ScholarLinkRequest'
-                    - $ref: '#/components/schemas/VectorizeFilesRequest'
-                    - $ref: '#/components/schemas/SummarizationRequest'
+              $ref: '#/components/schemas/GatewayRequest'
       responses:
         '202':
           description: Request received
@@ -114,6 +158,7 @@ components:
       required:
         - attorneyId
         - applicantId
+        - scholarLink
     VectorizeFilesRequest:
       type: object
       properties:
@@ -121,12 +166,15 @@ components:
           $ref: '#/components/schemas/AttorneyId'
         applicantId:
           $ref: '#/components/schemas/ApplicantId'
-        fileIds:
-          type: string
-          example: "file-12345"
+        bucket:
+          $ref: '#/components/schemas/Bucket'
+        fileId:
+          $ref: '#/components/schemas/FileID'
       required:
         - attorneyId
         - applicantId
+        - bucket
+        - fileId
     SummarizationRequest:
       type: object
       properties:
@@ -137,12 +185,96 @@ components:
       required:
         - attorneyId
         - applicantId
+    DocAssistRequest:
+      type: object
+      properties:
+        attorneyId:
+          $ref: '#/components/schemas/AttorneyId'
+        applicantId:
+          $ref: '#/components/schemas/ApplicantId'
+      required:
+        - attorneyId
+        - applicantId
+    ScholarNetworkRequest:
+      type: object
+      properties:
+        attorneyId:
+          $ref: '#/components/schemas/AttorneyId'
+        applicantId:
+          $ref: '#/components/schemas/ApplicantId'
+        scholarLink:
+          type: string
+          example: "https://scholar.google.com/citations?user=..."
+      required:
+        - attorneyId
+        - applicantId
+        - scholarLink
+    DeleteFileVectorsRequest:
+      type: object
+      properties:
+        attorneyId:
+          $ref: '#/components/schemas/AttorneyId'
+        applicantId:
+          $ref: '#/components/schemas/ApplicantId'
+        bucket:
+          $ref: '#/components/schemas/Bucket'
+        fileId:
+          $ref: '#/components/schemas/FileID'
+      required:
+        - attorneyId
+        - applicantId
+        - bucket
+        - fileId
+    DocAssistRequest:
+      type: object
+      properties:
+        attorneyId:
+          $ref: '#/components/schemas/AttorneyId'
+        applicantId:
+          $ref: '#/components/schemas/ApplicantId'
+        chatMessages:
+          type: array
+          items:
+            type: string
+          example: ["I am a software engineer", "I have 5 years of experience"]
+      required:
+        - attorneyId
+        - applicantId
+        - chatMessages
+    GatewayRequest:
+      type: object
+      properties:
+        or_request_type:
+          type: string
+          enum:
+            - process-scholar-link
+            - vectorize-files
+            - summarize
+            - process-scholar-network
+            - delete-file-vectors
+        or_request_payload:
+          oneOf:
+            - $ref: '#/components/schemas/ScholarLinkRequest'
+            - $ref: '#/components/schemas/VectorizeFilesRequest'
+            - $ref: '#/components/schemas/SummarizationRequest'
+            - $ref: '#/components/schemas/ScholarNetworkRequest'
+            - $ref: '#/components/schemas/DeleteFileVectorsRequest'
+            - $ref: '#/components/schemas/DocAssistRequest'
+      required:
+        - or_request_type
+        - or_request_payload
     AttorneyId:
       type: string
       example: "attorney-12345"
     ApplicantId:
       type: string
       example: "applicant-12345"
+    Bucket:
+      type: string
+      example: "research"
+    FileID:
+      type: string
+      example: "file-12345"
     RequestId:
       type: string
       example: "request-12345"

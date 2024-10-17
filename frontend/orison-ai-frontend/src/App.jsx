@@ -8,13 +8,14 @@ import { onAuthStateChanged } from "firebase/auth";
 
 // Chakra
 import {
-  Box, Text, useDisclosure, VStack,
+  Box, Text, useDisclosure, Flex,
 } from '@chakra-ui/react';
 
 // Internal
 import { auth } from './common/firebaseConfig';
 import ApplicantDocuments from './components/pages/ApplicantDocuments/ApplicantDocuments';
 import ApplicantSummarization from './components/pages/ApplicantSummarization/ApplicantSummarization';
+import DocAssist from './components/pages/DocAssist/DocAssist';
 import Auth from './components/auth/Auth';
 import Header from './components/Header';
 import QuestionaireEditor from './components/pages/QuestionaireEditor/QuestionaireEditor';
@@ -86,20 +87,26 @@ const App = () => {
         return <ApplicantDocuments selectedApplicant={selectedApplicant} />;
       case Views.APPLICANT_SUMMARIZATION:
         return <ApplicantSummarization selectedApplicant={selectedApplicant} />;
+      case Views.DOCASSIST:
+        return <DocAssist />;
       default:
         return <Text>Invalid View</Text>
     }
   };
 
   return (
-    <VStack className="oai-app" height="100vh" width="100vw" pb="20px">
+    <Flex className="oai-app" direction="column" height="100vh" width="100vw">
+      {/* Header */}
       <Header
         ref={headerRef}
         goHome={() => setCurrentView(Views.MANAGE_APPLICANTS)}
         editQuestionaire={() => setCurrentView(Views.QUESTIONAIRE)}
         onSettingsOpen={onSettingsOpen}
       />
-      <VStack className="oai-nav-and-view" height="100%" width="100%" padding="0 40px">
+
+      {/* Main Content Area */}
+      <Flex className="oai-nav-and-view" direction="column" flex="1" width="100%" padding="0 40px" overflow="hidden">
+        {/* Navigation */}
         <Navigation
           ref={navRef}
           applicants={applicants}
@@ -108,20 +115,23 @@ const App = () => {
           currentView={currentView}
           setCurrentView={setCurrentView}
         />
+
+        {/* View (main content) */}
         <Box
           className="oai-view"
           ref={viewRef}
           width="100%"
           flex="1"
           overflowY="auto"
-          maxH={`calc(100vh - ${headerHeight}px - ${navHeight}px - 40px)`}
-          pb="20px"
+          maxHeight={`calc(100vh - ${headerHeight}px - ${navHeight}px)`}
         >
           {renderCurrentView()}
         </Box>
-      </VStack>
+      </Flex>
+
+      {/* Settings Modal */}
       <Settings isOpen={isSettingsOpen} onClose={onSettingsClose} />
-    </VStack>
+    </Flex>
   );
 }
 
