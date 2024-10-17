@@ -46,10 +46,11 @@ class DocAssist(RequestHandler):
             prompt_message = request_json["message"]
             tag = request_json["bucket"]
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
-            self.logger.info("Initializing docassist with secrets")
+            self.logger.info("Initializing docassist secrets")
             self.initialize(secrets)
+            self.logger.info("Generating docassist prompt")
             prompt = Prompt(
-                question=prompt_message, tag=tag, detail_level=DetailLevel.MODERATE
+                question=prompt_message, tag=tag, detail_level=DetailLevel.LIGHT
             )
             response = await self._orison_messenger.request(prompt)
             output_message = response.answer + f"\t(Source: {response.source})"
