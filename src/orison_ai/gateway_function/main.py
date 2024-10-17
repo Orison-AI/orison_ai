@@ -30,8 +30,8 @@ from firebase_admin import auth
 from or_store.firebase import get_firebase_admin_app
 from fetch_scholar import FetchScholar
 from fetch_scholar_network import FetchScholarNetwork
-
 from summarize import Summarize
+from docassist import DocAssist
 from vectorize_files import VectorizeFiles, DeleteFileVectors
 from gateway import GatewayRequestType, router
 
@@ -63,6 +63,7 @@ def init_routes():
             GatewayRequestType.VECTORIZE_FILES: VectorizeFiles(),
             GatewayRequestType.DELETE_FILE_VECTORS: DeleteFileVectors(),
             GatewayRequestType.SUMMARIZE: Summarize(),
+            GatewayRequestType.DOCASSIST: DocAssist(),
         }
         _logger.info("Initializing routes....DONE")
 
@@ -118,7 +119,7 @@ def gateway_function(request: Request):
         return (
             {
                 "data": (
-                    {"requestId": "request-12345"}
+                    {"message": result["message"]}
                     if code == 200
                     else {"Internal Server Error": result["message"]}
                 )

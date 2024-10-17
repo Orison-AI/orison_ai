@@ -6,7 +6,7 @@ import { httpsCallable } from "firebase/functions";
 
 // Map function names to their endpoints
 const endpoints = {
-  gateway: "gateway_function",
+  gateway: "gateway_function_staging",
   processScholarLink: "process-scholar-link",
   processScholarNetwork: "process-scholar-network",
   vectorizeFiles: "vectorize-files",
@@ -120,38 +120,19 @@ export const summarize = async (attorneyId, applicantId) => {
   return response.data;
 };
 
-// New SSE connection function for DocAssist
-export const docassist = (attorneyId, applicantId, message, onChunkReceived, onComplete, onError, onStop) => {
-  const url = `${endpoints.docassist}?attorneyId=${encodeURIComponent(attorneyId)}&applicantId=${encodeURIComponent(applicantId)}&message=${encodeURIComponent(message)}`;
-
-  // Create a Server-Sent Events connection
-  const eventSource = new EventSource(url);
-
-  // Triggered when a new chunk of data is received
-  eventSource.onmessage = function (event) {
-    const dataChunk = event.data;
-    onChunkReceived(dataChunk); // Pass chunk to UI to display
-  };
-
-  // Triggered when the server completes the event stream
-  eventSource.addEventListener('complete', function () {
-    eventSource.close(); // Close the connection when complete
-    onComplete(); // Notify UI
+export const docassist = async (attorneyId, applicantId, bucket, message) => {
+  const response = await gateway(endpoints.summarize, {
+    attorneyId,
+    applicantId,
+    bucket,
+    message,
   });
 
-  // Handle errors from the SSE connection
-  eventSource.onerror = function (error) {
-    console.error('SSE error:', error);
-    onError(error); // Notify UI about error
-    eventSource.close(); // Close connection on error
-  };
+  console.log(`INFO: docassist: response=${JSON.stringify(response)}`);
 
-  // Function to stop the event stream manually
-  const stopStream = () => {
-    eventSource.close();
-    onStop(); // Trigger stop callback
-  };
+  if (!response.data) {
+    throw new Error('Failed to start docassist');
+  }
 
-  return stopStream; // Return stop function
+  return response.data;
 };
-

@@ -1,3 +1,4 @@
+```mermaid
 graph TD
     subgraph OrisonAI API
         A[process-scholar-link]
@@ -16,7 +17,7 @@ graph TD
         K[scholarLink]
         L[fileId]
         M[bucket]
-        N[chatMessages]
+        N[message]
         O[or_request_type]
         P[or_request_payload]
     end

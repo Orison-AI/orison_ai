@@ -1,22 +1,56 @@
 import React, { useState } from 'react';
-import { Box, Button, Input, VStack, Text, HStack, Flex } from '@chakra-ui/react';
+import { Box, Button, Input, VStack, Text, HStack, Flex, Spinner, useToast } from '@chakra-ui/react';
+import { docassist } from '../../../api/api.jsx';  // Import your API function here
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../../../common/firebaseConfig';
 
-const DocAssist = () => {
+const DocAssist = ({ selectedApplicant }) => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
+    const [timeoutDuration, setTimeoutDuration] = useState(10000); // Timeout duration (in milliseconds)
+    const toast = useToast(); // Toast for showing error messages
+    const [user] = useAuthState(auth);
 
     const handleSendMessage = async () => {
-        if (inputMessage.trim() !== '') {
-            setMessages((prevMessages) => [...prevMessages, { text: inputMessage, sender: 'user' }]);
-            setInputMessage('');
-            setIsStreaming(true);
+        if (inputMessage.trim() === '') {
+            toast({
+                title: "Error",
+                description: "Please enter a message.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
 
-            // Mock streaming response for example purposes
-            setTimeout(() => {
-                setMessages((prevMessages) => [...prevMessages, { text: 'This is a response chunk from the bot.', sender: 'bot' }]);
-                setIsStreaming(false);
-            }, 1000);
+        setMessages((prevMessages) => [...prevMessages, { text: inputMessage, sender: 'user' }]);
+        setInputMessage('');
+        setIsStreaming(true);
+        try {
+            const response = await Promise.race([
+                docassist(user.uid, selectedApplicant.id, "research", inputMessage),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), timeoutDuration))
+            ]);
+
+            setMessages((prevMessages) => [...prevMessages, { text: response.message, sender: 'bot' }]);
+        } catch (error) {
+            console.error('Error:', error);
+            toast({
+                title: "Error",
+                description: error.message || "Failed to get response from AI.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        } finally {
+            setIsStreaming(false);
+        }
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter' && !isStreaming) {
+            handleSendMessage();
         }
     };
 
@@ -46,6 +80,12 @@ const DocAssist = () => {
                         </Text>
                     </HStack>
                 ))}
+                {isStreaming && (
+                    <HStack justify="flex-start">
+                        <Spinner size="sm" color="white" />
+                        <Text color="white">AI is processing your request...</Text>
+                    </HStack>
+                )}
             </VStack>
 
             {/* Input Area at Bottom */}
@@ -60,12 +100,14 @@ const DocAssist = () => {
                     <Input
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
-                        placeholder="Type your message..."
+                        onKeyPress={handleKeyPress}
+                        placeholder="Hello I'm your AI assistant. How can I help you today?"
                         bg="gray.700"
                         borderRadius="md"
                         color="white"
                         _placeholder={{ color: 'gray.400' }}
                         flex="1"
+                        isDisabled={isStreaming}
                     />
                     <Button colorScheme="blue" onClick={handleSendMessage} isDisabled={isStreaming}>
                         Send

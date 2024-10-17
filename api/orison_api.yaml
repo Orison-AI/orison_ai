@@ -232,15 +232,18 @@ components:
           $ref: '#/components/schemas/AttorneyId'
         applicantId:
           $ref: '#/components/schemas/ApplicantId'
-        chatMessages:
+        bucket:
+          $ref: '#/components/schemas/Bucket'
+        message:
           type: array
           items:
             type: string
-          example: ["I am a software engineer", "I have 5 years of experience"]
+          example: "Can you please answer..."
       required:
         - attorneyId
         - applicantId
-        - chatMessages
+        - bucket
+        - message
     GatewayRequest:
       type: object
       properties:
