@@ -16,7 +16,7 @@ import {
 import {
   Alert, AlertIcon, AlertDescription,
   Box, HStack, Select, Text,
-  useDisclosure, useToast, VStack,
+  useDisclosure, useToast, VStack, Button,
 } from '@chakra-ui/react';
 
 // Orison
@@ -55,7 +55,7 @@ const FileUploader = ({ selectedApplicant }) => {
     onOpen: onViewModalOpen,
     onClose: onViewModalClose,
   } = useDisclosure();
-  const [vectorizingFile, setVectorizingFile] = useState(null);
+  const [vectorizingFiles, setVectorizingFiles] = useState([]);  // Array to track multiple vectorizations
   const [vectorizeStatus, setVectorizeStatus] = useState('');
   const [vectorizedFiles, setVectorizedFiles] = useState([]);
   const [uploadInProgress, setUploadInProgress] = useState(false);
@@ -102,17 +102,14 @@ const FileUploader = ({ selectedApplicant }) => {
     }
   }, [user, selectedApplicant, selectedBucket, vectorizedFiles]);
 
-  // Fetch the list of vectorized files when the component mounts or the selected applicant changes
   useEffect(() => {
     fetchVectorizedFiles();
   }, [fetchVectorizedFiles]);
 
-  // Fetch the list of documents whenever selected bucket changes
   useEffect(() => {
     fetchDocuments();
   }, [fetchDocuments, selectedBucket]);
 
-  // Fetch list of vectorized files whenever a round of vectorization completes
   useEffect(() => {
     if (vectorizeStatus === 'success') {
       fetchVectorizedFiles();
@@ -126,10 +123,7 @@ const FileUploader = ({ selectedApplicant }) => {
       const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${file.name}`;
       const storageRef = ref(storage, filePath);
 
-      // Determine the correct contentType
       let contentType = file.type;
-
-      // Browser doesn't detect markdown files for some reason
       if (file.name.endsWith('.md')) {
         contentType = 'text/markdown';
       }
@@ -214,8 +208,6 @@ const FileUploader = ({ selectedApplicant }) => {
       fetchDocuments();
       onDeleteModalClose();
 
-      // Can move this up later, once the backend works.
-      // For now it will raise an error.
       await deleteFileVectors(user.uid, selectedApplicant.id, selectedBucket, fileToDelete);
       setFileToDelete(null);
       onDeleteInProgressModalClose();
@@ -234,8 +226,8 @@ const FileUploader = ({ selectedApplicant }) => {
 
   const vectorizeFile = useCallback(async (fileName) => {
     if (user && selectedApplicant) {
-      setVectorizingFile(fileName);  // Set the file being vectorized
-      setVectorizeStatus('loading'); // Set status to loading
+      setVectorizingFiles((prev) => [...prev, fileName]);
+      setVectorizeStatus('loading');
       try {
         await vectorizeFiles(user.uid, selectedApplicant.id, selectedBucket, fileName);
         toast({
@@ -245,7 +237,7 @@ const FileUploader = ({ selectedApplicant }) => {
           duration: 5000,
           isClosable: true,
         });
-        setVectorizeStatus('success'); // Set status to success
+        setVectorizeStatus('success');
       } catch (error) {
         toast({
           title: 'Vectorization Failed',
@@ -254,21 +246,48 @@ const FileUploader = ({ selectedApplicant }) => {
           duration: 5000,
           isClosable: true,
         });
-        setVectorizeStatus('error'); // Set status to error
+        setVectorizeStatus('error');
+      } finally {
+        setVectorizingFiles((prev) => prev.filter((file) => file !== fileName));
       }
     }
   }, [selectedApplicant, selectedBucket, toast, user]);
+
+  const vectorizeAllFiles = useCallback(async () => {
+    const nonVectorizedFiles = documents.filter(doc => !doc.vectorized).map(doc => doc.fileName);
+    for (const fileName of nonVectorizedFiles) {
+      await vectorizeFile(fileName);
+    }
+  }, [documents, vectorizeFile]);
+
+  const unvectorizeFile = (fileName) => {
+    toast({
+      title: 'Unvectorize Not Implemented',
+      description: `Unvectorizing ${fileName} is not yet implemented.`,
+      status: 'warning',
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
+  const unvectorizeAllFiles = () => {
+    toast({
+      title: 'Unvectorize Not Implemented',
+      description: 'Unvectorizing all files is not yet implemented.',
+      status: 'warning',
+      duration: 3000,
+      isClosable: true,
+    });
+  };
 
   const viewFile = useCallback(async (fileName) => {
     const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileName}`;
     const storageRef = ref(getStorage(), filePath);
 
     try {
-      // Get file metadata, which includes the content type
       const metadata = await getMetadata(storageRef);
       const contentType = metadata.contentType;
 
-      // Determine if the file is text or binary based on contentType
       const textMimeTypes = [
         'text/plain', 'text/html', 'text/css', 'application/javascript', 'text/javascript',
         'application/json', 'application/xml', 'text/xml', 'text/markdown', 'text/csv',
@@ -327,9 +346,12 @@ const FileUploader = ({ selectedApplicant }) => {
         <FileTable
           documents={documents}
           vectorizeFile={vectorizeFile}
+          unvectorizeFile={unvectorizeFile}
+          vectorizeAllFiles={vectorizeAllFiles}
+          unvectorizeAllFiles={unvectorizeAllFiles}
           deleteFile={deleteFile}
           viewFile={viewFile}
-          vectorizingFile={vectorizingFile}
+          vectorizingFiles={vectorizingFiles}
           vectorizeStatus={vectorizeStatus}
         />
       </VStack>
@@ -366,4 +388,3 @@ const FileUploader = ({ selectedApplicant }) => {
 };
 
 export default FileUploader;
-
