@@ -84,6 +84,8 @@ const FileTable = ({
                     ml="16px"
                     colorScheme="red"
                     onClick={() => unvectorizeFile(fileName)}
+                    isDisabled={!vectorized}  // Disable if not vectorized
+                    visibility={!vectorized ? 'hidden' : 'visible'}  // Optional: hide button completely if not vectorized
                   >
                     Unvectorize
                   </Button>
