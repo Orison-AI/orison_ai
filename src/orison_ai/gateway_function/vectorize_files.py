@@ -17,6 +17,7 @@
 # External
 import os
 import asyncio
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 ## File Loader and Embeddings Imports
 from langchain_community.document_loaders import (
@@ -25,9 +26,9 @@ from langchain_community.document_loaders import (
     TextLoader,
     UnstructuredMarkdownLoader,
     JSONLoader,
+    Docx2txtLoader,
 )
 from langchain_experimental.text_splitter import SemanticChunker
-from langchain_openai.embeddings import OpenAIEmbeddings
 
 # Internal
 from request_handler import RequestHandler, OKResponse, ErrorResponse
@@ -102,6 +103,12 @@ class VectorizeFiles(RequestHandler):
             case ".pdf":
                 # Use PyPDFLoader for PDF files
                 loader = PyPDFLoader(file_path)
+            case ".docx":
+                # Handle Word files (.docx)
+                loader = Docx2txtLoader(file_path)
+            case ".doc":
+                # Handle Word files (.doc)
+                loader = Docx2txtLoader(file_path)
             case _:
                 raise_and_log_error(
                     f"Unsupported file format: {file_extension}", logger, ValueError
@@ -117,13 +124,14 @@ class VectorizeFiles(RequestHandler):
         return documents
 
     @staticmethod
-    def _apply_semantic_splitter(documents, openai_api_key, logger):
+    async def _apply_semantic_splitter(documents, logger):
 
         MIN_TOKEN_SIZE = 144
+        MAX_BATCH_SIZE = 10
 
         # Initialize the text splitter
         text_splitter = SemanticChunker(
-            OpenAIEmbeddings(model="text-embedding-ada-002", api_key=openai_api_key),
+            VectorizeFiles.embedding_client,
             breakpoint_threshold_type="percentile",
             breakpoint_threshold_amount=75,
             buffer_size=10,
@@ -133,7 +141,30 @@ class VectorizeFiles(RequestHandler):
         # Returns a List[Document]
         # ToDo: Need async here. Make sure source is only file name
         logger.info("Splitting documents")
-        chunks = text_splitter.split_documents(documents)
+        futures = []
+        # Use ThreadPoolExecutor to process documents in batches
+        with ThreadPoolExecutor() as executor:
+            # Iterate over documents in batches
+            for batch_start in range(0, len(documents), MAX_BATCH_SIZE):
+                # Create a batch that handles the last smaller batch correctly
+                batch_end = min(batch_start + MAX_BATCH_SIZE, len(documents))
+                futures.append(
+                    executor.submit(
+                        text_splitter.split_documents,
+                        documents[
+                            batch_start:batch_end
+                        ],  # Slice up to the smaller batch if necessary
+                    )
+                )
+
+        # Collect the results as they complete
+        chunks = []
+        for future in as_completed(futures):
+            try:
+                result = future.result()
+                chunks.extend(result)
+            except Exception as e:
+                logger.error(f"Error processing batch: {e}")
         logger.info("Splitting documents....DONE")
         filtered_chunks = [
             chunk
@@ -222,14 +253,9 @@ class VectorizeFiles(RequestHandler):
             documents = VectorizeFiles._load_file(
                 local_file_path, logger=self.logger, filename=file_id
             )
-            # Getting secrets
-            qdrant_url = secrets.qdrant_url
-            qdrant_api_key = secrets.qdrant_api_key
-            openai_api_key = secrets.openai_api_key
-
             # Chunk the file
-            chunks = VectorizeFiles._apply_semantic_splitter(
-                documents, openai_api_key=openai_api_key, logger=self.logger
+            chunks = await VectorizeFiles._apply_semantic_splitter(
+                documents, logger=self.logger
             )
 
             self.logger.debug(
@@ -237,7 +263,9 @@ class VectorizeFiles(RequestHandler):
             )
             await VectorizeFiles._store_chunks(
                 chunks,
-                qdrant_client=QdrantClient(url=qdrant_url, api_key=qdrant_api_key),
+                qdrant_client=QdrantClient(
+                    url=secrets.qdrant_url, api_key=secrets.qdrant_api_key
+                ),
                 logger=self.logger,
                 tag=tag,
                 collection_name=secrets.collection_name,
@@ -320,9 +348,9 @@ class DeleteFileVectors(RequestHandler):
 
 if __name__ == "__main__":
     request_json = {
-        "attorneyId": "xlMsyQpatdNCTvgRfW4TcysSDgX2",
-        "applicantId": "tYdtBdc7lJHyVCxquubj",
-        "fileId": "MalhanCV.pdf",
+        "attorneyId": "ejcszwbIMYdK2uaS9Bp3D0BBt6j1",
+        "applicantId": "herHKvUMteW3JiG0kfM6",
+        "fileId": "Fanuc_KAREL_Programming-Guide.pdf",
         "bucket_name": "research",
     }
     vectorizer = VectorizeFiles()

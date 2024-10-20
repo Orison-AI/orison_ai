@@ -93,12 +93,12 @@ def environment_or_secret(keys: Union[str, List[str]]):
                     client, build_secret_url(key.lower())
                 )
                 _logger.info(f"{key.lower()} found in secret manager.")
-                values.append(value)
             except Exception as e:
                 _logger.error(
                     f"Error getting {key.lower()} from secret manager. Error: {e}"
                 )
-                values.append(None)
+                value = None
+        values.append(value)
     return values if len(values) > 1 else values[0]
 
 
@@ -183,8 +183,9 @@ class FireStoreDB:
             logging.error("Field does not exist in document. Cannot update field")
             return None
         if isinstance(current_value, list):
-            current_value.remove(value)
-            document.update({field: current_value})
+            if value in current_value:
+                current_value.remove(value)
+                document.update({field: current_value})
         else:
             document.update({field: None})
         logging.info(
