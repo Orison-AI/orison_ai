@@ -275,13 +275,13 @@ class OrisonMessenger:
                 models.FieldCondition(
                     key="tag",
                     match=models.MatchAny(
-                        values=[tag_name.lower() for tag_name in prompt.tag]
+                        any=[tag_name.lower() for tag_name in prompt.tag]
                     ),
                 ),
                 models.FieldCondition(
                     key="filename",
                     match=models.MatchAny(
-                        values=[filename.lower() for filename in prompt.filename]
+                        any=[filename.lower() for filename in prompt.filename]
                     ),
                 ),
             ],

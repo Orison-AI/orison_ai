@@ -52,8 +52,26 @@ class DocAssist(RequestHandler):
             )
             response = await self._orison_messenger.request(prompt)
             output_message = response.answer + f"\t(Source: {response.source})"
+            self.logger.info(f"Generated response from DocAssist: {output_message}")
         except Exception as e:
             message = f"Error generating response from DocAssist. Error code: {type(e).__name__}. Error message: {e}"
             self.logger.error(message, exc_info=True)
             return ErrorResponse(message)
         return OKResponse(output_message)
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    docassist = DocAssist()
+    asyncio.run(
+        docassist.handle_request(
+            {
+                "attorneyId": "xlMsyQpatdNCTvgRfW4TcysSDgX2",
+                "applicantId": "tYdtBdc7lJHyVCxquubj",
+                "message": "Give me a summary of Rishi's skills",
+                "tag": ["research"],
+                "filename": ["MalhanCV.pdf"],
+            }
+        )
+    )
