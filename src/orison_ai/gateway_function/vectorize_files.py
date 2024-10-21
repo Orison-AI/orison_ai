@@ -15,11 +15,12 @@
 # ==========================================================================
 
 # External
-import os
-import asyncio
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
-## File Loader and Embeddings Imports
+import os
+import uuid
+import logging
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from langchain_community.document_loaders import (
     PyPDFLoader,
     CSVLoader,
@@ -29,8 +30,11 @@ from langchain_community.document_loaders import (
     Docx2txtLoader,
 )
 from langchain_experimental.text_splitter import SemanticChunker
+import numpy as np
+from qdrant_client.http import models
 
 # Internal
+
 from request_handler import RequestHandler, OKResponse, ErrorResponse
 from or_store.firebase_storage import FirebaseStorage
 from or_store.firebase import FireStoreDB
@@ -38,24 +42,25 @@ from utils import raise_and_log_error, file_extension
 from or_store.firebase import OrisonSecrets
 from or_llm.orison_messenger import OrisonMessenger
 
-# Vectorization Imports
-import numpy as np
-from qdrant_client import QdrantClient
-from qdrant_client.http import models
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class VectorizeFiles(RequestHandler):
+    orison_messenger = None
     embedding_client = None
+    async_db_client = None
 
     def __init__(self):
         super().__init__(str(self.__class__.__qualname__))
 
     @staticmethod
-    def embedding(secrets):
-        if not VectorizeFiles.embedding_client:
-            VectorizeFiles.embedding_client = OrisonMessenger(
-                secrets=secrets
-            )._embeddings
+    def _orison_messenger(secrets):
+        VectorizeFiles.orison_messenger = OrisonMessenger(secrets=secrets)
+        VectorizeFiles.embedding_client = VectorizeFiles.orison_messenger._embeddings
+        VectorizeFiles.async_db_client = (
+            VectorizeFiles.orison_messenger.async_qdrant_client
+        )
 
     @staticmethod
     def _file_path_builder(
@@ -124,92 +129,97 @@ class VectorizeFiles(RequestHandler):
         return documents
 
     @staticmethod
-    async def _apply_semantic_splitter(documents, logger):
+    async def _store_chunks(chunks, async_db_client, logger, collection_name, payload):
+        async def process_chunk(chunk, payload):
+            embedding = await VectorizeFiles.embedding_client.aembed_query(
+                chunk.page_content
+            )
+            payload.update(
+                {
+                    "page_content": chunk.page_content,
+                    "metadata": chunk.metadata,
+                }
+            )
+            return embedding, payload
 
+        # Process each chunk in parallel
+        tasks = [process_chunk(chunk, payload) for chunk in chunks]
+        results = await asyncio.gather(*tasks)
+        embeddings, payloads = zip(*results)
+
+        # Upload vectors to the vector database
+        logger.info("Uploading vectors")
+        async_db_client.upload_collection(
+            collection_name=collection_name,
+            vectors=np.array(embeddings),
+            payload=payloads,
+            parallel=4,
+            ids=None,  # Let Qdrant generate IDs
+        )
+        logger.info("Uploading vectors....DONE")
+
+    @staticmethod
+    async def _vectorize(
+        documents,
+        tag,
+        collection_name,
+        filename,
+        logger,
+    ):
         MIN_TOKEN_SIZE = 144
-        MAX_BATCH_SIZE = 10
-
-        # Initialize the text splitter
+        async_db_client = VectorizeFiles.async_db_client
+        logger.info(
+            f"Chunking, indexing, and storing in collection {secrets.collection_name}.\nChunker type: {SemanticChunker.__name__}. Collection type: {VectorizeFiles.async_db_client.__class__.__name__}"
+        )
+        sample_embedding = VectorizeFiles.embedding_client.embed_query(
+            "Generate a sample embedding to get the length of the vector"
+        )
+        # Ensure the collection exists
+        collection_exists = await VectorizeFiles.async_db_client.collection_exists(
+            collection_name=secrets.collection_name
+        )
+        if not collection_exists:
+            await VectorizeFiles.async_db_client.create_collection(
+                collection_name=secrets.collection_name,
+                vectors_config=models.VectorParams(
+                    size=len(sample_embedding),  # Length of the embedding vectors
+                    distance=models.Distance.COSINE,  # Distance metric
+                ),
+            )
+        payload = {
+            "tag": tag.lower(),
+            "filename": filename,
+        }
+        logger.info("Splitting documents")
         text_splitter = SemanticChunker(
             VectorizeFiles.embedding_client,
             breakpoint_threshold_type="percentile",
             breakpoint_threshold_amount=75,
             buffer_size=10,
         )
-        # Apply the splitter to the document. It will internally call create_documents
-        # which will internally call split_text
-        # Returns a List[Document]
-        # ToDo: Need async here. Make sure source is only file name
-        logger.info("Splitting documents")
-        futures = []
-        # Use ThreadPoolExecutor to process documents in batches
-        with ThreadPoolExecutor() as executor:
-            # Iterate over documents in batches
-            for batch_start in range(0, len(documents), MAX_BATCH_SIZE):
-                # Create a batch that handles the last smaller batch correctly
-                batch_end = min(batch_start + MAX_BATCH_SIZE, len(documents))
-                futures.append(
-                    executor.submit(
-                        text_splitter.split_documents,
-                        documents[
-                            batch_start:batch_end
-                        ],  # Slice up to the smaller batch if necessary
-                    )
-                )
-
-        # Collect the results as they complete
-        chunks = []
-        for future in as_completed(futures):
-            try:
-                result = future.result()
-                chunks.extend(result)
-            except Exception as e:
-                logger.error(f"Error processing batch: {e}")
-        logger.info("Splitting documents....DONE")
+        chunks = text_splitter.split_documents(documents)
+        # Filter chunks based on token size
         filtered_chunks = [
             chunk
             for chunk in chunks
             if OrisonMessenger.number_tokens(chunk.page_content) >= MIN_TOKEN_SIZE
         ]
-        return filtered_chunks
-
-    @staticmethod
-    async def _store_chunks(
-        chunks, qdrant_client, logger, tag, collection_name, filename
-    ):
-        async def process_chunk(chunk, tag):
-            embedding = VectorizeFiles.embedding_client.embed_query(chunk.page_content)
-            payload = {
-                "page_content": chunk.page_content,
-                "metadata": chunk.metadata,
-                "tag": tag.lower(),
-                "filename": filename,
-            }
-            return embedding, payload
-
-        tasks = [process_chunk(chunk, tag) for chunk in chunks]
-        results = await asyncio.gather(*tasks)
-        embeddings, payloads = zip(*results)
-
-        # Ensure the collection exists
-        if not qdrant_client.collection_exists(collection_name=collection_name):
-            qdrant_client.create_collection(
-                collection_name=collection_name,
-                vectors_config=models.VectorParams(
-                    size=len(embeddings[0]),  # Length of the embedding vectors
-                    distance=models.Distance.COSINE,  # Distance metric
-                ),
-            )
-
-        # Upload vectors to Qdrant
-        logger.info("Uploading vectors to Qdrant")
-        qdrant_client.upload_collection(
-            collection_name=collection_name,
-            vectors=np.array(embeddings),
-            payload=payloads,
-            ids=None,  # Let Qdrant generate IDs
+        logger.info("Splitting documents....DONE")
+        logger.info(
+            f"Number of chunks: {len(chunks)}. Number of filtered chunks: {len(filtered_chunks)}"
         )
-        logger.info("Uploading vectors to Qdrant....DONE")
+        if len(filtered_chunks) > 0:
+            # Store the filtered chunks in the vector DB
+            logger.info(f"Storing filtered chunks in vector DB.")
+            await VectorizeFiles._store_chunks(
+                chunks=filtered_chunks,
+                async_db_client=async_db_client,
+                logger=logger,
+                collection_name=collection_name,
+                payload=payload,
+            )
+            logger.info(f"Storing chunks in vector DB....DONE")
+        return
 
     async def handle_request(self, request_json):
         """
@@ -231,11 +241,10 @@ class VectorizeFiles(RequestHandler):
             bucket_name = request_json["bucket"]
             tag = bucket_name  # Change to something else if needed
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
-            VectorizeFiles.embedding(secrets)
+            VectorizeFiles._orison_messenger(secrets)
             self.logger.info(
                 f"Processing file for attorney {attorney_id} and applicant {applicant_id}"
             )
-
             # ToDo: Currently supporting only one file.
             # We should make multiple calls from the frontend instead for scalability
             # Download the file
@@ -253,22 +262,11 @@ class VectorizeFiles(RequestHandler):
             documents = VectorizeFiles._load_file(
                 local_file_path, logger=self.logger, filename=file_id
             )
-            # Chunk the file
-            chunks = await VectorizeFiles._apply_semantic_splitter(
-                documents, logger=self.logger
-            )
-
-            self.logger.debug(
-                f"Storing chunks in Qdrant in collection {secrets.collection_name}"
-            )
-            await VectorizeFiles._store_chunks(
-                chunks,
-                qdrant_client=QdrantClient(
-                    url=secrets.qdrant_url, api_key=secrets.qdrant_api_key
-                ),
+            await VectorizeFiles._vectorize(
+                documents=documents,
+                collection_name=secrets.collection_name,
                 logger=self.logger,
                 tag=tag,
-                collection_name=secrets.collection_name,
                 filename=file_id,
             )
             await client.update_collection_document(
@@ -288,8 +286,11 @@ class DeleteFileVectors(RequestHandler):
         super().__init__(str(self.__class__.__qualname__))
 
     @staticmethod
-    async def _delete_vectors(qdrant_client, collection_name, file_name, tag, logger):
-        if not qdrant_client.collection_exists(collection_name=collection_name):
+    async def _delete_vectors(async_db_client, collection_name, file_name, tag, logger):
+        collection_exists = await async_db_client.collection_exists(
+            collection_name=collection_name
+        )
+        if not collection_exists:
             logger.error(
                 f"Error deleting vector-files. Collection {collection_name} does not exist"
             )
@@ -308,7 +309,10 @@ class DeleteFileVectors(RequestHandler):
                 ],
             )
         )
-        qdrant_client.delete(
+        logger.info(
+            f"Deleting vectors for file {file_name} in collection {collection_name}"
+        )
+        await async_db_client.delete(
             collection_name=collection_name, points_selector=points_selector
         )
 
@@ -324,10 +328,9 @@ class DeleteFileVectors(RequestHandler):
             self.logger.info(
                 f"Processing delete file vectors for attorney {attorney_id}, applicant {applicant_id}, and file: {file_id}"
             )
+            VectorizeFiles._orison_messenger(secrets)
             await DeleteFileVectors._delete_vectors(
-                qdrant_client=QdrantClient(
-                    url=secrets.qdrant_url, api_key=secrets.qdrant_api_key
-                ),
+                async_db_client=VectorizeFiles.async_db_client,
                 collection_name=secrets.collection_name,
                 file_name=file_id,
                 tag=tag,
@@ -347,11 +350,38 @@ class DeleteFileVectors(RequestHandler):
 
 
 if __name__ == "__main__":
-    request_json = {
-        "attorneyId": "ejcszwbIMYdK2uaS9Bp3D0BBt6j1",
-        "applicantId": "herHKvUMteW3JiG0kfM6",
-        "fileId": "Fanuc_KAREL_Programming-Guide.pdf",
-        "bucket_name": "research",
-    }
+    import time
+
+    start_time = time.time()
     vectorizer = VectorizeFiles()
-    asyncio.run(vectorizer.handle_request(request_json))
+    secrets = OrisonSecrets.from_attorney_applicant("test_attorney", "test_applicant")
+    VectorizeFiles._orison_messenger(secrets)
+    current_dir = os.path.dirname(__file__)
+    template_file_path = os.path.join(current_dir, "templates", "test_vectorize.txt")
+    documents = VectorizeFiles._load_file(
+        file_path=template_file_path, logger=logger, filename="test_vectorize.txt"
+    )
+
+    async def test_vectorization():
+        await VectorizeFiles._vectorize(
+            documents=documents,
+            collection_name=secrets.collection_name,
+            logger=logger,
+            tag="test",
+            filename="test_vectorize.txt",
+        )
+
+        await DeleteFileVectors._delete_vectors(
+            async_db_client=VectorizeFiles.async_db_client,
+            collection_name=secrets.collection_name,
+            file_name="test_vectorize.txt",
+            tag="test",
+            logger=logger,
+        )
+
+        await VectorizeFiles.async_db_client.delete_collection(
+            collection_name=secrets.collection_name
+        )
+
+    asyncio.run(test_vectorization())
+    logger.info(f"Time taken: {time.time() - start_time}")

@@ -20,8 +20,6 @@ import uuid
 import numpy as np
 import logging
 import tiktoken
-from pydantic import ConfigDict, ValidationError, dataclasses
-from typing import ClassVar
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -165,6 +163,9 @@ class OrisonMessenger:
                 max_retries=max_retries,
                 rate_limiter=self._rate_limiter,
             )
+            self._tokenizer = tiktoken.encoding_for_model(MODEL_NAME)
+            self._tokenizer_model_name = MODEL_NAME
+            self._embedding_model_name = EMBEDDING_MODEL
         except Exception as e:
             raise LLM_INITIALIZATION_FAILED(exception=e)
 
