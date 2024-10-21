@@ -127,21 +127,22 @@ class VectorizeFiles(RequestHandler):
         return documents
 
     @staticmethod
-    async def _store_chunks(chunks, async_db_client, logger, collection_name, payload):
-        async def process_chunk(chunk, payload):
+    async def _store_chunks(
+        chunks, async_db_client, logger, collection_name, index_data
+    ):
+        async def process_chunk(chunk, index_data):
             embedding = await VectorizeFiles.embedding_client.aembed_query(
                 chunk.page_content
             )
-            payload.update(
-                {
-                    "page_content": chunk.page_content,
-                    "metadata": chunk.metadata,
-                }
-            )
+            payload = index_data | {
+                "page_content": chunk.page_content,
+                "metadata": chunk.metadata,
+            }
+
             return embedding, payload
 
         # Process each chunk in parallel
-        tasks = [process_chunk(chunk, payload) for chunk in chunks]
+        tasks = [process_chunk(chunk, index_data) for chunk in chunks]
         results = await asyncio.gather(*tasks)
         embeddings, payloads = zip(*results)
 
@@ -184,7 +185,7 @@ class VectorizeFiles(RequestHandler):
                     distance=models.Distance.COSINE,  # Distance metric
                 ),
             )
-        payload = {
+        index_data = {
             "tag": tag.lower(),
             "filename": filename,
         }
@@ -214,7 +215,7 @@ class VectorizeFiles(RequestHandler):
                 async_db_client=async_db_client,
                 logger=logger,
                 collection_name=collection_name,
-                payload=payload,
+                index_data=index_data,
             )
             logger.info(f"Storing chunks in vector DB....DONE")
         return
@@ -236,8 +237,7 @@ class VectorizeFiles(RequestHandler):
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
             file_id = request_json["fileId"]
-            bucket_name = request_json["bucket"]
-            tag = bucket_name  # Change to something else if needed
+            tag = request_json["tag"]
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             VectorizeFiles._orison_messenger(secrets)
             self.logger.info(
@@ -247,7 +247,7 @@ class VectorizeFiles(RequestHandler):
             # We should make multiple calls from the frontend instead for scalability
             # Download the file
             bucket_file_path = VectorizeFiles._file_path_builder(
-                attorney_id, applicant_id, bucket_name, file_id
+                attorney_id, applicant_id, tag, file_id
             )
             local_file_path = f"/tmp/to_be_processed.pdf"
             self.logger.info(f"Remote File path: {bucket_file_path}")
@@ -320,8 +320,7 @@ class DeleteFileVectors(RequestHandler):
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
             file_id = request_json["fileId"]
-            bucket_name = request_json["bucket"]
-            tag = bucket_name  # Change to something else if needed
+            tag = request_json["tag"]
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info(
                 f"Processing delete file vectors for attorney {attorney_id}, applicant {applicant_id}, and file: {file_id}"

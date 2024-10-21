@@ -14,16 +14,10 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-# External
-
-import asyncio
-from typing import List
-
 # Internal
 
 from request_handler import RequestHandler, OKResponse, ErrorResponse
 from or_store.firebase import OrisonSecrets
-from or_store.firebase import FireStoreDB
 from exceptions import OrisonMessenger_INITIALIZATION_FAILED
 from or_llm.orison_messenger import OrisonMessenger, Prompt, DetailLevel
 
@@ -44,18 +38,40 @@ class DocAssist(RequestHandler):
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
             prompt_message = request_json["message"]
-            tag = request_json["bucket"]
+            tag = request_json["tag"]  # List of tags
+            filename = request_json["filename"]  # List of filenames
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info("Initializing docassist secrets")
             self.initialize(secrets)
             self.logger.info("Generating docassist prompt")
             prompt = Prompt(
-                question=prompt_message, tag=tag, detail_level=DetailLevel.LIGHT
+                question=prompt_message,
+                tag=tag,
+                filename=filename,
+                detail_level=DetailLevel.LIGHT,
             )
             response = await self._orison_messenger.request(prompt)
             output_message = response.answer + f"\t(Source: {response.source})"
+            self.logger.info(f"Generated response from DocAssist: {output_message}")
         except Exception as e:
             message = f"Error generating response from DocAssist. Error code: {type(e).__name__}. Error message: {e}"
             self.logger.error(message, exc_info=True)
             return ErrorResponse(message)
         return OKResponse(output_message)
+
+
+if __name__ == "__main__":
+    import asyncio
+
+    docassist = DocAssist()
+    asyncio.run(
+        docassist.handle_request(
+            {
+                "attorneyId": "xlMsyQpatdNCTvgRfW4TcysSDgX2",
+                "applicantId": "tYdtBdc7lJHyVCxquubj",
+                "message": "Give me a summary of Rishi's skills",
+                "tag": [],
+                "filename": ["MalhanCV.pdf"],
+            }
+        )
+    )

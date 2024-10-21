@@ -20,6 +20,7 @@ import uuid
 import numpy as np
 import logging
 import tiktoken
+from typing import Union
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -57,7 +58,8 @@ RETRIEVAL_DOC_LIMIT = 10
 class Prompt:
     question: list
     detail_level: str
-    tag: str  # Qdrant tag
+    tag: Union[list, str]  # vector DB tag
+    filename: Union[list, str]  # vector DB filename
     id: str = uuid.uuid4().hex
 
 
@@ -268,14 +270,35 @@ class OrisonMessenger:
 
         query = prompt.question
         detail_level = prompt.detail_level
-        filter = models.Filter(
-            must=[
+        filter_conditions = []
+        # Check if tag list exists and is not empty
+        if prompt.tag:
+            filter_conditions.append(
                 models.FieldCondition(
                     key="tag",
-                    match=models.MatchValue(value=prompt.tag.lower()),
+                    match=models.MatchAny(
+                        any=[tag_name.lower() for tag_name in prompt.tag]
+                    ),
                 )
-            ],
-        )
+            )
+        # If tag list is empty, add the filename condition
+        if prompt.filename:
+            filter_conditions.append(
+                models.FieldCondition(
+                    key="filename",
+                    match=models.MatchAny(
+                        any=[filename for filename in prompt.filename]
+                    ),
+                )
+            )
+
+        # Construct the final filter
+        if filter_conditions:
+            filter = models.Filter(
+                should=filter_conditions  # `should` means it will match any of the conditions
+            )
+        else:
+            filter = None
         try:
             retriever = MultiQueryRetriever.from_llm(
                 retriever=self.vectordb.as_retriever(

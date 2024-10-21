@@ -166,14 +166,14 @@ components:
           $ref: '#/components/schemas/AttorneyId'
         applicantId:
           $ref: '#/components/schemas/ApplicantId'
-        bucket:
+        tag:
           $ref: '#/components/schemas/Bucket'
         fileId:
           $ref: '#/components/schemas/FileID'
       required:
         - attorneyId
         - applicantId
-        - bucket
+        - tag
         - fileId
     SummarizationRequest:
       type: object
@@ -216,14 +216,14 @@ components:
           $ref: '#/components/schemas/AttorneyId'
         applicantId:
           $ref: '#/components/schemas/ApplicantId'
-        bucket:
+        tag:
           $ref: '#/components/schemas/Bucket'
         fileId:
           $ref: '#/components/schemas/FileID'
       required:
         - attorneyId
         - applicantId
-        - bucket
+        - tag
         - fileId
     DocAssistRequest:
       type: object
@@ -232,7 +232,7 @@ components:
           $ref: '#/components/schemas/AttorneyId'
         applicantId:
           $ref: '#/components/schemas/ApplicantId'
-        bucket:
+        tag:
           $ref: '#/components/schemas/Bucket'
         message:
           type: array
@@ -242,7 +242,7 @@ components:
       required:
         - attorneyId
         - applicantId
-        - bucket
+        - tag
         - message
     GatewayRequest:
       type: object

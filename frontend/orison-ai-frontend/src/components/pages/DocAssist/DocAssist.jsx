@@ -1,17 +1,136 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Box, Button, Input, VStack, Text, HStack, Flex, Spinner, useToast } from '@chakra-ui/react';
-import { docassist } from '../../../api/api';  // Import your API function here
+import { docassist } from '../../../api/api';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../../common/firebaseConfig';
-import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown for markdown support
+import { auth, db } from '../../../common/firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
+import ReactMarkdown from 'react-markdown';
+import Select, { components } from 'react-select'; // Import react-select and components
+
+const tags = [
+    { label: "Research", value: "research" },
+    { label: "Reviews", value: "reviews" },
+    { label: "Awards", value: "awards" },
+    { label: "Feedback", value: "feedback" },
+];
+
+const customStyles = {
+    control: (provided, state) => ({
+        ...provided,
+        backgroundColor: '#2d3748', // Dark background
+        borderColor: state.isFocused ? '#63b3ed' : '#4a5568', // Focused state has a border color change
+        color: 'white',
+        cursor: 'pointer', // Make the entire control clickable
+    }),
+    menu: (provided) => ({
+        ...provided,
+        backgroundColor: '#2d3748', // Dark menu background
+    }),
+    option: (provided, state) => ({
+        ...provided,
+        backgroundColor: state.isFocused ? '#4a5568' : '#2d3748',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    }),
+    multiValue: (provided) => ({
+        ...provided,
+        display: 'none', // Hide the selected values from appearing in the control
+    }),
+    placeholder: (provided) => ({
+        ...provided,
+        color: '#a0aec0',
+    }),
+    dropdownIndicator: (provided) => ({
+        ...provided,
+        color: 'white',
+    }),
+    indicatorSeparator: () => ({
+        display: 'none',
+    }),
+};
+
+// Custom Option component to show tick marks
+const CustomOption = (props) => {
+    return (
+        <components.Option {...props}>
+            {props.label}
+            {props.isSelected ? (
+                <span style={{ marginLeft: 'auto', color: 'green' }}>✔</span> // Tick mark for selected items
+            ) : null}
+        </components.Option>
+    );
+};
+
+// Custom ValueContainer to display custom text
+const CustomValueContainer = ({ children, ...props }) => {
+    const { getValue, hasValue } = props;
+    const selected = getValue();
+    let displayText = props.selectProps.placeholder;
+    if (hasValue && selected.length > 0) {
+        displayText = "View Selection";
+    }
+
+    return (
+        <components.ValueContainer {...props}>
+            <Text color="white">{displayText}</Text>
+        </components.ValueContainer>
+    );
+};
 
 const DocAssist = ({ selectedApplicant }) => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
-    const [timeoutDuration, setTimeoutDuration] = useState(60000); // Timeout duration (in milliseconds)
-    const toast = useToast(); // Toast for showing error messages
+    const [selectedTags, setSelectedTags] = useState([]);
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [vectorizedFiles, setVectorizedFiles] = useState([]);
+    const toast = useToast();
     const [user] = useAuthState(auth);
+
+    // Refs to track dropdown components
+    const tagDropdownRef = useRef(null);
+    const fileDropdownRef = useRef(null);
+
+    // Disable file dropdown if tag is selected, and vice versa
+    const isBucketDisabled = selectedFiles.length > 0;
+    const isFileDisabled = selectedTags.length > 0;
+
+    // Fetch vectorized files from Firestore
+    const fetchVectorizedFiles = useCallback(async () => {
+        if (user && selectedApplicant) {
+            const docRef = doc(db, "applicants", selectedApplicant.id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                setVectorizedFiles(docSnap.data().vectorized_files || []);
+            } else {
+                console.error("No document found for the selected applicant.");
+            }
+        }
+    }, [user, selectedApplicant]);
+
+    useEffect(() => {
+        fetchVectorizedFiles();
+    }, [fetchVectorizedFiles]);
+
+    // Function to close dropdown without clearing selection
+    const handleClickOutside = useCallback((e) => {
+        if (
+            tagDropdownRef.current && !tagDropdownRef.current.contains(e.target) &&
+            fileDropdownRef.current && !fileDropdownRef.current.contains(e.target)
+        ) {
+            // Close the dropdown but keep the selections intact
+            document.activeElement.blur(); // This blurs the focus and closes the dropdown
+        }
+    }, []);
+
+    useEffect(() => {
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [handleClickOutside]);
 
     const handleSendMessage = async () => {
         if (inputMessage.trim() === '') {
@@ -36,13 +155,17 @@ const DocAssist = ({ selectedApplicant }) => {
             return;
         }
 
+        const tag = selectedTags.map(b => b.value);
+        const filename = selectedFiles.map(f => f.value);
+
         setMessages((prevMessages) => [...prevMessages, { text: inputMessage, sender: 'user' }]);
         setInputMessage('');
         setIsStreaming(true);
+
         try {
             const response = await Promise.race([
-                docassist(user.uid, selectedApplicant.id, "research", inputMessage),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), timeoutDuration))
+                docassist(user.uid, selectedApplicant.id, inputMessage, tag, filename),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), 60000))
             ]);
 
             setMessages((prevMessages) => [...prevMessages, { text: response.message, sender: 'bot' }]);
@@ -64,6 +187,11 @@ const DocAssist = ({ selectedApplicant }) => {
         if (e.key === 'Enter' && !isStreaming) {
             handleSendMessage();
         }
+    };
+
+    const clearSelections = () => {
+        setSelectedTags([]);
+        setSelectedFiles([]);
     };
 
     return (
@@ -98,6 +226,7 @@ const DocAssist = ({ selectedApplicant }) => {
                 width="100%"
             >
                 <HStack width="100%">
+                    {/* Input Message Box */}
                     <Input
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
@@ -110,6 +239,53 @@ const DocAssist = ({ selectedApplicant }) => {
                         flex="1"
                         isDisabled={isStreaming}
                     />
+
+                    {/* Multi-Select Bucket Dropdown */}
+                    <Box width="200px" ref={tagDropdownRef}>
+                        <Select
+                            isMulti
+                            options={tags}
+                            value={selectedTags}
+                            onChange={setSelectedTags}
+                            styles={customStyles}
+                            components={{
+                                Option: CustomOption,
+                                ValueContainer: CustomValueContainer,
+                            }}
+                            placeholder="Select Tags"
+                            hideSelectedOptions={false}
+                            closeMenuOnSelect={false}
+                            menuPlacement="top"
+                            isDisabled={isBucketDisabled || isStreaming}
+                        />
+                    </Box>
+
+                    {/* Multi-Select File Dropdown */}
+                    <Box width="200px" ref={fileDropdownRef}>
+                        <Select
+                            isMulti
+                            options={vectorizedFiles.map(file => ({ label: file, value: file }))}
+                            value={selectedFiles}
+                            onChange={setSelectedFiles}
+                            styles={customStyles}
+                            components={{
+                                Option: CustomOption,
+                                ValueContainer: CustomValueContainer,
+                            }}
+                            placeholder="Select Files"
+                            hideSelectedOptions={false}
+                            closeMenuOnSelect={false}
+                            menuPlacement="top"
+                            isDisabled={isFileDisabled || isStreaming}
+                        />
+                    </Box>
+
+                    {/* Clear Selections Button */}
+                    <Button onClick={clearSelections} isDisabled={isStreaming}>
+                        Clear Selections
+                    </Button>
+
+                    {/* Send Button */}
                     <Button colorScheme="blue" onClick={handleSendMessage} isDisabled={isStreaming}>
                         Send
                     </Button>
@@ -121,19 +297,19 @@ const DocAssist = ({ selectedApplicant }) => {
 
 export default DocAssist;
 
-// Individual message card component
+// MessageCard component
 const MessageCard = ({ message }) => {
     const { text, sender } = message;
 
     return (
         <HStack justify={sender === 'user' ? 'flex-end' : 'flex-start'} width="100%">
             <Box
-                bg={sender === 'user' ? 'blue.700' : 'gray.900'} // Adjusted colors to match SummarizationDataDisplay
+                bg={sender === 'user' ? 'blue.700' : 'gray.900'}
                 color="white"
                 borderRadius="md"
                 p="3"
-                pl="4"  // Added extra padding to the left
-                maxWidth={sender === 'user' ? "75%" : "100%"}  // User message: 75%, Bot message: 100%
+                pl="4"
+                maxWidth={sender === 'user' ? "75%" : "100%"}
                 wordBreak="break-word"
             >
                 <ReactMarkdown
@@ -143,7 +319,7 @@ const MessageCard = ({ message }) => {
                         em: ({ node, ...props }) => <Text as="i" {...props} />,
                         ul: ({ node, ...props }) => <Box as="ul" pl="4" mb={2} {...props} />,
                         li: ({ node, ...props }) => <Text as="li" mb={1} {...props} />,
-                        ol: ({ node, ...props }) => <Box as="ol" pl="4" mb={2} {...props} />,  // For ordered lists (numbers)
+                        ol: ({ node, ...props }) => <Box as="ol" pl="4" mb={2} {...props} />,
                     }}
                 >
                     {text}
