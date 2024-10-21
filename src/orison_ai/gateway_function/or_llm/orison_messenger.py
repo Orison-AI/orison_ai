@@ -299,7 +299,6 @@ class OrisonMessenger:
             )
         else:
             filter = None
-        print(filter)
         try:
             retriever = MultiQueryRetriever.from_llm(
                 retriever=self.vectordb.as_retriever(
