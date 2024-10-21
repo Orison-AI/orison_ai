@@ -7,7 +7,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import ReactMarkdown from 'react-markdown';
 import Select, { components } from 'react-select'; // Import react-select and components
 
-const buckets = [
+const tags = [
     { label: "Research", value: "research" },
     { label: "Reviews", value: "reviews" },
     { label: "Awards", value: "awards" },
@@ -83,19 +83,19 @@ const DocAssist = ({ selectedApplicant }) => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
-    const [selectedBuckets, setSelectedBuckets] = useState([]);
+    const [selectedTags, setSelectedTags] = useState([]);
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [vectorizedFiles, setVectorizedFiles] = useState([]);
     const toast = useToast();
     const [user] = useAuthState(auth);
 
     // Refs to track dropdown components
-    const bucketDropdownRef = useRef(null);
+    const tagDropdownRef = useRef(null);
     const fileDropdownRef = useRef(null);
 
-    // Disable file dropdown if bucket is selected, and vice versa
+    // Disable file dropdown if tag is selected, and vice versa
     const isBucketDisabled = selectedFiles.length > 0;
-    const isFileDisabled = selectedBuckets.length > 0;
+    const isFileDisabled = selectedTags.length > 0;
 
     // Fetch vectorized files from Firestore
     const fetchVectorizedFiles = useCallback(async () => {
@@ -117,7 +117,7 @@ const DocAssist = ({ selectedApplicant }) => {
     // Function to close dropdown without clearing selection
     const handleClickOutside = useCallback((e) => {
         if (
-            bucketDropdownRef.current && !bucketDropdownRef.current.contains(e.target) &&
+            tagDropdownRef.current && !tagDropdownRef.current.contains(e.target) &&
             fileDropdownRef.current && !fileDropdownRef.current.contains(e.target)
         ) {
             // Close the dropdown but keep the selections intact
@@ -155,7 +155,7 @@ const DocAssist = ({ selectedApplicant }) => {
             return;
         }
 
-        const bucket = selectedBuckets.map(b => b.value);
+        const tag = selectedTags.map(b => b.value);
         const filename = selectedFiles.map(f => f.value);
 
         setMessages((prevMessages) => [...prevMessages, { text: inputMessage, sender: 'user' }]);
@@ -164,7 +164,7 @@ const DocAssist = ({ selectedApplicant }) => {
 
         try {
             const response = await Promise.race([
-                docassist(user.uid, selectedApplicant.id, inputMessage, bucket, filename),
+                docassist(user.uid, selectedApplicant.id, inputMessage, tag, filename),
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), 60000))
             ]);
 
@@ -190,7 +190,7 @@ const DocAssist = ({ selectedApplicant }) => {
     };
 
     const clearSelections = () => {
-        setSelectedBuckets([]);
+        setSelectedTags([]);
         setSelectedFiles([]);
     };
 
@@ -241,18 +241,18 @@ const DocAssist = ({ selectedApplicant }) => {
                     />
 
                     {/* Multi-Select Bucket Dropdown */}
-                    <Box width="200px" ref={bucketDropdownRef}>
+                    <Box width="200px" ref={tagDropdownRef}>
                         <Select
                             isMulti
-                            options={buckets}
-                            value={selectedBuckets}
-                            onChange={setSelectedBuckets}
+                            options={tags}
+                            value={selectedTags}
+                            onChange={setSelectedTags}
                             styles={customStyles}
                             components={{
                                 Option: CustomOption,
                                 ValueContainer: CustomValueContainer,
                             }}
-                            placeholder="Select Buckets"
+                            placeholder="Select Tags"
                             hideSelectedOptions={false}
                             closeMenuOnSelect={false}
                             menuPlacement="top"

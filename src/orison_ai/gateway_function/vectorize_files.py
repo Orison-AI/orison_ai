@@ -127,21 +127,22 @@ class VectorizeFiles(RequestHandler):
         return documents
 
     @staticmethod
-    async def _store_chunks(chunks, async_db_client, logger, collection_name, payload):
-        async def process_chunk(chunk, payload):
+    async def _store_chunks(
+        chunks, async_db_client, logger, collection_name, index_data
+    ):
+        async def process_chunk(chunk, index_data):
             embedding = await VectorizeFiles.embedding_client.aembed_query(
                 chunk.page_content
             )
-            payload.update(
-                {
-                    "page_content": chunk.page_content,
-                    "metadata": chunk.metadata,
-                }
-            )
+            payload = index_data | {
+                "page_content": chunk.page_content,
+                "metadata": chunk.metadata,
+            }
+
             return embedding, payload
 
         # Process each chunk in parallel
-        tasks = [process_chunk(chunk, payload) for chunk in chunks]
+        tasks = [process_chunk(chunk, index_data) for chunk in chunks]
         results = await asyncio.gather(*tasks)
         embeddings, payloads = zip(*results)
 
@@ -184,7 +185,7 @@ class VectorizeFiles(RequestHandler):
                     distance=models.Distance.COSINE,  # Distance metric
                 ),
             )
-        payload = {
+        index_data = {
             "tag": tag.lower(),
             "filename": filename,
         }
@@ -214,7 +215,7 @@ class VectorizeFiles(RequestHandler):
                 async_db_client=async_db_client,
                 logger=logger,
                 collection_name=collection_name,
-                payload=payload,
+                index_data=index_data,
             )
             logger.info(f"Storing chunks in vector DB....DONE")
         return

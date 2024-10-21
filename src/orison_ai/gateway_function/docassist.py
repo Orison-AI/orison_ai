@@ -45,7 +45,10 @@ class DocAssist(RequestHandler):
             self.initialize(secrets)
             self.logger.info("Generating docassist prompt")
             prompt = Prompt(
-                question=prompt_message, tag=tag, detail_level=DetailLevel.LIGHT
+                question=prompt_message,
+                tag=tag,
+                filename=filename,
+                detail_level=DetailLevel.LIGHT,
             )
             response = await self._orison_messenger.request(prompt)
             output_message = response.answer + f"\t(Source: {response.source})"

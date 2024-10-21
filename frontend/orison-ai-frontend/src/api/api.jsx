@@ -120,12 +120,13 @@ export const summarize = async (attorneyId, applicantId) => {
   return response.data;
 };
 
-export const docassist = async (attorneyId, applicantId, tag, message) => {
+export const docassist = async (attorneyId, applicantId, message, tag, filename) => {
   const response = await gateway(endpoints.docassist, {
     attorneyId,
     applicantId,
-    tag,
     message,
+    tag,
+    filename
   });
 
   console.log(`INFO: docassist: response=${JSON.stringify(response)}`);
