@@ -167,18 +167,18 @@ class VectorizeFiles(RequestHandler):
         MIN_TOKEN_SIZE = 144
         async_db_client = VectorizeFiles.async_db_client
         logger.info(
-            f"Chunking, indexing, and storing in collection {secrets.collection_name}.\nChunker type: {SemanticChunker.__name__}. Collection type: {VectorizeFiles.async_db_client.__class__.__name__}"
+            f"Chunking, indexing, and storing in collection {collection_name}.\nChunker type: {SemanticChunker.__name__}. Collection type: {VectorizeFiles.async_db_client.__class__.__name__}"
         )
         sample_embedding = VectorizeFiles.embedding_client.embed_query(
             "Generate a sample embedding to get the length of the vector"
         )
         # Ensure the collection exists
         collection_exists = await VectorizeFiles.async_db_client.collection_exists(
-            collection_name=secrets.collection_name
+            collection_name=collection_name
         )
         if not collection_exists:
             await VectorizeFiles.async_db_client.create_collection(
-                collection_name=secrets.collection_name,
+                collection_name=collection_name,
                 vectors_config=models.VectorParams(
                     size=len(sample_embedding),  # Length of the embedding vectors
                     distance=models.Distance.COSINE,  # Distance metric
