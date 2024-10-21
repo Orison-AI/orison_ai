@@ -1,17 +1,45 @@
-import React, { useState } from 'react';
-import { Box, Button, Input, VStack, Text, HStack, Flex, Spinner, useToast } from '@chakra-ui/react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, Button, Input, VStack, Text, HStack, Flex, Spinner, Select, useToast } from '@chakra-ui/react';
 import { docassist } from '../../../api/api';  // Import your API function here
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../../common/firebaseConfig';
+import { auth, db } from '../../../common/firebaseConfig'; // Make sure you have the Firebase config imported
+import { doc, getDoc } from 'firebase/firestore';
 import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown for markdown support
+
+const buckets = ["research", "reviews", "awards", "feedback"];
 
 const DocAssist = ({ selectedApplicant }) => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
     const [timeoutDuration, setTimeoutDuration] = useState(60000); // Timeout duration (in milliseconds)
+    const [selectedBuckets, setSelectedBuckets] = useState([]); // Allow multiple buckets
+    const [selectedFiles, setSelectedFiles] = useState([]); // Allow multiple files
+    const [vectorizedFiles, setVectorizedFiles] = useState([]); // Store vectorized files here
     const toast = useToast(); // Toast for showing error messages
     const [user] = useAuthState(auth);
+
+    // Disable file dropdown if bucket is selected, and vice versa
+    const isBucketDisabled = selectedFiles.length > 0;
+    const isFileDisabled = selectedBuckets.length > 0;
+
+    // Fetch vectorized files from Firestore
+    const fetchVectorizedFiles = useCallback(async () => {
+        if (user && selectedApplicant) {
+            const docRef = doc(db, "applicants", selectedApplicant.id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                setVectorizedFiles(docSnap.data().vectorized_files || []);
+            } else {
+                console.error("No document found for the selected applicant.");
+            }
+        }
+    }, [user, selectedApplicant]);
+
+    // Fetch the vectorized files whenever the selected applicant changes
+    useEffect(() => {
+        fetchVectorizedFiles();
+    }, [fetchVectorizedFiles]);
 
     const handleSendMessage = async () => {
         if (inputMessage.trim() === '') {
@@ -36,12 +64,16 @@ const DocAssist = ({ selectedApplicant }) => {
             return;
         }
 
+        const bucket = selectedBuckets.length > 0 ? selectedBuckets : [];
+        const filename = selectedFiles.length > 0 ? selectedFiles : [];
+
         setMessages((prevMessages) => [...prevMessages, { text: inputMessage, sender: 'user' }]);
         setInputMessage('');
         setIsStreaming(true);
+
         try {
             const response = await Promise.race([
-                docassist(user.uid, selectedApplicant.id, "research", inputMessage),
+                docassist(user.uid, selectedApplicant.id, inputMessage, bucket, filename), // Updated to pass bucket and filename
                 new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), timeoutDuration))
             ]);
 
@@ -64,6 +96,21 @@ const DocAssist = ({ selectedApplicant }) => {
         if (e.key === 'Enter' && !isStreaming) {
             handleSendMessage();
         }
+    };
+
+    const clearSelections = () => {
+        setSelectedBuckets([]);
+        setSelectedFiles([]);
+    };
+
+    const handleBucketChange = (e) => {
+        const selectedOptions = [...e.target.selectedOptions].map(option => option.value);
+        setSelectedBuckets(selectedOptions);
+    };
+
+    const handleFileChange = (e) => {
+        const selectedOptions = [...e.target.selectedOptions].map(option => option.value);
+        setSelectedFiles(selectedOptions);
     };
 
     return (
@@ -98,6 +145,7 @@ const DocAssist = ({ selectedApplicant }) => {
                 width="100%"
             >
                 <HStack width="100%">
+                    {/* Input Message Box */}
                     <Input
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
@@ -110,6 +158,49 @@ const DocAssist = ({ selectedApplicant }) => {
                         flex="1"
                         isDisabled={isStreaming}
                     />
+
+                    {/* Multi-Select Bucket Dropdown */}
+                    <Select
+                        placeholder="Select Buckets"
+                        value={selectedBuckets}
+                        onChange={handleBucketChange}
+                        isDisabled={isBucketDisabled || isStreaming}
+                        bg="gray.700"
+                        color="white"
+                        width="200px"
+                        multiple
+                    >
+                        {buckets.map((bucket) => (
+                            <option key={bucket} value={bucket}>
+                                {bucket.charAt(0).toUpperCase() + bucket.slice(1)}
+                            </option>
+                        ))}
+                    </Select>
+
+                    {/* Multi-Select File Dropdown */}
+                    <Select
+                        placeholder="Select Files"
+                        value={selectedFiles}
+                        onChange={handleFileChange}
+                        isDisabled={isFileDisabled || isStreaming}
+                        bg="gray.700"
+                        color="white"
+                        width="200px"
+                        multiple
+                    >
+                        {vectorizedFiles.map((file) => (
+                            <option key={file} value={file}>
+                                {file}
+                            </option>
+                        ))}
+                    </Select>
+
+                    {/* Clear Selections Button */}
+                    <Button onClick={clearSelections} isDisabled={isStreaming}>
+                        Clear Selections
+                    </Button>
+
+                    {/* Send Button */}
                     <Button colorScheme="blue" onClick={handleSendMessage} isDisabled={isStreaming}>
                         Send
                     </Button>
@@ -121,7 +212,7 @@ const DocAssist = ({ selectedApplicant }) => {
 
 export default DocAssist;
 
-// Individual message card component
+// Individual message card component remains unchanged.
 const MessageCard = ({ message }) => {
     const { text, sender } = message;
 
