@@ -20,6 +20,7 @@ import uuid
 import numpy as np
 import logging
 import tiktoken
+from typing import Union
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -57,7 +58,8 @@ RETRIEVAL_DOC_LIMIT = 10
 class Prompt:
     question: list
     detail_level: str
-    tag: str  # Qdrant tag
+    tag: Union[list, str]  # vector DB tag
+    filename: Union[list, str]  # vector DB filename
     id: str = uuid.uuid4().hex
 
 
@@ -272,8 +274,16 @@ class OrisonMessenger:
             must=[
                 models.FieldCondition(
                     key="tag",
-                    match=models.MatchValue(value=prompt.tag.lower()),
-                )
+                    match=models.MatchAny(
+                        values=[tag_name.lower() for tag_name in prompt.tag]
+                    ),
+                ),
+                models.FieldCondition(
+                    key="filename",
+                    match=models.MatchAny(
+                        values=[filename.lower() for filename in prompt.filename]
+                    ),
+                ),
             ],
         )
         try:

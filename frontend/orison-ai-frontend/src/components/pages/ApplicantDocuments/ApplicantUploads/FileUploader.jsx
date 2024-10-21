@@ -325,9 +325,9 @@ const FileUploader = ({ selectedApplicant }) => {
         <Text width="100%">Applicant Files</Text>
         <Box minWidth="200px" fontSize="24px">
           <Select value={selectedBucket} onChange={(e) => setSelectedBucket(e.target.value)} color="blue.100">
-            {buckets.map((bucket) => (
-              <option key={bucket} value={bucket}>
-                {bucket.charAt(0).toUpperCase() + bucket.slice(1)}
+            {buckets.map((tag) => (
+              <option key={tag} value={tag}>
+                {tag.charAt(0).toUpperCase() + tag.slice(1)}
               </option>
             ))}
           </Select>

@@ -71,11 +71,11 @@ export const processScholarNetwork = async (attorneyId, applicantId, scholarLink
   return response.data;
 };
 
-export const vectorizeFiles = async (attorneyId, applicantId, bucket, fileId) => {
+export const vectorizeFiles = async (attorneyId, applicantId, tag, fileId) => {
   const response = await gateway(endpoints.vectorizeFiles, {
     attorneyId,
     applicantId,
-    bucket,
+    tag,
     fileId,
   });
 
@@ -88,11 +88,11 @@ export const vectorizeFiles = async (attorneyId, applicantId, bucket, fileId) =>
   return response.data;
 };
 
-export const deleteFileVectors = async (attorneyId, applicantId, bucket, fileId) => {
+export const deleteFileVectors = async (attorneyId, applicantId, tag, fileId) => {
   const response = await gateway(endpoints.deleteFileVectors, {
     attorneyId,
     applicantId,
-    bucket,
+    tag,
     fileId,
   });
 
@@ -120,11 +120,11 @@ export const summarize = async (attorneyId, applicantId) => {
   return response.data;
 };
 
-export const docassist = async (attorneyId, applicantId, bucket, message) => {
+export const docassist = async (attorneyId, applicantId, tag, message) => {
   const response = await gateway(endpoints.docassist, {
     attorneyId,
     applicantId,
-    bucket,
+    tag,
     message,
   });
 

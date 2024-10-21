@@ -14,16 +14,10 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-# External
-
-import asyncio
-from typing import List
-
 # Internal
 
 from request_handler import RequestHandler, OKResponse, ErrorResponse
 from or_store.firebase import OrisonSecrets
-from or_store.firebase import FireStoreDB
 from exceptions import OrisonMessenger_INITIALIZATION_FAILED
 from or_llm.orison_messenger import OrisonMessenger, Prompt, DetailLevel
 
@@ -44,7 +38,8 @@ class DocAssist(RequestHandler):
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
             prompt_message = request_json["message"]
-            tag = request_json["bucket"]
+            tag = request_json["tag"]  # List of tags
+            filename = request_json["filename"]  # List of filenames
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info("Initializing docassist secrets")
             self.initialize(secrets)

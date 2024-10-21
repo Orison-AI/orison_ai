@@ -236,8 +236,7 @@ class VectorizeFiles(RequestHandler):
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
             file_id = request_json["fileId"]
-            bucket_name = request_json["bucket"]
-            tag = bucket_name  # Change to something else if needed
+            tag = request_json["tag"]
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             VectorizeFiles._orison_messenger(secrets)
             self.logger.info(
@@ -247,7 +246,7 @@ class VectorizeFiles(RequestHandler):
             # We should make multiple calls from the frontend instead for scalability
             # Download the file
             bucket_file_path = VectorizeFiles._file_path_builder(
-                attorney_id, applicant_id, bucket_name, file_id
+                attorney_id, applicant_id, tag, file_id
             )
             local_file_path = f"/tmp/to_be_processed.pdf"
             self.logger.info(f"Remote File path: {bucket_file_path}")
@@ -320,8 +319,7 @@ class DeleteFileVectors(RequestHandler):
             attorney_id = request_json["attorneyId"]
             applicant_id = request_json["applicantId"]
             file_id = request_json["fileId"]
-            bucket_name = request_json["bucket"]
-            tag = bucket_name  # Change to something else if needed
+            tag = request_json["tag"]
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info(
                 f"Processing delete file vectors for attorney {attorney_id}, applicant {applicant_id}, and file: {file_id}"
