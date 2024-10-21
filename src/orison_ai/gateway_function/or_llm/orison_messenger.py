@@ -270,22 +270,36 @@ class OrisonMessenger:
 
         query = prompt.question
         detail_level = prompt.detail_level
-        filter = models.Filter(
-            must=[
+        filter_conditions = []
+        # Check if tag list exists and is not empty
+        if prompt.tag:
+            filter_conditions.append(
                 models.FieldCondition(
                     key="tag",
                     match=models.MatchAny(
                         any=[tag_name.lower() for tag_name in prompt.tag]
                     ),
-                ),
+                )
+            )
+        # If tag list is empty, add the filename condition
+        if prompt.filename:
+            filter_conditions.append(
                 models.FieldCondition(
                     key="filename",
                     match=models.MatchAny(
-                        any=[filename.lower() for filename in prompt.filename]
+                        any=[filename for filename in prompt.filename]
                     ),
-                ),
-            ],
-        )
+                )
+            )
+
+        # Construct the final filter
+        if filter_conditions:
+            filter = models.Filter(
+                should=filter_conditions  # `should` means it will match any of the conditions
+            )
+        else:
+            filter = None
+        print(filter)
         try:
             retriever = MultiQueryRetriever.from_llm(
                 retriever=self.vectordb.as_retriever(

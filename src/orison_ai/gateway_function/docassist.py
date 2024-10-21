@@ -70,7 +70,7 @@ if __name__ == "__main__":
                 "attorneyId": "xlMsyQpatdNCTvgRfW4TcysSDgX2",
                 "applicantId": "tYdtBdc7lJHyVCxquubj",
                 "message": "Give me a summary of Rishi's skills",
-                "tag": ["research"],
+                "tag": [],
                 "filename": ["MalhanCV.pdf"],
             }
         )
