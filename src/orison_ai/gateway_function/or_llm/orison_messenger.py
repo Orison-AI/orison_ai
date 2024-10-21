@@ -20,7 +20,6 @@ import uuid
 import numpy as np
 import logging
 import tiktoken
-from typing import List
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -83,6 +82,38 @@ class DetailLevel(Enum):
         raise ValueError(f"No matching DetailLevel for keyword: {keyword}")
 
 
+class OrisonEmbeddings(OpenAIEmbeddings):
+    rate_limiter: InMemoryRateLimiter
+
+    class Config:
+        # Allow arbitrary types like InMemoryRateLimiter to be used
+        arbitrary_types_allowed = True
+
+    def embed_query(self, text: str):
+        try:
+            token_acquired = True
+            if self.rate_limiter:
+                token_acquired = self.rate_limiter.acquire()
+            if token_acquired:
+                embeddings = super().embed_query(text)
+            return embeddings
+        except Exception as e:
+            logger.error(f"Failed to get embeddings for text: {text}. Error: {e}")
+            raise e
+
+    async def aembed_query(self, text: str):
+        try:
+            token_acquired = True
+            if self.rate_limiter:
+                token_acquired = await self.rate_limiter.aacquire()
+            if token_acquired:
+                embeddings = await super().aembed_query(text)
+            return embeddings
+        except Exception as e:
+            logger.error(f"Failed to get embeddings for text: {text}. Error: {e}")
+            raise e
+
+
 class OrisonMessenger:
     ROLE = """
     You are a helpful, respectful and honest assistant.\
@@ -104,9 +135,9 @@ class OrisonMessenger:
     ):
         try:
             self._rate_limiter = InMemoryRateLimiter(
-                requests_per_second=7,
-                check_every_n_seconds=1.0,  # Wake up every 100 ms to check whether allowed to make a request,
-                max_bucket_size=10,  # Controls the maximum burst size.
+                requests_per_second=7,  # Value which throttles the requests
+                check_every_n_seconds=0.1,
+                max_bucket_size=1,  # Controls the maximum burst size. We don't want to allow burst requests.
             )
         except Exception as e:
             raise RateLimiter_INITIALIZATION_FAILED(exception=e)
@@ -126,11 +157,15 @@ class OrisonMessenger:
             )
             self._parser = StrOutputParser()
             self._system_chain = self._system_prompt | self._chat_bot | self._parser
-            self._embeddings = OpenAIEmbeddings(
+            self._embeddings = OrisonEmbeddings(
                 model=embedding_model,
                 api_key=secrets.openai_api_key,
                 max_retries=max_retries,
+                rate_limiter=self._rate_limiter,
             )
+            self._tokenizer = tiktoken.encoding_for_model(MODEL_NAME)
+            self._tokenizer_model_name = MODEL_NAME
+            self._embedding_model_name = EMBEDDING_MODEL
         except Exception as e:
             raise LLM_INITIALIZATION_FAILED(exception=e)
 

@@ -37,7 +37,7 @@ jobs:
           name: 'gateway_function_staging'
           source_dir: './src/orison_ai/gateway_function'
           runtime: 'python310'
-          memory: '512M'
+          memory: '1024M'
           min_instance_count: 0
           max_instance_count: 5
           service_timeout: 540
@@ -72,7 +72,7 @@ jobs:
           name: 'gateway_function'
           source_dir: './src/orison_ai/gateway_function'
           runtime: 'python310'
-          memory: '512M'
+          memory: '1024M'
           min_instance_count: 0
           max_instance_count: 5
           service_timeout: 540
