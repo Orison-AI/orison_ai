@@ -32,11 +32,11 @@ import DeletingFileModal from './DeletingFileModal';
 const FileUploader = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
   const [documents, setDocuments] = useState([]);
-  // Set "main" as the default bucket and initialize state with it
-  const [buckets, setBuckets] = useState(["main"]);
-  const [selectedBucket, setSelectedBucket] = useState("main");
+  // Set "main" as the default tag and initialize state with it
+  const [tags, setTags] = useState(["main"]);
+  const [selectedTag, setSelectedTag] = useState("main");
   const [fileToOverwrite, setFileToOverwrite] = useState(null);
-  const [newBucketName, setNewBucketName] = useState('');
+  const [newTagName, setNewTagName] = useState('');
 
   const {
     isOpen: isOverwriteModalOpen,
@@ -81,7 +81,7 @@ const FileUploader = ({ selectedApplicant }) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setVectorizedFiles(data.vectorized_files || []);
-        setBuckets(data.customBuckets || ["main"]); // Set buckets from Firestore, defaulting to "main" if empty
+        setTags(data.customTags || ["main"]); // Set tags from Firestore, defaulting to "main" if empty
       }
     }
   }, [user, selectedApplicant]);
@@ -91,9 +91,9 @@ const FileUploader = ({ selectedApplicant }) => {
     if (user && selectedApplicant) {
       console.log('User ID:', user.uid);
       console.log('Applicant ID:', selectedApplicant.id);
-      console.log('Selected Bucket:', selectedBucket);
+      console.log('Selected Tag:', selectedTag);
 
-      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/`;
+      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/`;
       const storage = getStorage();
       const listRef = ref(storage, filePath);
 
@@ -108,18 +108,18 @@ const FileUploader = ({ selectedApplicant }) => {
         console.error("Error fetching documents:", error);
       }
     } else {
-      console.error("User, selectedApplicant, or selectedBucket is undefined.");
+      console.error("User, selectedApplicant, or selectedTag is undefined.");
     }
-  }, [user, selectedApplicant, selectedBucket, vectorizedFiles]);
+  }, [user, selectedApplicant, selectedTag, vectorizedFiles]);
 
 
   useEffect(() => {
-    fetchApplicantData(); // Fetch both vectorized files and custom buckets on component mount
+    fetchApplicantData(); // Fetch both vectorized files and custom tags on component mount
   }, [fetchApplicantData]);
 
   useEffect(() => {
     fetchDocuments();
-  }, [fetchDocuments, selectedBucket]);
+  }, [fetchDocuments, selectedTag]);
 
   useEffect(() => {
     if (vectorizeStatus === 'success') {
@@ -131,7 +131,7 @@ const FileUploader = ({ selectedApplicant }) => {
     const storage = getStorage();
 
     for (const file of acceptedFiles) {
-      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${file.name}`;
+      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/${file.name}`;
       const storageRef = ref(storage, filePath);
 
       let contentType = file.type;
@@ -173,7 +173,7 @@ const FileUploader = ({ selectedApplicant }) => {
 
   const handleOverwriteConfirm = async () => {
     const storage = getStorage();
-    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileToOverwrite.name}`;
+    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/${fileToOverwrite.name}`;
     const storageRef = ref(storage, filePath);
 
     try {
@@ -198,9 +198,9 @@ const FileUploader = ({ selectedApplicant }) => {
     onDeleteModalOpen();
   };
 
-  const deleteAllFileVectorsInBucket = useCallback(async () => {
-    if (user && selectedApplicant && selectedBucket) {
-      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/`;
+  const deleteAllFileVectorsInTag = useCallback(async () => {
+    if (user && selectedApplicant && selectedTag) {
+      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/`;
       const storage = getStorage();
       const listRef = ref(storage, filePath);
 
@@ -213,17 +213,17 @@ const FileUploader = ({ selectedApplicant }) => {
           console.log(`Deleting vectors for file: ${fileName}`);
 
           // First, delete the vectors for each file
-          await deleteFileVectors(user.uid, selectedApplicant.id, selectedBucket, fileName);
+          await deleteFileVectors(user.uid, selectedApplicant.id, selectedTag, fileName);
 
           // Then, delete the actual file from Firebase Storage
           await deleteObject(fileRef);
           console.log(`File ${fileName} deleted from storage.`);
         }
 
-        console.log(`All vectors and files deleted for bucket: ${selectedBucket}`);
+        console.log(`All vectors and files deleted for tag: ${selectedTag}`);
         toast({
           title: 'Success',
-          description: `Vectors and files for all files in the "${selectedBucket}" bucket were deleted.`,
+          description: `Vectors and files for all files in the "${selectedTag}" tag were deleted.`,
           status: 'success',
           duration: 3000,
           isClosable: true,
@@ -239,15 +239,15 @@ const FileUploader = ({ selectedApplicant }) => {
         });
       }
     } else {
-      console.error("User, selectedApplicant, or selectedBucket is undefined.");
+      console.error("User, selectedApplicant, or selectedTag is undefined.");
     }
-  }, [user, selectedApplicant, selectedBucket]);
+  }, [user, selectedApplicant, selectedTag]);
 
 
 
   const handleDeleteConfirm = async () => {
     const storage = getStorage();
-    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileToDelete}`;
+    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/${fileToDelete}`;
     const storageRef = ref(storage, filePath);
 
     try {
@@ -266,7 +266,7 @@ const FileUploader = ({ selectedApplicant }) => {
       fetchDocuments();
       onDeleteModalClose();
 
-      await deleteFileVectors(user.uid, selectedApplicant.id, selectedBucket, fileToDelete);
+      await deleteFileVectors(user.uid, selectedApplicant.id, selectedTag, fileToDelete);
       setFileToDelete(null);
       onDeleteInProgressModalClose();
     } catch (error) {
@@ -289,7 +289,7 @@ const FileUploader = ({ selectedApplicant }) => {
 
       try {
         // Call the vectorization API (or function)
-        await vectorizeFiles(user.uid, selectedApplicant.id, selectedBucket, fileName);
+        await vectorizeFiles(user.uid, selectedApplicant.id, selectedTag, fileName);
 
         // Fetch current vectorized files from Firestore
         const docRef = doc(db, 'applicants', selectedApplicant.id);
@@ -336,7 +336,7 @@ const FileUploader = ({ selectedApplicant }) => {
         setVectorizingFiles((prev) => prev.filter((file) => file !== fileName));
       }
     }
-  }, [user, selectedApplicant, selectedBucket, toast]);
+  }, [user, selectedApplicant, selectedTag, toast]);
 
 
   const vectorizeAllFiles = useCallback(async () => {
@@ -367,7 +367,7 @@ const FileUploader = ({ selectedApplicant }) => {
   };
 
   const viewFile = useCallback(async (fileName) => {
-    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileName}`;
+    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/${fileName}`;
     const storageRef = ref(getStorage(), filePath);
 
     try {
@@ -403,7 +403,7 @@ const FileUploader = ({ selectedApplicant }) => {
         isClosable: true,
       });
     }
-  }, [onViewModalOpen, selectedApplicant.id, selectedBucket, toast, user.uid]);
+  }, [onViewModalOpen, selectedApplicant.id, selectedTag, toast, user.uid]);
 
   return (
     <VStack width="100%" flex="1" mt="20px" overflowY="auto" overflowX="auto">
@@ -411,26 +411,26 @@ const FileUploader = ({ selectedApplicant }) => {
         <Text width="100%">Applicant Files</Text>
         <Box minWidth="200px" fontSize="24px">
           <Select
-            value={selectedBucket}
-            onChange={(e) => setSelectedBucket(e.target.value)}
+            value={selectedTag}
+            onChange={(e) => setSelectedTag(e.target.value)}
             color="blue.100"
           >
-            {buckets.map((bucket) => (
-              <option key={bucket} value={bucket}>
-                {bucket}
+            {tags.map((tag) => (
+              <option key={tag} value={tag}>
+                {tag}
               </option>
             ))}
           </Select>
         </Box>
 
-        {/* Input Box for Bucket Name */}
+        {/* Input Box for Tag Name */}
         <Box minWidth="200px">
           <input
             type="text"
             maxLength="30"
-            placeholder="New bucket name"
-            value={newBucketName}
-            onChange={(e) => setNewBucketName(e.target.value)}
+            placeholder="New tag name"
+            value={newTagName}
+            onChange={(e) => setNewTagName(e.target.value)}
             style={{ padding: "6px", fontSize: "16px", borderRadius: "5px", width: "100%" }}
           />
         </Box>
@@ -439,23 +439,23 @@ const FileUploader = ({ selectedApplicant }) => {
         <Button
           colorScheme="teal"
           onClick={async () => {
-            if (newBucketName && !buckets.includes(newBucketName)) {
-              const updatedBuckets = [...buckets, newBucketName];
-              setBuckets(updatedBuckets);
-              setSelectedBucket(newBucketName);
+            if (newTagName && !tags.includes(newTagName)) {
+              const updatedTags = [...tags, newTagName];
+              setTags(updatedTags);
+              setSelectedTag(newTagName);
 
-              // Update Firestore with the new bucket list
+              // Update Firestore with the new tag list
               const docRef = doc(db, "applicants", selectedApplicant.id);
-              await updateDoc(docRef, { customBuckets: updatedBuckets });
+              await updateDoc(docRef, { customTags: updatedTags });
 
               toast({
-                title: 'Bucket Added',
-                description: `Bucket "${newBucketName}" added successfully.`,
+                title: 'Tag Added',
+                description: `Tag "${newTagName}" added successfully.`,
                 status: 'success',
                 duration: 3000,
                 isClosable: true,
               });
-              setNewBucketName(''); // Clear input after adding
+              setNewTagName(''); // Clear input after adding
             }
           }}
         >
@@ -466,26 +466,26 @@ const FileUploader = ({ selectedApplicant }) => {
         <Button
           colorScheme="red"
           onClick={async () => {
-            if (selectedBucket !== "main" && window.confirm(`Delete all files and their vectors in the "${selectedBucket}" bucket?`)) {
-              await deleteAllFileVectorsInBucket(); // Call the function to delete vectors
-              const updatedBuckets = buckets.filter((bucket) => bucket !== selectedBucket);
-              setBuckets(updatedBuckets);
-              setSelectedBucket("main"); // Reset to "main" if the selected bucket is deleted
+            if (selectedTag !== "main" && window.confirm(`Delete all files and their vectors in the "${selectedTag}" tag?`)) {
+              await deleteAllFileVectorsInTag(); // Call the function to delete vectors
+              const updatedTags = tags.filter((tag) => tag !== selectedTag);
+              setTags(updatedTags);
+              setSelectedTag("main"); // Reset to "main" if the selected tag is deleted
 
-              // Update Firestore with the updated bucket list
+              // Update Firestore with the updated tag list
               const docRef = doc(db, "applicants", selectedApplicant.id);
-              await updateDoc(docRef, { customBuckets: updatedBuckets });
+              await updateDoc(docRef, { customTags: updatedTags });
 
               toast({
-                title: 'Bucket Deleted',
-                description: `Bucket "${selectedBucket}" and all associated file vectors were deleted.`,
+                title: 'Tag Deleted',
+                description: `Tag "${selectedTag}" and all associated file vectors were deleted.`,
                 status: 'success',
                 duration: 5000,
                 isClosable: true,
               });
             }
           }}
-          isDisabled={selectedBucket === "main"} // Disable deletion for "main" bucket
+          isDisabled={selectedTag === "main"} // Disable deletion for "main" tag
         >
           Del
         </Button>
