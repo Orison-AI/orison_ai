@@ -34,7 +34,7 @@ const Header = React.forwardRef(({ goHome, editQuestionaire, onSettingsOpen }, r
 
       {/* Title in the Center */}
       <Center width="100%">
-        <Box fontSize="32px">orison.ai</Box>
+        <Box fontSize="32px">void pointer.ai</Box>
       </Center>
 
       {/* Color Mode Toggle */}

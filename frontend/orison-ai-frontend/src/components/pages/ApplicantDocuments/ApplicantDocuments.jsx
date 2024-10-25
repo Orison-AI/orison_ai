@@ -14,7 +14,7 @@ const ApplicantDocuments = ({ selectedApplicant }) => {
   return (
     <Center className="oai-appdocs-center" width="100%" flex="1">
       <VStack className="oai-appdocs-stack" width="70%">
-        <ScholarLinkForm selectedApplicant={selectedApplicant} />
+        {/* <ScholarLinkForm selectedApplicant={selectedApplicant} /> */}
         <FileUploader selectedApplicant={selectedApplicant} />
       </VStack>
     </Center>

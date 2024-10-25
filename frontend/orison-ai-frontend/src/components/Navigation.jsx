@@ -29,7 +29,7 @@ const Navigation = React.forwardRef(({
   };
 
   const viewDisplayNames = {
-    [Views.MANAGE_APPLICANTS]: "Manage Applicants",
+    [Views.MANAGE_APPLICANTS]: "HOME",
     [Views.APPLICANT_DOCUMENTS]: "Documents",
     [Views.QUESTIONAIRE]: "Questionaire",
     [Views.APPLICANT_SUMMARIZATION]: "Summarization",

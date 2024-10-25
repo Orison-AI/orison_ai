@@ -205,7 +205,7 @@ const ManageApplicants = ({
         </Box>
       </Center>
       <Center className="oai-manage-addnewapp-button-center">
-        <Button mt="16px" colorScheme="blue" onClick={addNewApplicant}>Add New Applicant</Button>
+        <Button mt="16px" colorScheme="blue" onClick={addNewApplicant}>Create New Profile</Button>
       </Center>
       <DeleteApplicantModal
         isOpen={isOpen}
