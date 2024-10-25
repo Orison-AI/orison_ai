@@ -7,13 +7,6 @@ import { doc, getDoc } from 'firebase/firestore';
 import ReactMarkdown from 'react-markdown';
 import Select, { components } from 'react-select'; // Import react-select and components
 
-const tags = [
-    { label: "Research", value: "research" },
-    { label: "Reviews", value: "reviews" },
-    { label: "Awards", value: "awards" },
-    { label: "Feedback", value: "feedback" },
-];
-
 const customStyles = {
     control: (provided, state) => ({
         ...provided,
@@ -86,6 +79,7 @@ const DocAssist = ({ selectedApplicant }) => {
     const [selectedTags, setSelectedTags] = useState([]);
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [vectorizedFiles, setVectorizedFiles] = useState([]);
+    const [tags, setTags] = useState([]); // Store fetched tags here
     const toast = useToast();
     const [user] = useAuthState(auth);
 
@@ -114,14 +108,36 @@ const DocAssist = ({ selectedApplicant }) => {
         fetchVectorizedFiles();
     }, [fetchVectorizedFiles]);
 
+    // Fetch customTags from Firestore
+    const fetchTags = useCallback(async () => {
+        if (user && selectedApplicant) {
+            const docRef = doc(db, "applicants", selectedApplicant.id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const customTags = docSnap.data().customTags || []; // Fetch customTags
+                // Map the customTags to the required format
+                const mappedTags = customTags.map(tag => ({
+                    label: tag,
+                    value: tag.toLowerCase() // Lowercase for value
+                }));
+                setTags(mappedTags);
+            } else {
+                console.error("No document found for the selected applicant.");
+            }
+        }
+    }, [user, selectedApplicant]);
+
+    useEffect(() => {
+        fetchTags(); // Fetch tags on component mount or when user/selectedApplicant changes
+    }, [fetchTags]);
+
     // Function to close dropdown without clearing selection
     const handleClickOutside = useCallback((e) => {
         if (
             tagDropdownRef.current && !tagDropdownRef.current.contains(e.target) &&
             fileDropdownRef.current && !fileDropdownRef.current.contains(e.target)
         ) {
-            // Close the dropdown but keep the selections intact
-            document.activeElement.blur(); // This blurs the focus and closes the dropdown
+            document.activeElement.blur(); // Close the dropdown
         }
     }, []);
 
