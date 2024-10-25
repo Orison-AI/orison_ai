@@ -6,7 +6,7 @@ import React, { useCallback, useState, useEffect } from 'react';
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../../../../common/firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import {
   deleteObject, getDownloadURL, getMetadata, getStorage,
   listAll, ref, uploadBytes,
@@ -29,14 +29,15 @@ import ViewFileModal from './ViewFileModal';
 import DeleteFileModal from './DeleteFileModal';
 import DeletingFileModal from './DeletingFileModal';
 
-
-const buckets = ["research", "reviews", "awards", "feedback"];
-
 const FileUploader = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
   const [documents, setDocuments] = useState([]);
-  const [selectedBucket, setSelectedBucket] = useState(buckets[0]);
+  // Set "main" as the default bucket and initialize state with it
+  const [buckets, setBuckets] = useState(["main"]);
+  const [selectedBucket, setSelectedBucket] = useState("main");
   const [fileToOverwrite, setFileToOverwrite] = useState(null);
+  const [newBucketName, setNewBucketName] = useState('');
+
   const {
     isOpen: isOverwriteModalOpen,
     onOpen: onOverwriteModalOpen,
@@ -73,18 +74,25 @@ const FileUploader = ({ selectedApplicant }) => {
   } = useDisclosure();
   const toast = useToast();
 
-  const fetchVectorizedFiles = useCallback(async () => {
+  const fetchApplicantData = useCallback(async () => {
     if (user && selectedApplicant) {
       const docRef = doc(db, "applicants", selectedApplicant.id);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setVectorizedFiles(docSnap.data().vectorized_files || []);
+        const data = docSnap.data();
+        setVectorizedFiles(data.vectorized_files || []);
+        setBuckets(data.customBuckets || ["main"]); // Set buckets from Firestore, defaulting to "main" if empty
       }
     }
   }, [user, selectedApplicant]);
 
+
   const fetchDocuments = useCallback(async () => {
     if (user && selectedApplicant) {
+      console.log('User ID:', user.uid);
+      console.log('Applicant ID:', selectedApplicant.id);
+      console.log('Selected Bucket:', selectedBucket);
+
       const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/`;
       const storage = getStorage();
       const listRef = ref(storage, filePath);
@@ -99,12 +107,15 @@ const FileUploader = ({ selectedApplicant }) => {
       } catch (error) {
         console.error("Error fetching documents:", error);
       }
+    } else {
+      console.error("User, selectedApplicant, or selectedBucket is undefined.");
     }
   }, [user, selectedApplicant, selectedBucket, vectorizedFiles]);
 
+
   useEffect(() => {
-    fetchVectorizedFiles();
-  }, [fetchVectorizedFiles]);
+    fetchApplicantData(); // Fetch both vectorized files and custom buckets on component mount
+  }, [fetchApplicantData]);
 
   useEffect(() => {
     fetchDocuments();
@@ -112,9 +123,9 @@ const FileUploader = ({ selectedApplicant }) => {
 
   useEffect(() => {
     if (vectorizeStatus === 'success') {
-      fetchVectorizedFiles();
+      fetchApplicantData(); // Refetch data after successful vectorization
     }
-  }, [vectorizeStatus, fetchVectorizedFiles]);
+  }, [vectorizeStatus, fetchApplicantData]);
 
   const onDrop = async (acceptedFiles) => {
     const storage = getStorage();
@@ -321,25 +332,96 @@ const FileUploader = ({ selectedApplicant }) => {
 
   return (
     <VStack width="100%" flex="1" mt="20px" overflowY="auto" overflowX="auto">
-      <HStack width="100%" fontSize="24px">
+      <HStack width="100%" fontSize="24px" spacing={4}>
         <Text width="100%">Applicant Files</Text>
         <Box minWidth="200px" fontSize="24px">
-          <Select value={selectedBucket} onChange={(e) => setSelectedBucket(e.target.value)} color="blue.100">
-            {buckets.map((tag) => (
-              <option key={tag} value={tag}>
-                {tag.charAt(0).toUpperCase() + tag.slice(1)}
+          <Select
+            value={selectedBucket}
+            onChange={(e) => setSelectedBucket(e.target.value)}
+            color="blue.100"
+          >
+            {buckets.map((bucket) => (
+              <option key={bucket} value={bucket}>
+                {bucket}
               </option>
             ))}
           </Select>
         </Box>
+
+        {/* Input Box for Bucket Name */}
+        <Box minWidth="200px">
+          <input
+            type="text"
+            maxLength="30"
+            placeholder="New bucket name"
+            value={newBucketName}
+            onChange={(e) => setNewBucketName(e.target.value)}
+            style={{ padding: "6px", fontSize: "16px", borderRadius: "5px", width: "100%" }}
+          />
+        </Box>
+
+        {/* Add Button */}
+        <Button
+          colorScheme="teal"
+          onClick={async () => {
+            if (newBucketName && !buckets.includes(newBucketName)) {
+              const updatedBuckets = [...buckets, newBucketName];
+              setBuckets(updatedBuckets);
+              setSelectedBucket(newBucketName);
+
+              // Update Firestore with the new bucket list
+              const docRef = doc(db, "applicants", selectedApplicant.id);
+              await updateDoc(docRef, { customBuckets: updatedBuckets });
+
+              toast({
+                title: 'Bucket Added',
+                description: `Bucket "${newBucketName}" added successfully.`,
+                status: 'success',
+                duration: 3000,
+                isClosable: true,
+              });
+              setNewBucketName(''); // Clear input after adding
+            }
+          }}
+        >
+          Add
+        </Button>
+
+        {/* Remove Button */}
+        <Button
+          colorScheme="red"
+          onClick={async () => {
+            if (selectedBucket !== "main" && window.confirm(`Delete bucket "${selectedBucket}" and its files?`)) {
+              const updatedBuckets = buckets.filter((bucket) => bucket !== selectedBucket);
+              setBuckets(updatedBuckets);
+              setSelectedBucket("main"); // Reset to "main" if the selected bucket is deleted
+
+              // Update Firestore with the updated bucket list
+              const docRef = doc(db, "applicants", selectedApplicant.id);
+              await updateDoc(docRef, { customBuckets: updatedBuckets });
+
+              toast({
+                title: 'Bucket Deleted',
+                description: `Bucket "${selectedBucket}" deleted successfully.`,
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+              });
+            }
+          }}
+          isDisabled={selectedBucket === "main"} // Disable deletion for "main" bucket
+        >
+          Del
+        </Button>
       </HStack>
+
+
+      {/* Rest of the component remains unchanged */}
       <VStack width="100%" flex="1" overflowY="auto" overflowX="auto">
         <Alert status="warning" minHeight="80px" borderRadius="10px" mb="4" fontSize="16px">
           <AlertIcon />
           <AlertDescription>
-            Only vectorized files are included in the applicant summary generated by the AI model, and currently only one file may be vectorized at a time.
-            Vectorizing a file will delete the vectors for any other file.
-            Support for multiple files will be added in a future version.
+            Only vectorized files are included in the applicant summary generated by the AI model, and currently only one file may be vectorized at a time. Vectorizing a file will delete the vectors for any other file. Support for multiple files will be added in a future version.
           </AlertDescription>
         </Alert>
         <FileDropzone onDrop={onDrop} disabled={uploadInProgress} />
@@ -355,6 +437,8 @@ const FileUploader = ({ selectedApplicant }) => {
           vectorizeStatus={vectorizeStatus}
         />
       </VStack>
+
+      {/* Modals */}
       <OverwriteFileModal
         isOpen={isOverwriteModalOpen}
         onClose={onOverwriteModalClose}
@@ -385,6 +469,6 @@ const FileUploader = ({ selectedApplicant }) => {
       />
     </VStack>
   );
-};
 
+}
 export default FileUploader;
