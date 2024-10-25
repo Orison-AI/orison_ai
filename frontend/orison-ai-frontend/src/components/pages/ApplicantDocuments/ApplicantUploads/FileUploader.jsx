@@ -6,7 +6,7 @@ import React, { useCallback, useState, useEffect } from 'react';
 // Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../../../../common/firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import {
   deleteObject, getDownloadURL, getMetadata, getStorage,
   listAll, ref, uploadBytes,
@@ -29,14 +29,15 @@ import ViewFileModal from './ViewFileModal';
 import DeleteFileModal from './DeleteFileModal';
 import DeletingFileModal from './DeletingFileModal';
 
-
-const buckets = ["research", "reviews", "awards", "feedback"];
-
 const FileUploader = ({ selectedApplicant }) => {
   const [user] = useAuthState(auth);
   const [documents, setDocuments] = useState([]);
-  const [selectedBucket, setSelectedBucket] = useState(buckets[0]);
+  // Set "main" as the default tag and initialize state with it
+  const [tags, setTags] = useState(["main"]);
+  const [selectedTag, setSelectedTag] = useState("main");
   const [fileToOverwrite, setFileToOverwrite] = useState(null);
+  const [newTagName, setNewTagName] = useState('');
+
   const {
     isOpen: isOverwriteModalOpen,
     onOpen: onOverwriteModalOpen,
@@ -73,19 +74,26 @@ const FileUploader = ({ selectedApplicant }) => {
   } = useDisclosure();
   const toast = useToast();
 
-  const fetchVectorizedFiles = useCallback(async () => {
+  const fetchApplicantData = useCallback(async () => {
     if (user && selectedApplicant) {
       const docRef = doc(db, "applicants", selectedApplicant.id);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setVectorizedFiles(docSnap.data().vectorized_files || []);
+        const data = docSnap.data();
+        setVectorizedFiles(data.vectorized_files || []);
+        setTags(data.customTags || ["main"]); // Set tags from Firestore, defaulting to "main" if empty
       }
     }
   }, [user, selectedApplicant]);
 
+
   const fetchDocuments = useCallback(async () => {
     if (user && selectedApplicant) {
-      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/`;
+      console.log('User ID:', user.uid);
+      console.log('Applicant ID:', selectedApplicant.id);
+      console.log('Selected Tag:', selectedTag);
+
+      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/`;
       const storage = getStorage();
       const listRef = ref(storage, filePath);
 
@@ -99,28 +107,31 @@ const FileUploader = ({ selectedApplicant }) => {
       } catch (error) {
         console.error("Error fetching documents:", error);
       }
+    } else {
+      console.error("User, selectedApplicant, or selectedTag is undefined.");
     }
-  }, [user, selectedApplicant, selectedBucket, vectorizedFiles]);
+  }, [user, selectedApplicant, selectedTag, vectorizedFiles]);
+
 
   useEffect(() => {
-    fetchVectorizedFiles();
-  }, [fetchVectorizedFiles]);
+    fetchApplicantData(); // Fetch both vectorized files and custom tags on component mount
+  }, [fetchApplicantData]);
 
   useEffect(() => {
     fetchDocuments();
-  }, [fetchDocuments, selectedBucket]);
+  }, [fetchDocuments, selectedTag]);
 
   useEffect(() => {
     if (vectorizeStatus === 'success') {
-      fetchVectorizedFiles();
+      fetchApplicantData(); // Refetch data after successful vectorization
     }
-  }, [vectorizeStatus, fetchVectorizedFiles]);
+  }, [vectorizeStatus, fetchApplicantData]);
 
   const onDrop = async (acceptedFiles) => {
     const storage = getStorage();
 
     for (const file of acceptedFiles) {
-      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${file.name}`;
+      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/${file.name}`;
       const storageRef = ref(storage, filePath);
 
       let contentType = file.type;
@@ -162,7 +173,7 @@ const FileUploader = ({ selectedApplicant }) => {
 
   const handleOverwriteConfirm = async () => {
     const storage = getStorage();
-    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileToOverwrite.name}`;
+    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/${fileToOverwrite.name}`;
     const storageRef = ref(storage, filePath);
 
     try {
@@ -187,9 +198,56 @@ const FileUploader = ({ selectedApplicant }) => {
     onDeleteModalOpen();
   };
 
+  const deleteAllFileVectorsInTag = useCallback(async () => {
+    if (user && selectedApplicant && selectedTag) {
+      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/`;
+      const storage = getStorage();
+      const listRef = ref(storage, filePath);
+
+      try {
+        const res = await listAll(listRef);
+        const filesToDelete = res.items.map(itemRef => itemRef); // Get all file references
+
+        for (const fileRef of filesToDelete) {
+          const fileName = fileRef.name;
+          console.log(`Deleting vectors for file: ${fileName}`);
+
+          // First, delete the vectors for each file
+          await deleteFileVectors(user.uid, selectedApplicant.id, selectedTag, fileName);
+
+          // Then, delete the actual file from Firebase Storage
+          await deleteObject(fileRef);
+          console.log(`File ${fileName} deleted from storage.`);
+        }
+
+        console.log(`All vectors and files deleted for tag: ${selectedTag}`);
+        toast({
+          title: 'Success',
+          description: `Vectors and files for all files in the "${selectedTag}" tag were deleted.`,
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } catch (error) {
+        console.error("Error deleting file vectors or files:", error);
+        toast({
+          title: 'Error',
+          description: 'Error occurred while deleting file vectors and files.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } else {
+      console.error("User, selectedApplicant, or selectedTag is undefined.");
+    }
+  }, [user, selectedApplicant, selectedTag]);
+
+
+
   const handleDeleteConfirm = async () => {
     const storage = getStorage();
-    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileToDelete}`;
+    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/${fileToDelete}`;
     const storageRef = ref(storage, filePath);
 
     try {
@@ -208,7 +266,7 @@ const FileUploader = ({ selectedApplicant }) => {
       fetchDocuments();
       onDeleteModalClose();
 
-      await deleteFileVectors(user.uid, selectedApplicant.id, selectedBucket, fileToDelete);
+      await deleteFileVectors(user.uid, selectedApplicant.id, selectedTag, fileToDelete);
       setFileToDelete(null);
       onDeleteInProgressModalClose();
     } catch (error) {
@@ -228,8 +286,31 @@ const FileUploader = ({ selectedApplicant }) => {
     if (user && selectedApplicant) {
       setVectorizingFiles((prev) => [...prev, fileName]);
       setVectorizeStatus('loading');
+
       try {
-        await vectorizeFiles(user.uid, selectedApplicant.id, selectedBucket, fileName);
+        // Call the vectorization API (or function)
+        await vectorizeFiles(user.uid, selectedApplicant.id, selectedTag, fileName);
+
+        // Fetch current vectorized files from Firestore
+        const docRef = doc(db, 'applicants', selectedApplicant.id);
+        const docSnap = await getDoc(docRef);
+        let currentVectorizedFiles = [];
+
+        if (docSnap.exists()) {
+          currentVectorizedFiles = docSnap.data().vectorized_files || [];
+        }
+
+        // Add the new file to the vectorized_files list if it's not already there
+        if (!currentVectorizedFiles.includes(fileName)) {
+          const updatedVectorizedFiles = [...currentVectorizedFiles, fileName];
+
+          // Update the vectorized_files field in Firestore
+          await updateDoc(docRef, {
+            vectorized_files: updatedVectorizedFiles
+          });
+        }
+
+        // Show success toast
         toast({
           title: 'Vectorization Completed',
           description: `Vectorization for ${fileName} has completed successfully.`,
@@ -238,7 +319,9 @@ const FileUploader = ({ selectedApplicant }) => {
           isClosable: true,
         });
         setVectorizeStatus('success');
+
       } catch (error) {
+        // Show error toast if vectorization or Firestore update fails
         toast({
           title: 'Vectorization Failed',
           description: error.message,
@@ -247,11 +330,14 @@ const FileUploader = ({ selectedApplicant }) => {
           isClosable: true,
         });
         setVectorizeStatus('error');
+
       } finally {
+        // Remove the file from the vectorizing state
         setVectorizingFiles((prev) => prev.filter((file) => file !== fileName));
       }
     }
-  }, [selectedApplicant, selectedBucket, toast, user]);
+  }, [user, selectedApplicant, selectedTag, toast]);
+
 
   const vectorizeAllFiles = useCallback(async () => {
     const nonVectorizedFiles = documents.filter(doc => !doc.vectorized).map(doc => doc.fileName);
@@ -281,7 +367,7 @@ const FileUploader = ({ selectedApplicant }) => {
   };
 
   const viewFile = useCallback(async (fileName) => {
-    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileName}`;
+    const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/${fileName}`;
     const storageRef = ref(getStorage(), filePath);
 
     try {
@@ -317,29 +403,101 @@ const FileUploader = ({ selectedApplicant }) => {
         isClosable: true,
       });
     }
-  }, [onViewModalOpen, selectedApplicant.id, selectedBucket, toast, user.uid]);
+  }, [onViewModalOpen, selectedApplicant.id, selectedTag, toast, user.uid]);
 
   return (
     <VStack width="100%" flex="1" mt="20px" overflowY="auto" overflowX="auto">
-      <HStack width="100%" fontSize="24px">
+      <HStack width="100%" fontSize="24px" spacing={4}>
         <Text width="100%">Applicant Files</Text>
         <Box minWidth="200px" fontSize="24px">
-          <Select value={selectedBucket} onChange={(e) => setSelectedBucket(e.target.value)} color="blue.100">
-            {buckets.map((tag) => (
+          <Select
+            value={selectedTag}
+            onChange={(e) => setSelectedTag(e.target.value)}
+            color="blue.100"
+          >
+            {tags.map((tag) => (
               <option key={tag} value={tag}>
-                {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                {tag}
               </option>
             ))}
           </Select>
         </Box>
+
+        {/* Input Box for Tag Name */}
+        <Box minWidth="200px">
+          <input
+            type="text"
+            maxLength="30"
+            placeholder="New tag name"
+            value={newTagName}
+            onChange={(e) => setNewTagName(e.target.value)}
+            style={{ padding: "6px", fontSize: "16px", borderRadius: "5px", width: "100%" }}
+          />
+        </Box>
+
+        {/* Add Button */}
+        <Button
+          colorScheme="teal"
+          onClick={async () => {
+            if (newTagName && !tags.includes(newTagName)) {
+              const updatedTags = [...tags, newTagName];
+              setTags(updatedTags);
+              setSelectedTag(newTagName);
+
+              // Update Firestore with the new tag list
+              const docRef = doc(db, "applicants", selectedApplicant.id);
+              await updateDoc(docRef, { customTags: updatedTags });
+
+              toast({
+                title: 'Tag Added',
+                description: `Tag "${newTagName}" added successfully.`,
+                status: 'success',
+                duration: 3000,
+                isClosable: true,
+              });
+              setNewTagName(''); // Clear input after adding
+            }
+          }}
+        >
+          Add
+        </Button>
+
+        {/* Remove Button */}
+        <Button
+          colorScheme="red"
+          onClick={async () => {
+            if (selectedTag !== "main" && window.confirm(`Delete all files and their vectors in the "${selectedTag}" tag?`)) {
+              await deleteAllFileVectorsInTag(); // Call the function to delete vectors
+              const updatedTags = tags.filter((tag) => tag !== selectedTag);
+              setTags(updatedTags);
+              setSelectedTag("main"); // Reset to "main" if the selected tag is deleted
+
+              // Update Firestore with the updated tag list
+              const docRef = doc(db, "applicants", selectedApplicant.id);
+              await updateDoc(docRef, { customTags: updatedTags });
+
+              toast({
+                title: 'Tag Deleted',
+                description: `Tag "${selectedTag}" and all associated file vectors were deleted.`,
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+              });
+            }
+          }}
+          isDisabled={selectedTag === "main"} // Disable deletion for "main" tag
+        >
+          Del
+        </Button>
       </HStack>
+
+
+      {/* Rest of the component remains unchanged */}
       <VStack width="100%" flex="1" overflowY="auto" overflowX="auto">
         <Alert status="warning" minHeight="80px" borderRadius="10px" mb="4" fontSize="16px">
           <AlertIcon />
           <AlertDescription>
-            Only vectorized files are included in the applicant summary generated by the AI model, and currently only one file may be vectorized at a time.
-            Vectorizing a file will delete the vectors for any other file.
-            Support for multiple files will be added in a future version.
+            Only vectorized files are included in the applicant summary generated by the AI model, and currently only one file may be vectorized at a time. Vectorizing a file will delete the vectors for any other file. Support for multiple files will be added in a future version.
           </AlertDescription>
         </Alert>
         <FileDropzone onDrop={onDrop} disabled={uploadInProgress} />
@@ -355,6 +513,8 @@ const FileUploader = ({ selectedApplicant }) => {
           vectorizeStatus={vectorizeStatus}
         />
       </VStack>
+
+      {/* Modals */}
       <OverwriteFileModal
         isOpen={isOverwriteModalOpen}
         onClose={onOverwriteModalClose}
@@ -385,6 +545,6 @@ const FileUploader = ({ selectedApplicant }) => {
       />
     </VStack>
   );
-};
 
+}
 export default FileUploader;
