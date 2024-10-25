@@ -58,8 +58,8 @@ RETRIEVAL_DOC_LIMIT = 10
 class Prompt:
     question: list
     detail_level: str
-    tag: Union[list, str]  # vector DB tag
-    filename: Union[list, str]  # vector DB filename
+    tag: Union[list, str] = None  # vector DB tag
+    filename: Union[list, str] = None  # vector DB filename
     id: str = uuid.uuid4().hex
 
 
