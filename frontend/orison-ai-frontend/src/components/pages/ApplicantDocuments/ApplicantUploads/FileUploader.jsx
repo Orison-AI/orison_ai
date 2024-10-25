@@ -198,6 +198,53 @@ const FileUploader = ({ selectedApplicant }) => {
     onDeleteModalOpen();
   };
 
+  const deleteAllFileVectorsInBucket = useCallback(async () => {
+    if (user && selectedApplicant && selectedBucket) {
+      const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/`;
+      const storage = getStorage();
+      const listRef = ref(storage, filePath);
+
+      try {
+        const res = await listAll(listRef);
+        const filesToDelete = res.items.map(itemRef => itemRef); // Get all file references
+
+        for (const fileRef of filesToDelete) {
+          const fileName = fileRef.name;
+          console.log(`Deleting vectors for file: ${fileName}`);
+
+          // First, delete the vectors for each file
+          await deleteFileVectors(user.uid, selectedApplicant.id, selectedBucket, fileName);
+
+          // Then, delete the actual file from Firebase Storage
+          await deleteObject(fileRef);
+          console.log(`File ${fileName} deleted from storage.`);
+        }
+
+        console.log(`All vectors and files deleted for bucket: ${selectedBucket}`);
+        toast({
+          title: 'Success',
+          description: `Vectors and files for all files in the "${selectedBucket}" bucket were deleted.`,
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } catch (error) {
+        console.error("Error deleting file vectors or files:", error);
+        toast({
+          title: 'Error',
+          description: 'Error occurred while deleting file vectors and files.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
+    } else {
+      console.error("User, selectedApplicant, or selectedBucket is undefined.");
+    }
+  }, [user, selectedApplicant, selectedBucket]);
+
+
+
   const handleDeleteConfirm = async () => {
     const storage = getStorage();
     const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedBucket}/${fileToDelete}`;
@@ -239,8 +286,31 @@ const FileUploader = ({ selectedApplicant }) => {
     if (user && selectedApplicant) {
       setVectorizingFiles((prev) => [...prev, fileName]);
       setVectorizeStatus('loading');
+
       try {
+        // Call the vectorization API (or function)
         await vectorizeFiles(user.uid, selectedApplicant.id, selectedBucket, fileName);
+
+        // Fetch current vectorized files from Firestore
+        const docRef = doc(db, 'applicants', selectedApplicant.id);
+        const docSnap = await getDoc(docRef);
+        let currentVectorizedFiles = [];
+
+        if (docSnap.exists()) {
+          currentVectorizedFiles = docSnap.data().vectorized_files || [];
+        }
+
+        // Add the new file to the vectorized_files list if it's not already there
+        if (!currentVectorizedFiles.includes(fileName)) {
+          const updatedVectorizedFiles = [...currentVectorizedFiles, fileName];
+
+          // Update the vectorized_files field in Firestore
+          await updateDoc(docRef, {
+            vectorized_files: updatedVectorizedFiles
+          });
+        }
+
+        // Show success toast
         toast({
           title: 'Vectorization Completed',
           description: `Vectorization for ${fileName} has completed successfully.`,
@@ -249,7 +319,9 @@ const FileUploader = ({ selectedApplicant }) => {
           isClosable: true,
         });
         setVectorizeStatus('success');
+
       } catch (error) {
+        // Show error toast if vectorization or Firestore update fails
         toast({
           title: 'Vectorization Failed',
           description: error.message,
@@ -258,11 +330,14 @@ const FileUploader = ({ selectedApplicant }) => {
           isClosable: true,
         });
         setVectorizeStatus('error');
+
       } finally {
+        // Remove the file from the vectorizing state
         setVectorizingFiles((prev) => prev.filter((file) => file !== fileName));
       }
     }
-  }, [selectedApplicant, selectedBucket, toast, user]);
+  }, [user, selectedApplicant, selectedBucket, toast]);
+
 
   const vectorizeAllFiles = useCallback(async () => {
     const nonVectorizedFiles = documents.filter(doc => !doc.vectorized).map(doc => doc.fileName);
@@ -391,7 +466,8 @@ const FileUploader = ({ selectedApplicant }) => {
         <Button
           colorScheme="red"
           onClick={async () => {
-            if (selectedBucket !== "main" && window.confirm(`Delete bucket "${selectedBucket}" and its files?`)) {
+            if (selectedBucket !== "main" && window.confirm(`Delete all files and their vectors in the "${selectedBucket}" bucket?`)) {
+              await deleteAllFileVectorsInBucket(); // Call the function to delete vectors
               const updatedBuckets = buckets.filter((bucket) => bucket !== selectedBucket);
               setBuckets(updatedBuckets);
               setSelectedBucket("main"); // Reset to "main" if the selected bucket is deleted
@@ -402,7 +478,7 @@ const FileUploader = ({ selectedApplicant }) => {
 
               toast({
                 title: 'Bucket Deleted',
-                description: `Bucket "${selectedBucket}" deleted successfully.`,
+                description: `Bucket "${selectedBucket}" and all associated file vectors were deleted.`,
                 status: 'success',
                 duration: 5000,
                 isClosable: true,
