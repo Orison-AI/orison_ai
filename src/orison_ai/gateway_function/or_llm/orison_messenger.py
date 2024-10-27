@@ -257,19 +257,15 @@ class OrisonMessenger:
         result = " and ".join(pairs)
         return result
 
-    async def request(
-        self,
-        prompt: Prompt,
-    ):
+    async def _retrieve_docs(self, prompt):
         """
-        Request the LLM to answer a question
+        Retrieve documents from the vector DB
         :param prompt: Prompt object
-        :return: Answer to the question
-        :rtype: QandA
+        :return: List of retrieved documents
+        :rtype: List[Document]
         """
 
         query = prompt.question
-        detail_level = prompt.detail_level
         filter_conditions = []
         # Check if tag list exists and is not empty
         if prompt.tag:
@@ -309,15 +305,22 @@ class OrisonMessenger:
         except Exception as e:
             raise Retriever_INITIALIZATION_FAILED(exception=e)
 
-        if isinstance(detail_level, str):
-            detail_level = DetailLevel.from_keyword(detail_level)
-
         retrieved_docs = await retriever.ainvoke(query)
         logger.info(
             f"Retrieved {len(retrieved_docs)} documents from the query: {query}"
         )
-        context = "\n".join([doc.page_content for doc in retrieved_docs])
+        return retrieved_docs
+
+    async def _generate_context(self, retrieved_docs):
+        """
+        Generate context from the retrieved documents
+        :param retrieved_docs: List of retrieved documents
+        :return: Context string
+        :rtype: str
+        """
+
         source = {}
+        context = "\n".join([doc.page_content for doc in retrieved_docs])
         for doc in retrieved_docs:
             if doc.metadata["source"] not in source:
                 source[doc.metadata["source"]] = []
@@ -329,6 +332,60 @@ class OrisonMessenger:
         logger.info(
             "Checking if context exceeds max tokens. Truncating if required...DONE"
         )
-        text = f"Given the context: \n{context}, \n answer the following: {query} in {detail_level.value}."
-        response = await self._system_chain.ainvoke(text)
+        return context, source
+
+    async def request(
+        self,
+        prompt: Prompt,
+    ):
+        """
+        Request the LLM to answer a question
+        :param prompt: Prompt object
+        :return: Answer to the question
+        :rtype: QandA
+        """
+
+        retrieved_docs = await self._retrieve_docs(prompt)
+        detail_level = prompt.detail_level
+        if isinstance(detail_level, str):
+            detail_level = DetailLevel.from_keyword(detail_level)
+        source = {}
+        if len(retrieved_docs) == 0:
+            response = QandA(
+                question=prompt.question,
+                answer="No relevant sources were found. Check that your tag and filename are relevant and not conflicting exclusive.",
+                source=source,
+            )
+        else:
+            context, source = await self._generate_context(retrieved_docs)
+            prompt_text = f"Given the context: \n{context}, \n answer the following: {prompt.question} in {prompt.detail_level}."
+        response = await self._system_chain.ainvoke(prompt_text)
         return QandA(question=prompt.question, answer=response, source=source)
+
+    async def stream(
+        self,
+        prompt: Prompt,
+    ):
+        """
+        Request the LLM to answer a question
+        :param prompt: Prompt object
+        :return: Answer to the question
+        :rtype: QandA
+        """
+
+        retrieved_docs = await self._retrieve_docs(prompt)
+        detail_level = prompt.detail_level
+        if isinstance(detail_level, str):
+            detail_level = DetailLevel.from_keyword(detail_level)
+        source = {}
+        if len(retrieved_docs) == 0:
+            yield QandA(
+                question=prompt.question,
+                answer="No relevant sources were found. Check that your tag and filename are relevant and not conflicting exclusive.",
+                source=source,
+            )
+        else:
+            context, source = await self._generate_context(retrieved_docs)
+            prompt_text = f"Given the context: \n{context}, \n answer the following: {prompt.question} in {prompt.detail_level.value}."
+            async for chunk in self._system_chain.astream(prompt_text):
+                yield QandA(question=prompt.question, answer=chunk, source=source)

@@ -50,14 +50,15 @@ class DocAssist(RequestHandler):
                 filename=filename,
                 detail_level=DetailLevel.LIGHT,
             )
-            response = await self._orison_messenger.request(prompt)
-            output_message = response.answer + f"\t(Source: {response.source})"
-            self.logger.info(f"Generated response from DocAssist: {output_message}")
+            async for qna in self._orison_messenger.stream(prompt):
+                response = qna.answer
+                print(response, end="", flush=True)
+            print(f"Sources: {qna.source}")
         except Exception as e:
             message = f"Error generating response from DocAssist. Error code: {type(e).__name__}. Error message: {e}"
             self.logger.error(message, exc_info=True)
             return ErrorResponse(message)
-        return OKResponse(output_message)
+        return OKResponse(message="DocAssist response generated successfully")
 
 
 if __name__ == "__main__":
