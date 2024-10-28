@@ -22,9 +22,16 @@ import logging
 import tiktoken
 from typing import Union
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    MessagesPlaceholder,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+)
+from langchain.chains.llm import LLMChain
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.rate_limiters import InMemoryRateLimiter
+from langchain.memory import ConversationBufferWindowMemory
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from qdrant_client.async_qdrant_client import AsyncQdrantClient
 from qdrant_client import QdrantClient
@@ -44,6 +51,7 @@ from exceptions import (
     QDrant_INITIALIZATION_FAILED,
     Retriever_INITIALIZATION_FAILED,
 )
+from or_store.db_interfaces import ChatMemoryClient
 
 
 logging.basicConfig(level=logging.INFO)
@@ -61,6 +69,9 @@ class Prompt:
     tag: Union[list, str] = None  # vector DB tag
     filename: Union[list, str] = None  # vector DB filename
     id: str = uuid.uuid4().hex
+    # Used if memory is True
+    applicant_id: str = None
+    attorney_id: str = None
 
 
 class DetailLevel(Enum):
@@ -133,6 +144,7 @@ class OrisonMessenger:
         temperature: float = 0.2,
         max_tokens: int = 4096,
         max_retries: int = 5,
+        memory_window_size: int = 20,
         **kwargs,
     ):
         try:
@@ -145,8 +157,18 @@ class OrisonMessenger:
             raise RateLimiter_INITIALIZATION_FAILED(exception=e)
 
         try:
+            self.chat_memory_client = ChatMemoryClient()
+            self.memory = ConversationBufferWindowMemory(
+                k=memory_window_size,  # Keep track of the last `k` interactions
+                memory_key="chat_history",  # Key for the memory in the prompt
+                return_messages=True,
+            )
             self._system_prompt = ChatPromptTemplate(
-                messages=[("system", self.ROLE), ("user", "{text}")]
+                messages=[
+                    SystemMessagePromptTemplate.from_template(self.ROLE),
+                    MessagesPlaceholder(variable_name="chat_history"),
+                    HumanMessagePromptTemplate.from_template("{text}"),
+                ]
             )
             self._chat_bot = ChatOpenAI(
                 api_key=secrets.openai_api_key,
@@ -158,7 +180,19 @@ class OrisonMessenger:
                 **kwargs,
             )
             self._parser = StrOutputParser()
-            self._system_chain = self._system_prompt | self._chat_bot | self._parser
+            self._system_chain_memory = LLMChain(
+                llm=self._chat_bot,
+                prompt=self._system_prompt,
+                verbose=True,
+                memory=self.memory,
+                output_parser=self._parser,
+            )
+            self._system_chain = LLMChain(
+                llm=self._chat_bot,
+                prompt=self._system_prompt,
+                verbose=True,
+                output_parser=self._parser,
+            )
             self._embeddings = OrisonEmbeddings(
                 model=embedding_model,
                 api_key=secrets.openai_api_key,
@@ -260,10 +294,12 @@ class OrisonMessenger:
     async def request(
         self,
         prompt: Prompt,
+        use_memory: bool = True,
     ):
         """
         Request the LLM to answer a question
         :param prompt: Prompt object
+        :param use_memory: Use memory to store the context
         :return: Answer to the question
         :rtype: QandA
         """
@@ -330,5 +366,23 @@ class OrisonMessenger:
             "Checking if context exceeds max tokens. Truncating if required...DONE"
         )
         text = f"Given the context: \n{context}, \n answer the following: {query} in {detail_level.value}."
-        response = await self._system_chain.ainvoke(text)
+        if use_memory:
+            await self.chat_memory_client.load_memory_into_buffer(
+                memory_buffer=self.memory,
+                applicant_id=prompt.applicant_id,
+                attorney_id=prompt.attorney_id,
+            )
+            chain_response = await self._system_chain_memory.ainvoke(text)
+            response = chain_response.get("text")
+            await self.memory.asave_context(
+                inputs={"question": query}, outputs={"answer": response}
+            )
+            await self.chat_memory_client.update_memory(
+                applicant_id=prompt.applicant_id,
+                attorney_id=prompt.attorney_id,
+                user_message=query,
+                assistant_response=response,
+            )
+        else:
+            response = await self._system_chain.ainvoke(text)
         return QandA(question=prompt.question, answer=response, source=source)

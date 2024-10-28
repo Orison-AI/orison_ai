@@ -49,6 +49,8 @@ class DocAssist(RequestHandler):
                 tag=tag,
                 filename=filename,
                 detail_level=DetailLevel.LIGHT,
+                applicant_id=applicant_id,
+                attorney_id=attorney_id,
             )
             response = await self._orison_messenger.request(prompt)
             output_message = response.answer + f"\t(Source: {response.source})"

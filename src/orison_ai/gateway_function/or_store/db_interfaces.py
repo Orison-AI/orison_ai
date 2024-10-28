@@ -14,6 +14,12 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
+# External
+
+from typing import List
+from datetime import datetime
+from mongoengine import DoesNotExist
+from langchain.memory import ConversationBufferWindowMemory
 
 # Internal
 
@@ -22,6 +28,8 @@ from or_store.models import (
     GoogleScholarNetworkDB,
     StoryBuilder,
     ScreeningBuilder,
+    MemoryEntry,
+    ChatMemoryDB,
 )
 from or_store.firebase import FirestoreClient
 
@@ -68,3 +76,89 @@ class GoogleScholarNetworkClient(FirestoreClient):
         super(GoogleScholarNetworkClient, self).__init__()
         self._model = GoogleScholarNetworkDB
         self._collection = self.client.collection("google_scholar_network")
+
+
+class ChatMemoryClient(FirestoreClient):
+    def __init__(self):
+        """
+        Initializes an instance of a ChatMemoryClient object, which interacts with the chat memory collection.
+        """
+        super(ChatMemoryClient, self).__init__()
+        self._model = ChatMemoryDB
+        self._collection = self.client.collection("chat_memory")
+
+    async def get_memory(
+        self, applicant_id: str, attorney_id: str
+    ) -> List[MemoryEntry]:
+        """
+        Retrieves the chat memory for a given applicant and attorney.
+        """
+        try:
+            memory_record = await self.find_top(
+                applicant_id=applicant_id, attorney_id=attorney_id
+            )
+            return memory_record
+        except DoesNotExist:
+            return []
+
+    async def update_memory(
+        self,
+        applicant_id: str,
+        attorney_id: str,
+        user_message: str,
+        assistant_response: str,
+    ):
+        """
+        Updates the chat memory for a given applicant and attorney with a new user message and assistant response.
+        """
+        memory_entry = MemoryEntry(
+            user_message=user_message,
+            assistant_response=assistant_response,
+        )
+        memory_record = await self.find_top(
+            applicant_id=applicant_id, attorney_id=attorney_id
+        )
+        if memory_record:
+            memory_record.history.append(memory_entry)
+            memory_record.date_updated = datetime.utcnow()
+            memory_record.update(
+                history=memory_record.history, date_updated=memory_record.date_updated
+            )
+        else:
+            memory_record = ChatMemoryDB(
+                applicant_id=applicant_id,
+                attorney_id=attorney_id,
+                history=[memory_entry],
+                date_updated=datetime.utcnow(),
+            )
+            await self.insert(
+                applicant_id=applicant_id, attorney_id=attorney_id, doc=memory_record
+            )
+
+    async def clear_memory(self, applicant_id: str, attorney_id: str):
+        """
+        Clears the chat memory for a given applicant and attorney.
+        """
+        try:
+            memory_record = self.find_top(
+                applicant_id=applicant_id, attorney_id=attorney_id
+            )
+            memory_record.update(history=[], date_updated=datetime.utcnow())
+        except DoesNotExist:
+            pass
+
+    async def load_memory_into_buffer(
+        self,
+        memory_buffer: ConversationBufferWindowMemory,
+        applicant_id: str,
+        attorney_id: str,
+    ):
+        """
+        Loads existing memory from DB into an empty ConversationBufferWindowMemory.
+        """
+        history = await self.get_memory(applicant_id, attorney_id)
+        for entry in history:
+            memory_buffer.save_context(
+                {"question": entry.user_message},  # User's message
+                {"answer": entry.assistant_response},  # Assistant's response
+            )
