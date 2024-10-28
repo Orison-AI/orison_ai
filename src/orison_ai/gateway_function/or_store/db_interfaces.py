@@ -94,7 +94,7 @@ class ChatMemoryClient(FirestoreClient):
         Retrieves the chat memory for a given applicant and attorney.
         """
         try:
-            memory_record = await self.find_top(
+            memory_record, _ = await self.find_top(
                 applicant_id=applicant_id, attorney_id=attorney_id
             )
             return memory_record
@@ -115,16 +115,19 @@ class ChatMemoryClient(FirestoreClient):
             user_message=user_message,
             assistant_response=assistant_response,
         )
-        memory_record = await self.find_top(
-            applicant_id=applicant_id, attorney_id=attorney_id
-        )
-        if memory_record:
+        try:
+            memory_record, doc_id = await self.find_top(
+                applicant_id=applicant_id, attorney_id=attorney_id
+            )
             memory_record.history.append(memory_entry)
             memory_record.date_updated = datetime.utcnow()
-            memory_record.update(
-                history=memory_record.history, date_updated=memory_record.date_updated
+            await self.replace(
+                applicant_id=applicant_id,
+                attorney_id=attorney_id,
+                doc_id=doc_id,
+                doc=memory_record,
             )
-        else:
+        except DoesNotExist:
             memory_record = ChatMemoryDB(
                 applicant_id=applicant_id,
                 attorney_id=attorney_id,
@@ -134,13 +137,15 @@ class ChatMemoryClient(FirestoreClient):
             await self.insert(
                 applicant_id=applicant_id, attorney_id=attorney_id, doc=memory_record
             )
+        except Exception as e:
+            raise e
 
     async def clear_memory(self, applicant_id: str, attorney_id: str):
         """
         Clears the chat memory for a given applicant and attorney.
         """
         try:
-            memory_record = self.find_top(
+            memory_record, _ = self.find_top(
                 applicant_id=applicant_id, attorney_id=attorney_id
             )
             memory_record.update(history=[], date_updated=datetime.utcnow())
@@ -156,9 +161,9 @@ class ChatMemoryClient(FirestoreClient):
         """
         Loads existing memory from DB into an empty ConversationBufferWindowMemory.
         """
-        history = await self.get_memory(applicant_id, attorney_id)
-        for entry in history:
-            memory_buffer.save_context(
+        memory_record = await self.get_memory(applicant_id, attorney_id)
+        for entry in memory_record.history:
+            await memory_buffer.asave_context(
                 {"question": entry.user_message},  # User's message
                 {"answer": entry.assistant_response},  # Assistant's response
             )

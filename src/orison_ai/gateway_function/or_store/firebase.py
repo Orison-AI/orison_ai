@@ -36,6 +36,7 @@ from bson import ObjectId
 from mongoengine import Document, EmbeddedDocument
 from typing import List, Union, Any, Optional
 from pymongo import DESCENDING, ASCENDING
+from mongoengine import DoesNotExist
 
 logging.basicConfig(level=logging.INFO)
 _logger = logging.getLogger(__name__)
@@ -265,7 +266,7 @@ class FirestoreClient(FireStoreDB):
         if result:
             return result[0]
         else:
-            return []
+            raise DoesNotExist
 
     async def find_top_k(
         self,
@@ -330,7 +331,10 @@ class FirestoreClient(FireStoreDB):
             )
 
         return [
-            self._model(**{k: v for k, v in item.to_dict().items() if k != "id"})
+            (
+                self._model(**{k: v for k, v in item.to_dict().items() if k != "id"}),
+                item.id,
+            )
             for item in query.stream()
         ]
 
@@ -364,5 +368,44 @@ class FirestoreClient(FireStoreDB):
         applicant_collection = attorney_document.collection(applicant_id)
         _, doc_ref = applicant_collection.add(doc.to_mongo().to_dict())
         _logger.info(f"Document inserted. Firestore id: {doc_ref.id}")
+
+        return doc_ref.id
+
+    async def replace(
+        self,
+        attorney_id: str,
+        applicant_id: str,
+        doc_id: str,
+        doc: Union[EmbeddedDocument, Document],
+    ) -> str:
+        """
+        Replaces an existing document in Firestore with new data.
+
+        :param attorney_id: the business id of the document to replace
+        :param applicant_id: the user id of the document to replace
+        :param doc_id: the id of the document to replace
+        :param doc: the new object to replace in the database
+
+        :return: the Firestore document id of the replaced document
+        """
+        _logger.debug(f"Database operation: replacing document with id {doc_id}: {doc}")
+
+        if not isinstance(doc, self._model):
+            raise TypeError(
+                f"The mongo doc provided {doc} of type {type(doc)} "
+                f"needs to be type {self._model}"
+            )
+
+        # Setting the creation date to current timestamp for the replacement
+        doc.date_created = datetime.datetime.utcnow()
+
+        # Target the document within the nested collection
+        attorney_document = self._collection.document(attorney_id)
+        applicant_collection = attorney_document.collection(applicant_id)
+        doc_ref = applicant_collection.document(doc_id)
+
+        # Replace the document data
+        doc_ref.set(doc.to_mongo().to_dict(), merge=False)
+        _logger.info(f"Document replaced. Firestore id: {doc_ref.id}")
 
         return doc_ref.id
