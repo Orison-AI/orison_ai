@@ -3,150 +3,43 @@ import { Box, Button, Input, VStack, Text, HStack, Flex, Spinner, useToast } fro
 import { docassist } from '../../../api/api';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../../../common/firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { collection, orderBy, limit, query, getDocs } from 'firebase/firestore';
 import ReactMarkdown from 'react-markdown';
-import Select, { components } from 'react-select'; // Import react-select and components
-
-const customStyles = {
-    control: (provided, state) => ({
-        ...provided,
-        backgroundColor: '#2d3748', // Dark background
-        borderColor: state.isFocused ? '#63b3ed' : '#4a5568', // Focused state has a border color change
-        color: 'white',
-        cursor: 'pointer', // Make the entire control clickable
-    }),
-    menu: (provided) => ({
-        ...provided,
-        backgroundColor: '#2d3748', // Dark menu background
-    }),
-    option: (provided, state) => ({
-        ...provided,
-        backgroundColor: state.isFocused ? '#4a5568' : '#2d3748',
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    }),
-    multiValue: (provided) => ({
-        ...provided,
-        display: 'none', // Hide the selected values from appearing in the control
-    }),
-    placeholder: (provided) => ({
-        ...provided,
-        color: '#a0aec0',
-    }),
-    dropdownIndicator: (provided) => ({
-        ...provided,
-        color: 'white',
-    }),
-    indicatorSeparator: () => ({
-        display: 'none',
-    }),
-};
-
-// Custom Option component to show tick marks
-const CustomOption = (props) => {
-    return (
-        <components.Option {...props}>
-            {props.label}
-            {props.isSelected ? (
-                <span style={{ marginLeft: 'auto', color: 'green' }}>✔</span> // Tick mark for selected items
-            ) : null}
-        </components.Option>
-    );
-};
-
-// Custom ValueContainer to display custom text
-const CustomValueContainer = ({ children, ...props }) => {
-    const { getValue, hasValue } = props;
-    const selected = getValue();
-    let displayText = props.selectProps.placeholder;
-    if (hasValue && selected.length > 0) {
-        displayText = "View Selection";
-    }
-
-    return (
-        <components.ValueContainer {...props}>
-            <Text color="white">{displayText}</Text>
-        </components.ValueContainer>
-    );
-};
+import Select, { components } from 'react-select';
 
 const DocAssist = ({ selectedApplicant }) => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
-    const [selectedTags, setSelectedTags] = useState([]);
-    const [selectedFiles, setSelectedFiles] = useState([]);
-    const [vectorizedFiles, setVectorizedFiles] = useState([]);
-    const [tags, setTags] = useState([]); // Store fetched tags here
     const toast = useToast();
     const [user] = useAuthState(auth);
 
-    // Refs to track dropdown components
-    const tagDropdownRef = useRef(null);
-    const fileDropdownRef = useRef(null);
-
-    // Disable file dropdown if tag is selected, and vice versa
-    const isBucketDisabled = selectedFiles.length > 0;
-    const isFileDisabled = selectedTags.length > 0;
-
-    // Fetch vectorized files from Firestore
-    const fetchVectorizedFiles = useCallback(async () => {
+    const fetchChatHistory = useCallback(async () => {
         if (user && selectedApplicant) {
-            const docRef = doc(db, "applicants", selectedApplicant.id);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                setVectorizedFiles(docSnap.data().vectorized_files || []);
+            const querySnapshot = await getDocs(query(collection(db, "chat_memory", user.uid, selectedApplicant.id), orderBy("timestamp", "desc"), limit(1)));
+            const docSnap = querySnapshot.docs[0];
+            if (docSnap && docSnap.exists()) {
+                const history = docSnap.data().history || [];
+
+                // Sort history by timestamp in ascending order
+                const sortedHistory = history.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis());
+
+                // Format messages for display
+                const formattedMessages = sortedHistory.map(entry => [
+                    { text: entry.user_message, sender: 'user' },
+                    { text: entry.assistant_response, sender: 'bot' }
+                ]).flat();
+
+                setMessages(formattedMessages);
             } else {
-                console.error("No document found for the selected applicant.");
+                console.error("No chat history found for the selected applicant.");
             }
         }
     }, [user, selectedApplicant]);
 
     useEffect(() => {
-        fetchVectorizedFiles();
-    }, [fetchVectorizedFiles]);
-
-    // Fetch customTags from Firestore
-    const fetchTags = useCallback(async () => {
-        if (user && selectedApplicant) {
-            const docRef = doc(db, "applicants", selectedApplicant.id);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const customTags = docSnap.data().customTags || []; // Fetch customTags
-                // Map the customTags to the required format
-                const mappedTags = customTags.map(tag => ({
-                    label: tag,
-                    value: tag.toLowerCase() // Lowercase for value
-                }));
-                setTags(mappedTags);
-            } else {
-                console.error("No document found for the selected applicant.");
-            }
-        }
-    }, [user, selectedApplicant]);
-
-    useEffect(() => {
-        fetchTags(); // Fetch tags on component mount or when user/selectedApplicant changes
-    }, [fetchTags]);
-
-    // Function to close dropdown without clearing selection
-    const handleClickOutside = useCallback((e) => {
-        if (
-            tagDropdownRef.current && !tagDropdownRef.current.contains(e.target) &&
-            fileDropdownRef.current && !fileDropdownRef.current.contains(e.target)
-        ) {
-            document.activeElement.blur(); // Close the dropdown
-        }
-    }, []);
-
-    useEffect(() => {
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [handleClickOutside]);
+        fetchChatHistory(); // Fetch chat history on component mount or when user/selectedApplicant changes
+    }, [fetchChatHistory]);
 
     const handleSendMessage = async () => {
         if (inputMessage.trim() === '') {
@@ -171,20 +64,14 @@ const DocAssist = ({ selectedApplicant }) => {
             return;
         }
 
-        const tag = selectedTags.map(b => b.value);
-        const filename = selectedFiles.map(f => f.value);
-
-        setMessages((prevMessages) => [...prevMessages, { text: inputMessage, sender: 'user' }]);
         setInputMessage('');
         setIsStreaming(true);
 
         try {
-            const response = await Promise.race([
-                docassist(user.uid, selectedApplicant.id, inputMessage, tag, filename),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), 60000))
-            ]);
+            await docassist(user.uid, selectedApplicant.id, inputMessage);
 
-            setMessages((prevMessages) => [...prevMessages, { text: response.message, sender: 'bot' }]);
+            // Fetch updated history after sending the message
+            await fetchChatHistory();
         } catch (error) {
             console.error('Error:', error);
             toast({
@@ -203,11 +90,6 @@ const DocAssist = ({ selectedApplicant }) => {
         if (e.key === 'Enter' && !isStreaming) {
             handleSendMessage();
         }
-    };
-
-    const clearSelections = () => {
-        setSelectedTags([]);
-        setSelectedFiles([]);
     };
 
     return (
@@ -255,51 +137,6 @@ const DocAssist = ({ selectedApplicant }) => {
                         flex="1"
                         isDisabled={isStreaming}
                     />
-
-                    {/* Multi-Select Bucket Dropdown */}
-                    <Box width="200px" ref={tagDropdownRef}>
-                        <Select
-                            isMulti
-                            options={tags}
-                            value={selectedTags}
-                            onChange={setSelectedTags}
-                            styles={customStyles}
-                            components={{
-                                Option: CustomOption,
-                                ValueContainer: CustomValueContainer,
-                            }}
-                            placeholder="Select Tags"
-                            hideSelectedOptions={false}
-                            closeMenuOnSelect={false}
-                            menuPlacement="top"
-                            isDisabled={isBucketDisabled || isStreaming}
-                        />
-                    </Box>
-
-                    {/* Multi-Select File Dropdown */}
-                    <Box width="200px" ref={fileDropdownRef}>
-                        <Select
-                            isMulti
-                            options={vectorizedFiles.map(file => ({ label: file, value: file }))}
-                            value={selectedFiles}
-                            onChange={setSelectedFiles}
-                            styles={customStyles}
-                            components={{
-                                Option: CustomOption,
-                                ValueContainer: CustomValueContainer,
-                            }}
-                            placeholder="Select Files"
-                            hideSelectedOptions={false}
-                            closeMenuOnSelect={false}
-                            menuPlacement="top"
-                            isDisabled={isFileDisabled || isStreaming}
-                        />
-                    </Box>
-
-                    {/* Clear Selections Button */}
-                    <Button onClick={clearSelections} isDisabled={isStreaming}>
-                        Clear Selections
-                    </Button>
 
                     {/* Send Button */}
                     <Button colorScheme="blue" onClick={handleSendMessage} isDisabled={isStreaming}>

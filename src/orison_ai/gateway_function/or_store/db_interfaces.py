@@ -162,7 +162,10 @@ class ChatMemoryClient(FirestoreClient):
         Loads existing memory from DB into an empty ConversationBufferWindowMemory.
         """
         memory_record = await self.get_memory(applicant_id, attorney_id)
-        for entry in memory_record.history:
+        sorted_history = sorted(
+            memory_record.history, key=lambda entry: entry.timestamp, reverse=True
+        )
+        for entry in sorted_history.history:
             await memory_buffer.asave_context(
                 {"question": entry.user_message},  # User's message
                 {"answer": entry.assistant_response},  # Assistant's response
