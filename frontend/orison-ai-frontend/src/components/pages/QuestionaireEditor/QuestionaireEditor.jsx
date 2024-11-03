@@ -1,5 +1,5 @@
 // React
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 // Firebase
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
@@ -16,6 +16,7 @@ const QuestionaireEditor = ({ selectedApplicant }) => {
   const [idCounter, setIdCounter] = useState(0); // Initialize ID counter
   const [documentExists, setDocumentExists] = useState(false);
   const toast = useToast();
+  const [tags, setTags] = useState([]); // Store fetched tags here
 
   // Fetch the questionnaire for the attorney when the component mounts
   useEffect(() => {
@@ -196,18 +197,82 @@ const QuestionaireEditor = ({ selectedApplicant }) => {
     updateFirestore(updatedQuestions);
   };
 
+  // Fetch tags from Firestore
+  const fetchTags = useCallback(async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user || !selectedApplicant) throw new Error("User or applicant not found");
+
+      const docRef = doc(db, "applicants", selectedApplicant.id);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const customTags = docSnap.data().customTags || [];
+        const mappedTags = customTags.map(tag => ({
+          label: tag,
+          value: tag.toLowerCase()
+        }));
+        setTags(mappedTags);
+      } else {
+        console.error("No document found for the selected applicant.");
+      }
+    } catch (error) {
+      console.error("Error fetching tags:", error);
+    }
+  }, [selectedApplicant]);
+
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
+
+  // Fetch the questionnaire when the component mounts
+  useEffect(() => {
+    const fetchQuestionnaire = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) throw new Error('User not authenticated');
+
+        const questionnaireDocRef = doc(db, 'templates', selectedApplicant.id);
+        const questionnaireDoc = await getDoc(questionnaireDocRef);
+
+        if (questionnaireDoc.exists()) {
+          setDocumentExists(true);
+          const questionnaireData = questionnaireDoc.data();
+          const taskArray = questionnaireData.task || [];
+
+          const extractedQuestions = taskArray.map((taskItem, index) => ({
+            id: index + 1,
+            text: taskItem.question,
+            tag: taskItem.tag || '',
+            detail_level: taskItem.detail_level || '',
+            isEditing: false
+          }));
+
+          setQuestions(extractedQuestions);
+          setIdCounter(extractedQuestions.length);
+        } else {
+          setDocumentExists(false);
+        }
+      } catch (error) {
+        console.error('Error fetching questionnaire:', error);
+      }
+    };
+
+    fetchQuestionnaire();
+  }, []);
+
   return (
-    <Box className="oai-questionaire-editor" width="100%">
-      {/* "Add from Template" button is always visible now */}
+    <Box className="oai-questionnaire-editor" width="100%">
       <Button onClick={createFromTemplate} colorScheme="teal" mb={4}>
         Add from Template
       </Button>
 
       <VStack spacing={4}>
-        {questions.map(question => (
+        {questions.map((question) => (
           <QuestionEditor
             key={question.id}
             question={question}
+            tags={tags}  // Pass tags to QuestionEditor
             onSave={(id, text, tag, detail_level) => updateQuestion(id, text, tag, detail_level)}
             onEdit={() => editQuestion(question.id)}
             onDelete={() => deleteQuestion(question.id)}
