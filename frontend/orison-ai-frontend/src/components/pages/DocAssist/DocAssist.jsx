@@ -134,13 +134,6 @@ const DocAssist = ({ selectedApplicant }) => {
                 setMessages(allMessages);
             } else {
                 console.error("No chat history found for the selected applicant.");
-                toast({
-                    title: "Error",
-                    description: "No chat history found for the selected applicant.",
-                    status: "error",
-                    duration: 3000,
-                    isClosable: true,
-                });
             }
         }
     }, [user, selectedApplicant]);
