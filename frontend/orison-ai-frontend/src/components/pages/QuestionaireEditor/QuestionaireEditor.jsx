@@ -17,6 +17,7 @@ const QuestionaireEditor = ({ selectedApplicant }) => {
   const [documentExists, setDocumentExists] = useState(false);
   const toast = useToast();
   const [tags, setTags] = useState([]); // Store fetched tags here
+  const [detail_levels, setDetailLevel] = useState([]); // Store fetched detail levels here
 
   // Fetch the questionnaire for the attorney when the component mounts
   useEffect(() => {
@@ -212,7 +213,13 @@ const QuestionaireEditor = ({ selectedApplicant }) => {
           label: tag,
           value: tag.toLowerCase()
         }));
+        const customDetailLevel = docSnap.data().customDetailLevel || [];
+        const mappedDetailLevel = customDetailLevel.map(detail_level => ({
+          label: detail_level,
+          value: detail_level.toLowerCase()
+        }));
         setTags(mappedTags);
+        setDetailLevel(mappedDetailLevel);
       } else {
         console.error("No document found for the selected applicant.");
       }
@@ -273,6 +280,7 @@ const QuestionaireEditor = ({ selectedApplicant }) => {
             key={question.id}
             question={question}
             tags={tags}  // Pass tags to QuestionEditor
+            detailLevels={detail_levels}  // Pass detail_levels to QuestionEditor
             onSave={(id, text, tag, detail_level) => updateQuestion(id, text, tag, detail_level)}
             onEdit={() => editQuestion(question.id)}
             onDelete={() => deleteQuestion(question.id)}

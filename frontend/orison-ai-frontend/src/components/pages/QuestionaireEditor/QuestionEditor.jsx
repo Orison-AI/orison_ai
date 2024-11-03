@@ -4,10 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Input, Button, HStack, Spacer, Select } from '@chakra-ui/react';
 
 const DETAIL_LEVELS = [
-  { label: "Light Detail", value: "light detail" },
-  { label: "Moderate Detail", value: "moderate detail" },
-  { label: "Lengthy Detail", value: "lengthy detail" },
-  { label: "Very Heavy Detail", value: "very heavy detail" },
+  { label: "Light", value: "light" },
+  { label: "Moderate", value: "moderate" },
+  { label: "Lengthy", value: "lengthy" },
+  { label: "Very Heavy", value: "very heavy" },
 ];
 
 const QuestionEditor = ({ question, onSave, onEdit, onDelete, tags }) => {

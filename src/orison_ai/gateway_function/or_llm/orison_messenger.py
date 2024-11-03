@@ -295,7 +295,7 @@ class OrisonMessenger:
     async def request(
         self,
         prompt: Prompt,
-        use_memory: bool = True,
+        use_memory: bool = False,
     ):
         """
         Request the LLM to answer a question

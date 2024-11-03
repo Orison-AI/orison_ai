@@ -52,7 +52,7 @@ class DocAssist(RequestHandler):
                 applicant_id=applicant_id,
                 attorney_id=attorney_id,
             )
-            response = await self._orison_messenger.request(prompt)
+            response = await self._orison_messenger.request(prompt, use_memory=True)
             output_message = response.answer + f" (Source: {response.source})"
             self.logger.info(f"Generated response from DocAssist: {output_message}")
         except Exception as e:
