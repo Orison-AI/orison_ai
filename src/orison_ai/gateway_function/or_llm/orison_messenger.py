@@ -60,7 +60,7 @@ logger = logging.getLogger(__name__)
 MODEL_NAME = "gpt-4-turbo"
 EMBEDDING_MODEL = "text-embedding-ada-002"
 RETRIEVAL_DOC_LIMIT = 10
-CHAT_HISTORY_LIMIT = 5
+CHAT_HISTORY_LIMIT = 10
 
 
 @dataclass

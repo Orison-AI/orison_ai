@@ -110,6 +110,7 @@ const DocAssist = ({ selectedApplicant }) => {
     }, [fetchVectorizedFiles]);
 
     // Fetch chat memory (sorted by timestamp)
+    // Fetch chat memory (sorted by timestamp)
     const fetchMemory = useCallback(async () => {
         if (user && selectedApplicant) {
             const memoryRef = collection(db, "chat_memory", user.uid, selectedApplicant.id);
@@ -119,9 +120,12 @@ const DocAssist = ({ selectedApplicant }) => {
             if (!querySnapshot.empty) {
                 const latestDoc = querySnapshot.docs[0];  // Get the latest document
                 const data = latestDoc.data();
-                const history = data.history || [];  // Access the history field
+                let history = data.history || [];  // Access the history field
 
-                // Extract user and assistant messages from history
+                // Sort the history by timestamp in ascending order
+                history = history.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis());
+
+                // Extract user and assistant messages from sorted history
                 const allMessages = history.flatMap(entry => [
                     { text: entry.user_message, sender: 'user' },
                     { text: entry.assistant_response, sender: 'bot' }
@@ -140,6 +144,7 @@ const DocAssist = ({ selectedApplicant }) => {
             }
         }
     }, [user, selectedApplicant]);
+
 
     useEffect(() => {
         fetchMemory(); // Load memory on component mount
