@@ -99,7 +99,7 @@ class ChatMemoryClient(FirestoreClient):
             )
             return memory_record
         except DoesNotExist:
-            return []
+            return None
 
     async def update_memory(
         self,
@@ -162,10 +162,12 @@ class ChatMemoryClient(FirestoreClient):
         Loads existing memory from DB into an empty ConversationBufferWindowMemory.
         """
         memory_record = await self.get_memory(applicant_id, attorney_id)
+        if not memory_record:
+            return
         sorted_history = sorted(
             memory_record.history, key=lambda entry: entry.timestamp, reverse=True
         )
-        for entry in sorted_history.history:
+        for entry in sorted_history:
             await memory_buffer.asave_context(
                 {"question": entry.user_message},  # User's message
                 {"answer": entry.assistant_response},  # Assistant's response
