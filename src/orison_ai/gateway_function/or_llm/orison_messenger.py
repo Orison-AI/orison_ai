@@ -181,18 +181,12 @@ class OrisonMessenger:
                 **kwargs,
             )
             self._parser = StrOutputParser()
-            self._system_chain_memory = LLMChain(
-                llm=self._chat_bot,
-                prompt=self._system_prompt,
-                verbose=False,
-                memory=self.memory,
-                output_parser=self._parser,
-            )
             self._system_chain = LLMChain(
                 llm=self._chat_bot,
                 prompt=self._system_prompt,
-                verbose=True,
+                verbose=False,
                 output_parser=self._parser,
+                memory=self.memory,
             )
             self._embeddings = OrisonEmbeddings(
                 model=embedding_model,
@@ -374,8 +368,9 @@ class OrisonMessenger:
                 attorney_id=prompt.attorney_id,
                 window_size=CHAT_HISTORY_LIMIT,
             )
-            chain_response = await self._system_chain_memory.ainvoke(text)
-            response = chain_response.get("text")
+        chain_response = await self._system_chain.ainvoke({"text": text})
+        response = chain_response.get("text")
+        if use_memory:
             await self.memory.asave_context(
                 inputs={"question": query}, outputs={"answer": response}
             )
@@ -386,6 +381,4 @@ class OrisonMessenger:
                 assistant_response=response,
                 window_size=CHAT_HISTORY_LIMIT,
             )
-        else:
-            response = await self._system_chain.ainvoke(text)
         return QandA(question=prompt.question, answer=response, source=source)
