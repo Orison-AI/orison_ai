@@ -49,9 +49,11 @@ class DocAssist(RequestHandler):
                 tag=tag,
                 filename=filename,
                 detail_level=DetailLevel.LIGHT,
+                applicant_id=applicant_id,
+                attorney_id=attorney_id,
             )
             response = await self._orison_messenger.request(prompt)
-            output_message = response.answer + f"\t(Source: {response.source})"
+            output_message = response.answer + f" (Source: {response.source})"
             self.logger.info(f"Generated response from DocAssist: {output_message}")
         except Exception as e:
             message = f"Error generating response from DocAssist. Error code: {type(e).__name__}. Error message: {e}"

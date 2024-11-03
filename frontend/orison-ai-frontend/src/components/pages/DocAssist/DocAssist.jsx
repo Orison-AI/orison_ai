@@ -3,7 +3,7 @@ import { Box, Button, Input, VStack, Text, HStack, Flex, Spinner, useToast } fro
 import { docassist } from '../../../api/api';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../../../common/firebaseConfig';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, orderBy, getDocs, limit } from 'firebase/firestore';
 import ReactMarkdown from 'react-markdown';
 import Select, { components } from 'react-select'; // Import react-select and components
 
@@ -82,6 +82,7 @@ const DocAssist = ({ selectedApplicant }) => {
     const [tags, setTags] = useState([]); // Store fetched tags here
     const toast = useToast();
     const [user] = useAuthState(auth);
+    const messagesEndRef = useRef(null);
 
     // Refs to track dropdown components
     const tagDropdownRef = useRef(null);
@@ -107,6 +108,91 @@ const DocAssist = ({ selectedApplicant }) => {
     useEffect(() => {
         fetchVectorizedFiles();
     }, [fetchVectorizedFiles]);
+
+    // Fetch chat memory (sorted by timestamp)
+    // Fetch chat memory (sorted by timestamp)
+    const fetchMemory = useCallback(async () => {
+        if (user && selectedApplicant) {
+            const memoryRef = collection(db, "chat_memory", user.uid, selectedApplicant.id);
+            const q = query(memoryRef, orderBy("date_created", "desc"), limit(1));  // Get the latest document
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const latestDoc = querySnapshot.docs[0];  // Get the latest document
+                const data = latestDoc.data();
+                let history = data.history || [];  // Access the history field
+
+                // Sort the history by timestamp in ascending order
+                history = history.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis());
+
+                // Extract user and assistant messages from sorted history
+                const allMessages = history.flatMap(entry => [
+                    { text: entry.user_message, sender: 'user' },
+                    { text: entry.assistant_response, sender: 'bot' }
+                ]);
+
+                setMessages(allMessages);
+            } else {
+                console.error("No chat history found for the selected applicant.");
+                toast({
+                    title: "Error",
+                    description: "No chat history found for the selected applicant.",
+                    status: "error",
+                    duration: 3000,
+                    isClosable: true,
+                });
+            }
+        }
+    }, [user, selectedApplicant]);
+
+
+    useEffect(() => {
+        fetchMemory(); // Load memory on component mount
+    }, [fetchMemory]);
+
+    // Scroll to the bottom whenever messages are updated
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages]);
+
+    const handleSendMessage = async () => {
+        if (inputMessage.trim() === '') {
+            toast({
+                title: "Error",
+                description: "Please enter a message.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        // Temporarily display the user's question
+        const tempQuestion = { text: inputMessage, sender: 'user' };
+        setMessages((prevMessages) => [...prevMessages, tempQuestion]);
+        setInputMessage('');
+        setIsStreaming(true);
+
+        try {
+            await docassist(user.uid, selectedApplicant.id, inputMessage);
+
+            // Fetch the full updated chat history, which includes the latest question and answer
+            await fetchMemory();
+        } catch (error) {
+            console.error('Error:', error);
+            toast({
+                title: "Error",
+                description: error.message || "Failed to get response from AI.",
+                status: "error",
+                duration: 3000,
+                isClosable: true,
+            });
+        } finally {
+            setIsStreaming(false);
+        }
+    };
 
     // Fetch customTags from Firestore
     const fetchTags = useCallback(async () => {
@@ -148,57 +234,6 @@ const DocAssist = ({ selectedApplicant }) => {
         };
     }, [handleClickOutside]);
 
-    const handleSendMessage = async () => {
-        if (inputMessage.trim() === '') {
-            toast({
-                title: "Error",
-                description: "Please enter a message.",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-            return;
-        }
-
-        if (!user || !selectedApplicant) {
-            toast({
-                title: "Error",
-                description: "User or selected applicant not found.",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-            return;
-        }
-
-        const tag = selectedTags.map(b => b.value);
-        const filename = selectedFiles.map(f => f.value);
-
-        setMessages((prevMessages) => [...prevMessages, { text: inputMessage, sender: 'user' }]);
-        setInputMessage('');
-        setIsStreaming(true);
-
-        try {
-            const response = await Promise.race([
-                docassist(user.uid, selectedApplicant.id, inputMessage, tag, filename),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Request timed out')), 60000))
-            ]);
-
-            setMessages((prevMessages) => [...prevMessages, { text: response.message, sender: 'bot' }]);
-        } catch (error) {
-            console.error('Error:', error);
-            toast({
-                title: "Error",
-                description: error.message || "Failed to get response from AI.",
-                status: "error",
-                duration: 3000,
-                isClosable: true,
-            });
-        } finally {
-            setIsStreaming(false);
-        }
-    };
-
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && !isStreaming) {
             handleSendMessage();
@@ -231,6 +266,8 @@ const DocAssist = ({ selectedApplicant }) => {
                         <Text color="white">AI is processing your request...</Text>
                     </HStack>
                 )}
+                {/* Anchor to scroll to the bottom */}
+                <div ref={messagesEndRef} />
             </VStack>
 
             {/* Input Area at Bottom */}
@@ -256,7 +293,7 @@ const DocAssist = ({ selectedApplicant }) => {
                         isDisabled={isStreaming}
                     />
 
-                    {/* Multi-Select Bucket Dropdown */}
+                    {/* Multi-Select Tag Dropdown */}
                     <Box width="200px" ref={tagDropdownRef}>
                         <Select
                             isMulti

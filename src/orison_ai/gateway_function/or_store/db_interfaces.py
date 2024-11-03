@@ -14,6 +14,12 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
+# External
+
+from typing import List
+from datetime import datetime, timezone
+from mongoengine import DoesNotExist
+from langchain.memory import ConversationBufferWindowMemory
 
 # Internal
 
@@ -22,6 +28,8 @@ from or_store.models import (
     GoogleScholarNetworkDB,
     StoryBuilder,
     ScreeningBuilder,
+    MemoryEntry,
+    ChatMemoryDB,
 )
 from or_store.firebase import FirestoreClient
 
@@ -68,3 +76,118 @@ class GoogleScholarNetworkClient(FirestoreClient):
         super(GoogleScholarNetworkClient, self).__init__()
         self._model = GoogleScholarNetworkDB
         self._collection = self.client.collection("google_scholar_network")
+
+
+class ChatMemoryClient(FirestoreClient):
+    def __init__(self):
+        """
+        Initializes an instance of a ChatMemoryClient object, which interacts with the chat memory collection.
+        """
+        super(ChatMemoryClient, self).__init__()
+        self._model = ChatMemoryDB
+        self._collection = self.client.collection("chat_memory")
+
+    async def get_memory(
+        self, applicant_id: str, attorney_id: str
+    ) -> List[MemoryEntry]:
+        """
+        Retrieves the chat memory for a given applicant and attorney.
+        """
+        try:
+            memory_record, _ = await self.find_top(
+                applicant_id=applicant_id, attorney_id=attorney_id
+            )
+            return memory_record
+        except DoesNotExist:
+            return None
+
+    async def update_memory(
+        self,
+        applicant_id: str,
+        attorney_id: str,
+        user_message: str,
+        assistant_response: str,
+        window_size: int,
+    ):
+        """
+        Updates the chat memory for a given applicant and attorney with a new user message and assistant response.
+        :param applicant_id: Applicant ID
+        :param attorney_id: Attorney ID
+        :param user_message: User message
+        :param assistant_response: Assistant response
+        :param window_size: Window size of the memory buffer
+        """
+        memory_entry = MemoryEntry(
+            user_message=user_message,
+            assistant_response=assistant_response,
+        )
+        try:
+            memory_record, doc_id = await self.find_top(
+                applicant_id=applicant_id, attorney_id=attorney_id
+            )
+            memory_record.history.append(memory_entry)
+            sorted_history = sorted(
+                memory_record.history,
+                key=lambda entry: entry.timestamp.astimezone(timezone.utc),
+                reverse=True,
+            )
+            if len(sorted_history) > window_size:
+                sorted_history = sorted_history[:window_size]
+            memory_record.history = sorted_history
+            memory_record.date_updated = datetime.utcnow()
+            await self.replace(
+                applicant_id=applicant_id,
+                attorney_id=attorney_id,
+                doc_id=doc_id,
+                doc=memory_record,
+            )
+        except DoesNotExist:
+            memory_record = ChatMemoryDB(
+                applicant_id=applicant_id,
+                attorney_id=attorney_id,
+                history=[memory_entry],
+                date_updated=datetime.utcnow(),
+            )
+            await self.insert(
+                applicant_id=applicant_id, attorney_id=attorney_id, doc=memory_record
+            )
+        except Exception as e:
+            raise e
+
+    async def clear_memory(self, applicant_id: str, attorney_id: str):
+        """
+        Clears the chat memory for a given applicant and attorney.
+        """
+        try:
+            memory_record, _ = self.find_top(
+                applicant_id=applicant_id, attorney_id=attorney_id
+            )
+            memory_record.update(history=[], date_updated=datetime.utcnow())
+        except DoesNotExist:
+            pass
+
+    async def load_memory_into_buffer(
+        self,
+        memory_buffer: ConversationBufferWindowMemory,
+        applicant_id: str,
+        attorney_id: str,
+        window_size: int,
+    ):
+        """
+        Loads existing memory from DB into an empty ConversationBufferWindowMemory.
+        :param memory_buffer: ConversationBufferWindowMemory object
+        :param applicant_id: Applicant ID
+        :param attorney_id: Attorney ID
+        :param window_size: Window size of the memory buffer
+        """
+        memory_record = await self.get_memory(applicant_id, attorney_id)
+        if not memory_record:
+            return
+        sorted_history = sorted(
+            memory_record.history, key=lambda entry: entry.timestamp, reverse=True
+        )
+        for entry in sorted_history[:window_size]:
+            await memory_buffer.asave_context(
+                {"question": entry.user_message},  # User's message
+                {"answer": entry.assistant_response},  # Assistant's response
+            )
