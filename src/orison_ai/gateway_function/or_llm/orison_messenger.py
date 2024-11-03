@@ -184,7 +184,7 @@ class OrisonMessenger:
             self._system_chain_memory = LLMChain(
                 llm=self._chat_bot,
                 prompt=self._system_prompt,
-                verbose=True,
+                verbose=False,
                 memory=self.memory,
                 output_parser=self._parser,
             )
@@ -372,6 +372,7 @@ class OrisonMessenger:
                 memory_buffer=self.memory,
                 applicant_id=prompt.applicant_id,
                 attorney_id=prompt.attorney_id,
+                window_size=CHAT_HISTORY_LIMIT,
             )
             chain_response = await self._system_chain_memory.ainvoke(text)
             response = chain_response.get("text")
@@ -383,6 +384,7 @@ class OrisonMessenger:
                 attorney_id=prompt.attorney_id,
                 user_message=query,
                 assistant_response=response,
+                window_size=CHAT_HISTORY_LIMIT,
             )
         else:
             response = await self._system_chain.ainvoke(text)

@@ -17,7 +17,7 @@
 # External
 
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 from mongoengine import DoesNotExist
 from langchain.memory import ConversationBufferWindowMemory
 
@@ -107,9 +107,15 @@ class ChatMemoryClient(FirestoreClient):
         attorney_id: str,
         user_message: str,
         assistant_response: str,
+        window_size: int,
     ):
         """
         Updates the chat memory for a given applicant and attorney with a new user message and assistant response.
+        :param applicant_id: Applicant ID
+        :param attorney_id: Attorney ID
+        :param user_message: User message
+        :param assistant_response: Assistant response
+        :param window_size: Window size of the memory buffer
         """
         memory_entry = MemoryEntry(
             user_message=user_message,
@@ -120,6 +126,14 @@ class ChatMemoryClient(FirestoreClient):
                 applicant_id=applicant_id, attorney_id=attorney_id
             )
             memory_record.history.append(memory_entry)
+            sorted_history = sorted(
+                memory_record.history,
+                key=lambda entry: entry.timestamp.astimezone(timezone.utc),
+                reverse=True,
+            )
+            if len(sorted_history) > window_size:
+                sorted_history = sorted_history[:window_size]
+            memory_record.history = sorted_history
             memory_record.date_updated = datetime.utcnow()
             await self.replace(
                 applicant_id=applicant_id,
@@ -157,9 +171,14 @@ class ChatMemoryClient(FirestoreClient):
         memory_buffer: ConversationBufferWindowMemory,
         applicant_id: str,
         attorney_id: str,
+        window_size: int,
     ):
         """
         Loads existing memory from DB into an empty ConversationBufferWindowMemory.
+        :param memory_buffer: ConversationBufferWindowMemory object
+        :param applicant_id: Applicant ID
+        :param attorney_id: Attorney ID
+        :param window_size: Window size of the memory buffer
         """
         memory_record = await self.get_memory(applicant_id, attorney_id)
         if not memory_record:
@@ -167,7 +186,7 @@ class ChatMemoryClient(FirestoreClient):
         sorted_history = sorted(
             memory_record.history, key=lambda entry: entry.timestamp, reverse=True
         )
-        for entry in sorted_history:
+        for entry in sorted_history[:window_size]:
             await memory_buffer.asave_context(
                 {"question": entry.user_message},  # User's message
                 {"answer": entry.assistant_response},  # Assistant's response
