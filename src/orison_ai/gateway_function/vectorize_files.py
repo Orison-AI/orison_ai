@@ -24,8 +24,9 @@ from langchain_community.document_loaders import (
     CSVLoader,
     TextLoader,
     UnstructuredMarkdownLoader,
+    UnstructuredHTMLLoader,
     JSONLoader,
-    Docx2txtLoader,
+    AzureAIDocumentIntelligenceLoader,
 )
 from langchain_experimental.text_splitter import SemanticChunker
 import numpy as np
@@ -90,7 +91,8 @@ class VectorizeFiles(RequestHandler):
     @staticmethod
     def _load_file(file_path: str, logger, filename: str):
         logger.debug(f"Attempting to load file from {file_path}")
-        match file_extension(file_path):
+        extension = file_extension(file_path).lower()
+        match extension:
             case ".txt":
                 # Use TextLoader for text-based files
                 loader = TextLoader(file_path)
@@ -100,6 +102,9 @@ class VectorizeFiles(RequestHandler):
             case ".md":
                 # Use UnstructuredMarkdownLoader for text-based files
                 loader = UnstructuredMarkdownLoader(file_path)
+            case ".html":
+                # Use UnstructuredHTMLLoader for HTML files
+                loader = UnstructuredHTMLLoader(file_path)
             case ".csv":
                 # Use CSVLoader for CSV files
                 loader = CSVLoader(file_path)
@@ -107,15 +112,23 @@ class VectorizeFiles(RequestHandler):
                 # Use PyPDFLoader for PDF files
                 loader = PyPDFLoader(file_path)
             case ".docx":
-                # Handle Word files (.docx)
-                loader = Docx2txtLoader(file_path)
+                # Use AzureAIDocumentIntelligenceLoader for Word files
+                loader = AzureAIDocumentIntelligenceLoader(file_path)
             case ".doc":
-                # Handle Word files (.doc)
-                loader = Docx2txtLoader(file_path)
+                # Use AzureAIDocumentIntelligenceLoader for Word files
+                loader = AzureAIDocumentIntelligenceLoader(file_path)
+            case ".pptx":
+                # Use AzureAIDocumentIntelligenceLoader for PowerPoint files
+                loader = AzureAIDocumentIntelligenceLoader(file_path)
+            case ".xls":
+                # Use AzureAIDocumentIntelligenceLoader for Excel files
+                loader = AzureAIDocumentIntelligenceLoader(file_path)
+            case ".xlsx":
+                # Use AzureAIDocumentIntelligenceLoader for Excel files
+                loader = AzureAIDocumentIntelligenceLoader(file_path)
             case _:
-                raise_and_log_error(
-                    f"Unsupported file format: {file_extension}", logger, ValueError
-                )
+                # Use TextLoader for unknown file types
+                loader = TextLoader(file_path)
         # Load the file and return the documents
         # Each document is a dictionary with the keys "page_content" and "metadata"
         # Each document page_content is literally whatever is on that page
