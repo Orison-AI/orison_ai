@@ -82,6 +82,7 @@ const DocAssist = ({ selectedApplicant }) => {
     const [tags, setTags] = useState([]); // Store fetched tags here
     const toast = useToast();
     const [user] = useAuthState(auth);
+    const messagesEndRef = useRef(null);
 
     // Refs to track dropdown components
     const tagDropdownRef = useRef(null);
@@ -140,12 +141,16 @@ const DocAssist = ({ selectedApplicant }) => {
         }
     }, [user, selectedApplicant]);
 
-
-
-
     useEffect(() => {
         fetchMemory(); // Load memory on component mount
     }, [fetchMemory]);
+
+    // Scroll to the bottom whenever messages are updated
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages]);
 
     const handleSendMessage = async () => {
         if (inputMessage.trim() === '') {
@@ -256,6 +261,8 @@ const DocAssist = ({ selectedApplicant }) => {
                         <Text color="white">AI is processing your request...</Text>
                     </HStack>
                 )}
+                {/* Anchor to scroll to the bottom */}
+                <div ref={messagesEndRef} />
             </VStack>
 
             {/* Input Area at Bottom */}
