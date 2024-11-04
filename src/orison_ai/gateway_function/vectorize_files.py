@@ -31,10 +31,14 @@ from langchain_community.document_loaders.powerpoint import UnstructuredPowerPoi
 from langchain_community.document_loaders.word_document import (
     UnstructuredWordDocumentLoader,
 )
+from langchain_community.document_loaders.xml import UnstructuredXMLLoader
 from langchain_community.document_loaders.excel import UnstructuredExcelLoader
 from langchain_experimental.text_splitter import SemanticChunker
 import numpy as np
 from qdrant_client.http import models
+import nltk
+
+nltk.data.path.append(os.path.join(os.path.dirname(__file__), "nltk_data"))
 
 # Internal
 
@@ -94,7 +98,6 @@ class VectorizeFiles(RequestHandler):
 
     @staticmethod
     def _load_file(file_path: str, logger, filename: str):
-        logger.debug(f"Attempting to load file from {file_path}")
         extension = file_extension(file_path).lower()
         match extension:
             case ".txt":
@@ -121,6 +124,9 @@ class VectorizeFiles(RequestHandler):
             case ".doc":
                 # Use UnstructuredWordDocumentLoader for Word files
                 loader = UnstructuredWordDocumentLoader(file_path)
+            case ".docs":
+                # Use UnstructuredWordDocumentLoader for Word files
+                loader = UnstructuredWordDocumentLoader(file_path)
             case ".pptx":
                 # Use Uns for UnstructuredPowerPointLoader files
                 loader = UnstructuredPowerPointLoader(file_path)
@@ -130,6 +136,9 @@ class VectorizeFiles(RequestHandler):
             case ".xlsx":
                 # Use UnstructuredExcelLoader for Excel files
                 loader = UnstructuredExcelLoader(file_path)
+            case ".xml":
+                # Use UnstructuredXMLLoader for XML files
+                loader = UnstructuredXMLLoader(file_path)
             case _:
                 # Use TextLoader for unknown file types
                 loader = TextLoader(file_path)
@@ -266,7 +275,9 @@ class VectorizeFiles(RequestHandler):
             bucket_file_path = VectorizeFiles._file_path_builder(
                 attorney_id, applicant_id, tag, file_id
             )
-            local_file_path = f"/tmp/to_be_processed.pdf"
+            local_file_path = (
+                f"/tmp/to_be_processed" + file_extension(bucket_file_path).lower()
+            )
             self.logger.info(f"Remote File path: {bucket_file_path}")
             self.logger.info(f"Local File path: {local_file_path}")
             await VectorizeFiles._download_file(
