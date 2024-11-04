@@ -21,6 +21,7 @@ import numpy as np
 import logging
 import tiktoken
 from typing import Union
+from collections import defaultdict
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import (
     ChatPromptTemplate,
@@ -270,7 +271,7 @@ class OrisonMessenger:
             return text
 
     @staticmethod
-    def dict_to_string(dict: dict[str, list]) -> str:
+    def dict_to_string(ip_dict: dict[str, list]) -> str:
         """
         Convert a dictionary to a string
         :param dict: Dictionary
@@ -279,8 +280,12 @@ class OrisonMessenger:
 
         # Create a list of key-value pairs formatted as "key: [values]"
         pairs = [
-            f"{key}. Pages: [{', '.join(map(str, np.array(np.unique(values), dtype=int)))}]"
-            for key, values in dict.items()
+            (
+                f"{key}. Pages: [{', '.join(map(str, np.array(np.unique(values), dtype=int)))}]"
+                if "unknown" not in values
+                else f"{key}: Pages: unknown"
+            )
+            for key, values in ip_dict.items()
         ]
         # Join the pairs with " and "
         result = " and ".join(pairs)
@@ -348,11 +353,11 @@ class OrisonMessenger:
             f"Retrieved {len(retrieved_docs)} documents from the query: {query}"
         )
         context = "\n".join([doc.page_content for doc in retrieved_docs])
-        source = {}
+        source = defaultdict(list)
         for doc in retrieved_docs:
-            if doc.metadata["source"] not in source:
-                source[doc.metadata["source"]] = []
-            source[doc.metadata["source"]].append(doc.metadata["page"])
+            source[doc.metadata.get("source", "unknown")].append(
+                doc.metadata.get("page", "unknown")
+            )
         source = self.dict_to_string(source)
 
         logger.info("Checking if context exceeds max tokens. Truncating if required")
