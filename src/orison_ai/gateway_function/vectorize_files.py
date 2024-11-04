@@ -26,8 +26,12 @@ from langchain_community.document_loaders import (
     UnstructuredMarkdownLoader,
     UnstructuredHTMLLoader,
     JSONLoader,
-    AzureAIDocumentIntelligenceLoader,
 )
+from langchain_community.document_loaders.powerpoint import UnstructuredPowerPointLoader
+from langchain_community.document_loaders.word_document import (
+    UnstructuredWordDocumentLoader,
+)
+from langchain_community.document_loaders.excel import UnstructuredExcelLoader
 from langchain_experimental.text_splitter import SemanticChunker
 import numpy as np
 from qdrant_client.http import models
@@ -112,20 +116,20 @@ class VectorizeFiles(RequestHandler):
                 # Use PyPDFLoader for PDF files
                 loader = PyPDFLoader(file_path)
             case ".docx":
-                # Use AzureAIDocumentIntelligenceLoader for Word files
-                loader = AzureAIDocumentIntelligenceLoader(file_path)
+                # Use UnstructuredWordDocumentLoader for Word files
+                loader = UnstructuredWordDocumentLoader(file_path)
             case ".doc":
-                # Use AzureAIDocumentIntelligenceLoader for Word files
-                loader = AzureAIDocumentIntelligenceLoader(file_path)
+                # Use UnstructuredWordDocumentLoader for Word files
+                loader = UnstructuredWordDocumentLoader(file_path)
             case ".pptx":
-                # Use AzureAIDocumentIntelligenceLoader for PowerPoint files
-                loader = AzureAIDocumentIntelligenceLoader(file_path)
+                # Use Uns for UnstructuredPowerPointLoader files
+                loader = UnstructuredPowerPointLoader(file_path)
             case ".xls":
-                # Use AzureAIDocumentIntelligenceLoader for Excel files
-                loader = AzureAIDocumentIntelligenceLoader(file_path)
+                # Use UnstructuredExcelLoader for Excel files
+                loader = UnstructuredExcelLoader(file_path)
             case ".xlsx":
-                # Use AzureAIDocumentIntelligenceLoader for Excel files
-                loader = AzureAIDocumentIntelligenceLoader(file_path)
+                # Use UnstructuredExcelLoader for Excel files
+                loader = UnstructuredExcelLoader(file_path)
             case _:
                 # Use TextLoader for unknown file types
                 loader = TextLoader(file_path)
