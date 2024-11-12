@@ -306,8 +306,6 @@ class OrisonMessenger:
 
         query = prompt.question
         detail_level = prompt.detail_level
-        if isinstance(detail_level, str):
-            detail_level = DetailLevel.from_keyword(detail_level)
         filter_conditions = []
         # Check if tag list exists and is not empty
         if prompt.tag:
@@ -346,6 +344,9 @@ class OrisonMessenger:
             )
         except Exception as e:
             raise Retriever_INITIALIZATION_FAILED(exception=e)
+
+        if isinstance(detail_level, str):
+            detail_level = DetailLevel.from_keyword(detail_level)
 
         retrieved_docs = await retriever.ainvoke(query)
         logger.info(
