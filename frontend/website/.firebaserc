@@ -1,0 +1,16 @@
+{
+  "projects": {
+    "default": "orison-ai-visa-apply"
+  },
+  "targets": {
+    "orison-ai-visa-apply": {
+      "hosting": {
+        "orison-ai-landing": [
+          "orison-ai-landing"
+        ]
+      }
+    }
+  },
+  "etags": {},
+  "dataconnectEmulatorConfig": {}
+}

@@ -24,5 +24,3 @@ services:
       - "8888:8888"
       - "5004:5004"
       - "5005:5005"
-    depends_on:
-      - orison-frontend
