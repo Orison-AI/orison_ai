@@ -1,9 +1,16 @@
 // ./components/pages/QuestionaireEditor/QuestionEditor.jsx
 
-import React, { useState } from 'react';
-import { Input, Button, HStack, Spacer } from '@chakra-ui/react';
+import React, { useState, useEffect } from 'react';
+import { Input, Button, HStack, Spacer, Select } from '@chakra-ui/react';
 
-const QuestionEditor = ({ question, onSave, onEdit, onDelete }) => {
+const DETAIL_LEVELS = [
+  { label: "Light", value: "light" },
+  { label: "Moderate", value: "moderate" },
+  { label: "Lengthy", value: "lengthy" },
+  { label: "Very Heavy", value: "very heavy" },
+];
+
+const QuestionEditor = ({ question, onSave, onEdit, onDelete, tags }) => {
   const [text, setText] = useState(question.text);  // Initialize text state
   const [tag, setTag] = useState(question.tag);  // Initialize tag state
   const [detailLevel, setDetailLevel] = useState(question.detail_level);  // Initialize detail_level state
@@ -17,17 +24,29 @@ const QuestionEditor = ({ question, onSave, onEdit, onDelete }) => {
             onChange={(e) => setText(e.target.value)}
             placeholder="Edit question"
           />
-          <Input
+          <Select
             value={tag}
             onChange={(e) => setTag(e.target.value)}
-            placeholder="Edit tag"
-          />
-          <Input
+            placeholder="Select tag"
+          >
+            {tags.map((tagOption) => (
+              <option key={tagOption.value} value={tagOption.value}>
+                {tagOption.label}
+              </option>
+            ))}
+          </Select>
+          <Select
             value={detailLevel}
             onChange={(e) => setDetailLevel(e.target.value)}
-            placeholder="Edit detail level"
-          />
-          <Spacer />  {/* This pushes buttons to the right */}
+            placeholder="Select detail level"
+          >
+            {DETAIL_LEVELS.map((level) => (
+              <option key={level.value} value={level.value}>
+                {level.label}
+              </option>
+            ))}
+          </Select>
+          <Spacer />
           <Button
             onClick={() => onSave(question.id, text, tag, detailLevel)}  // Pass all values on save
             colorScheme="green"
@@ -38,7 +57,7 @@ const QuestionEditor = ({ question, onSave, onEdit, onDelete }) => {
       ) : (
         <>
           <div>{text} (Tag: {tag}, Detail Level: {detailLevel})</div>
-          <Spacer />  {/* This pushes buttons to the right */}
+          <Spacer />
           <Button onClick={onEdit} colorScheme="yellow">Edit</Button>
           <Button onClick={onDelete} colorScheme="red">Delete</Button>
         </>

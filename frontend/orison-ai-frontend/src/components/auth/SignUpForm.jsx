@@ -50,43 +50,6 @@ const SignUpForm = () => {
     e.preventDefault();
     validatePassword();
     if (error) return;
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      const taskDocRef = doc(db, "templates", "eb1_a_questionnaire");  // Reference to the default JSON document
-      const taskDoc = await getDoc(taskDocRef);
-
-      if (taskDoc.exists()) {
-        const taskData = taskDoc.data();
-        const attorneyDocRef = doc(db, "templates", "attorneys", user.uid, "eb1_a_questionnaire");
-        await setDoc(attorneyDocRef, taskData);
-      } else {
-        console.error("Questionnaire document not found!");
-        toast({
-          title: "Error",
-          description: "Questionnaire document not found.",
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-        });
-      }
-      toast({
-        title: "Account created.",
-        description: "Your account has been successfully created.",
-        status: "success",
-        duration: 5000,
-        isClosable: true,
-      });
-    } catch (firebaseError) {
-      toast({
-        title: "Error creating account",
-        description: `${firebaseError.message}`,
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
-      return;
-    };
   };
 
   return (

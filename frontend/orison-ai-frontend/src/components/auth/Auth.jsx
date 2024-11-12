@@ -22,7 +22,7 @@ const Auth = () => {
       <HStack width="100%" bg={headerColor}>
         <Box width="160px" />
         <Center width="100%">
-          <Box fontSize="32px" p="8px">orison.ai</Box>
+          <Box fontSize="32px" p="8px">Orison AI</Box>
         </Center>
         <ColorModeToggle />
       </HStack>

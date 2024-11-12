@@ -39,11 +39,11 @@ function Settings({ isOpen, onClose }) {
     });
   };
 
-  const handleDeleteAccount = async () => {
+  const handleDeleteAccount = async ({ selectedApplicant }) => {
     try {
       if (user) {
         // Step 1: Delete the attorney's document from Firestore
-        const attorneyDocRef = doc(db, "templates", "attorneys", user.uid, "eb1_a_questionnaire");
+        const attorneyDocRef = doc(db, "templates", selectedApplicant.id);
         await deleteDoc(attorneyDocRef);
         console.log("Attorney data deleted from Firestore.");
 

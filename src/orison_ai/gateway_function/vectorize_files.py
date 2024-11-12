@@ -24,12 +24,21 @@ from langchain_community.document_loaders import (
     CSVLoader,
     TextLoader,
     UnstructuredMarkdownLoader,
+    UnstructuredHTMLLoader,
     JSONLoader,
-    Docx2txtLoader,
 )
+from langchain_community.document_loaders.powerpoint import UnstructuredPowerPointLoader
+from langchain_community.document_loaders.word_document import (
+    UnstructuredWordDocumentLoader,
+)
+from langchain_community.document_loaders.xml import UnstructuredXMLLoader
+from langchain_community.document_loaders.excel import UnstructuredExcelLoader
 from langchain_experimental.text_splitter import SemanticChunker
 import numpy as np
 from qdrant_client.http import models
+import nltk
+
+nltk.data.path.append(os.path.join(os.path.dirname(__file__), "nltk_data"))
 
 # Internal
 
@@ -89,8 +98,8 @@ class VectorizeFiles(RequestHandler):
 
     @staticmethod
     def _load_file(file_path: str, logger, filename: str):
-        logger.debug(f"Attempting to load file from {file_path}")
-        match file_extension(file_path):
+        extension = file_extension(file_path).lower()
+        match extension:
             case ".txt":
                 # Use TextLoader for text-based files
                 loader = TextLoader(file_path)
@@ -100,6 +109,9 @@ class VectorizeFiles(RequestHandler):
             case ".md":
                 # Use UnstructuredMarkdownLoader for text-based files
                 loader = UnstructuredMarkdownLoader(file_path)
+            case ".html":
+                # Use UnstructuredHTMLLoader for HTML files
+                loader = UnstructuredHTMLLoader(file_path)
             case ".csv":
                 # Use CSVLoader for CSV files
                 loader = CSVLoader(file_path)
@@ -107,15 +119,29 @@ class VectorizeFiles(RequestHandler):
                 # Use PyPDFLoader for PDF files
                 loader = PyPDFLoader(file_path)
             case ".docx":
-                # Handle Word files (.docx)
-                loader = Docx2txtLoader(file_path)
+                # Use UnstructuredWordDocumentLoader for Word files
+                loader = UnstructuredWordDocumentLoader(file_path)
             case ".doc":
-                # Handle Word files (.doc)
-                loader = Docx2txtLoader(file_path)
+                # Use UnstructuredWordDocumentLoader for Word files
+                loader = UnstructuredWordDocumentLoader(file_path)
+            case ".docs":
+                # Use UnstructuredWordDocumentLoader for Word files
+                loader = UnstructuredWordDocumentLoader(file_path)
+            case ".pptx":
+                # Use Uns for UnstructuredPowerPointLoader files
+                loader = UnstructuredPowerPointLoader(file_path)
+            case ".xls":
+                # Use UnstructuredExcelLoader for Excel files
+                loader = UnstructuredExcelLoader(file_path)
+            case ".xlsx":
+                # Use UnstructuredExcelLoader for Excel files
+                loader = UnstructuredExcelLoader(file_path)
+            case ".xml":
+                # Use UnstructuredXMLLoader for XML files
+                loader = UnstructuredXMLLoader(file_path)
             case _:
-                raise_and_log_error(
-                    f"Unsupported file format: {file_extension}", logger, ValueError
-                )
+                # Use TextLoader for unknown file types
+                loader = TextLoader(file_path)
         # Load the file and return the documents
         # Each document is a dictionary with the keys "page_content" and "metadata"
         # Each document page_content is literally whatever is on that page
@@ -249,7 +275,9 @@ class VectorizeFiles(RequestHandler):
             bucket_file_path = VectorizeFiles._file_path_builder(
                 attorney_id, applicant_id, tag, file_id
             )
-            local_file_path = f"/tmp/to_be_processed.pdf"
+            local_file_path = (
+                f"/tmp/to_be_processed" + file_extension(bucket_file_path).lower()
+            )
             self.logger.info(f"Remote File path: {bucket_file_path}")
             self.logger.info(f"Local File path: {local_file_path}")
             await VectorizeFiles._download_file(

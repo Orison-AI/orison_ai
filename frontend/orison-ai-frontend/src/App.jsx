@@ -82,7 +82,7 @@ const App = () => {
           setCurrentView={setCurrentView}
         />;
       case Views.QUESTIONAIRE:
-        return <QuestionaireEditor />;
+        return <QuestionaireEditor selectedApplicant={selectedApplicant} />;
       case Views.APPLICANT_DOCUMENTS:
         return <ApplicantDocuments selectedApplicant={selectedApplicant} />;
       case Views.APPLICANT_SUMMARIZATION:

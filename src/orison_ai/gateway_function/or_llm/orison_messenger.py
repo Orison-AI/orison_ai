@@ -21,10 +21,18 @@ import numpy as np
 import logging
 import tiktoken
 from typing import Union
+from collections import defaultdict
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    MessagesPlaceholder,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+)
+from langchain.chains.llm import LLMChain
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.rate_limiters import InMemoryRateLimiter
+from langchain.memory import ConversationBufferWindowMemory
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from qdrant_client.async_qdrant_client import AsyncQdrantClient
 from qdrant_client import QdrantClient
@@ -44,6 +52,7 @@ from exceptions import (
     QDrant_INITIALIZATION_FAILED,
     Retriever_INITIALIZATION_FAILED,
 )
+from or_store.db_interfaces import ChatMemoryClient
 
 
 logging.basicConfig(level=logging.INFO)
@@ -52,6 +61,7 @@ logger = logging.getLogger(__name__)
 MODEL_NAME = "gpt-4-turbo"
 EMBEDDING_MODEL = "text-embedding-ada-002"
 RETRIEVAL_DOC_LIMIT = 10
+CHAT_HISTORY_LIMIT = 10
 
 
 @dataclass
@@ -61,6 +71,9 @@ class Prompt:
     tag: Union[list, str] = None  # vector DB tag
     filename: Union[list, str] = None  # vector DB filename
     id: str = uuid.uuid4().hex
+    # Used if memory is True
+    applicant_id: str = None
+    attorney_id: str = None
 
 
 class DetailLevel(Enum):
@@ -133,6 +146,7 @@ class OrisonMessenger:
         temperature: float = 0.2,
         max_tokens: int = 4096,
         max_retries: int = 5,
+        memory_window_size: int = CHAT_HISTORY_LIMIT,
         **kwargs,
     ):
         try:
@@ -145,8 +159,18 @@ class OrisonMessenger:
             raise RateLimiter_INITIALIZATION_FAILED(exception=e)
 
         try:
+            self.chat_memory_client = ChatMemoryClient()
+            self.memory = ConversationBufferWindowMemory(
+                k=memory_window_size,  # Keep track of the last `k` interactions
+                memory_key="chat_history",  # Key for the memory in the prompt
+                return_messages=True,
+            )
             self._system_prompt = ChatPromptTemplate(
-                messages=[("system", self.ROLE), ("user", "{text}")]
+                messages=[
+                    SystemMessagePromptTemplate.from_template(self.ROLE),
+                    MessagesPlaceholder(variable_name="chat_history"),
+                    HumanMessagePromptTemplate.from_template("{text}"),
+                ]
             )
             self._chat_bot = ChatOpenAI(
                 api_key=secrets.openai_api_key,
@@ -158,7 +182,13 @@ class OrisonMessenger:
                 **kwargs,
             )
             self._parser = StrOutputParser()
-            self._system_chain = self._system_prompt | self._chat_bot | self._parser
+            self._system_chain = LLMChain(
+                llm=self._chat_bot,
+                prompt=self._system_prompt,
+                verbose=False,
+                output_parser=self._parser,
+                memory=self.memory,
+            )
             self._embeddings = OrisonEmbeddings(
                 model=embedding_model,
                 api_key=secrets.openai_api_key,
@@ -241,7 +271,7 @@ class OrisonMessenger:
             return text
 
     @staticmethod
-    def dict_to_string(dict: dict[str, list]) -> str:
+    def dict_to_string(ip_dict: dict[str, list]) -> str:
         """
         Convert a dictionary to a string
         :param dict: Dictionary
@@ -250,22 +280,32 @@ class OrisonMessenger:
 
         # Create a list of key-value pairs formatted as "key: [values]"
         pairs = [
-            f"{key}. Pages: [{', '.join(map(str, np.array(np.unique(values), dtype=int)))}]"
-            for key, values in dict.items()
+            (
+                f"{key}. Pages: [{', '.join(map(str, np.array(np.unique(values), dtype=int)))}]"
+                if "unknown" not in values
+                else f"{key}: Pages: unknown"
+            )
+            for key, values in ip_dict.items()
         ]
         # Join the pairs with " and "
         result = " and ".join(pairs)
         return result
 
-    async def _retrieve_docs(self, prompt):
+    async def request(
+        self,
+        prompt: Prompt,
+        use_memory: bool = False,
+    ):
         """
         Retrieve documents from the vector DB
         :param prompt: Prompt object
-        :return: List of retrieved documents
-        :rtype: List[Document]
+        :param use_memory: Use memory to store the context
+        :return: Answer to the question
+        :rtype: QandA
         """
 
         query = prompt.question
+        detail_level = prompt.detail_level
         filter_conditions = []
         # Check if tag list exists and is not empty
         if prompt.tag:
@@ -309,22 +349,12 @@ class OrisonMessenger:
         logger.info(
             f"Retrieved {len(retrieved_docs)} documents from the query: {query}"
         )
-        return retrieved_docs
-
-    async def _generate_context(self, retrieved_docs):
-        """
-        Generate context from the retrieved documents
-        :param retrieved_docs: List of retrieved documents
-        :return: Context string
-        :rtype: str
-        """
-
-        source = {}
         context = "\n".join([doc.page_content for doc in retrieved_docs])
+        source = defaultdict(list)
         for doc in retrieved_docs:
-            if doc.metadata["source"] not in source:
-                source[doc.metadata["source"]] = []
-            source[doc.metadata["source"]].append(doc.metadata["page"])
+            source[doc.metadata.get("source", "unknown")].append(
+                doc.metadata.get("page", "unknown")
+            )
         source = self.dict_to_string(source)
 
         logger.info("Checking if context exceeds max tokens. Truncating if required")
@@ -332,34 +362,27 @@ class OrisonMessenger:
         logger.info(
             "Checking if context exceeds max tokens. Truncating if required...DONE"
         )
-        return context, source
-
-    async def request(
-        self,
-        prompt: Prompt,
-    ):
-        """
-        Request the LLM to answer a question
-        :param prompt: Prompt object
-        :return: Answer to the question
-        :rtype: QandA
-        """
-
-        retrieved_docs = await self._retrieve_docs(prompt)
-        detail_level = prompt.detail_level
-        if isinstance(detail_level, str):
-            detail_level = DetailLevel.from_keyword(detail_level)
-        source = {}
-        if len(retrieved_docs) == 0:
-            response = QandA(
-                question=prompt.question,
-                answer="No relevant sources were found. Check that your tag and filename are relevant and not conflicting exclusive.",
-                source=source,
+        text = f"Given the context: \n{context}, \n answer the following: {query} in {detail_level.value}."
+        if use_memory:
+            await self.chat_memory_client.load_memory_into_buffer(
+                memory_buffer=self.memory,
+                applicant_id=prompt.applicant_id,
+                attorney_id=prompt.attorney_id,
+                window_size=CHAT_HISTORY_LIMIT,
             )
-        else:
-            context, source = await self._generate_context(retrieved_docs)
-            prompt_text = f"Given the context: \n{context}, \n answer the following: {prompt.question} in {prompt.detail_level}."
-        response = await self._system_chain.ainvoke(prompt_text)
+        chain_response = await self._system_chain.ainvoke({"text": text})
+        response = chain_response.get("text")
+        if use_memory:
+            await self.memory.asave_context(
+                inputs={"question": query}, outputs={"answer": response}
+            )
+            await self.chat_memory_client.update_memory(
+                applicant_id=prompt.applicant_id,
+                attorney_id=prompt.attorney_id,
+                user_message=query,
+                assistant_response=response,
+                window_size=CHAT_HISTORY_LIMIT,
+            )
         return QandA(question=prompt.question, answer=response, source=source)
 
     async def stream(

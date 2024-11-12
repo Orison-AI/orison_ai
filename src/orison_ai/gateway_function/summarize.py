@@ -45,11 +45,11 @@ class Summarize(RequestHandler):
         self._screening_client = ScreeningClient()
 
     @staticmethod
-    async def prompts(logger, attorney_id: str) -> List[Prompt]:
+    async def prompts(logger, applicant_id: str) -> List[Prompt]:
         """
         Load prompts from Firestore using attorney ID.
         :param logger: Logger object
-        :param attorney_id: Attorney ID
+        :param applicant_id: Applicant ID
         :return: List of prompts
         """
 
@@ -60,12 +60,7 @@ class Summarize(RequestHandler):
             client = FireStoreDB().client
 
             # Reference the document in Firestore
-            doc_ref = (
-                client.collection("templates")
-                .document("attorneys")
-                .collection(attorney_id)
-                .document("eb1_a_questionnaire")
-            )
+            doc_ref = client.collection("templates").document(applicant_id)
             doc = doc_ref.get()
 
             if doc.exists:
@@ -83,11 +78,11 @@ class Summarize(RequestHandler):
                         Prompt(question=question, detail_level=detail_level, tag=tag)
                     )
             else:
-                logger.error(f"No questionnaire found for attorney ID: {attorney_id}")
+                logger.error(f"No questionnaire found for applicant ID: {applicant_id}")
 
         except Exception as e:
             logger.error(
-                f"Error fetching questionnaire for attorney ID {attorney_id}: {e}"
+                f"Error fetching questionnaire for applicant ID {applicant_id}: {e}"
             )
 
         return prompts
@@ -110,7 +105,7 @@ class Summarize(RequestHandler):
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info("Initializing summarizer with secrets")
             self.initialize(secrets)
-            prompts = await self.prompts(logger=self.logger, attorney_id=attorney_id)
+            prompts = await self.prompts(logger=self.logger, applicant_id=applicant_id)
             self.logger.info("Initializing summarizer with secrets...done")
             if not prompts:
                 message = f"No prompts found for attorney ID: {attorney_id}"

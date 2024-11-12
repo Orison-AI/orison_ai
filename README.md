@@ -111,5 +111,6 @@ Make sure node is installed to version 22
 npm run build
 firebase logout
 firebase login (use admin@orison.ai)
-firebase deploy --project orison-ai-visa-apply
+firebase deploy --project orison-ai-visa-apply --only hosting:orison-ai-visa-apply # For application
+firebase deploy --project orison-ai-visa-apply --only hosting:orison-ai-landing # For website
 ```

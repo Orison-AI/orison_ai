@@ -152,6 +152,28 @@ class ScreeningBuilder(BaseModel):
     summary = ListField(EmbeddedDocumentField(QandA), default=[])
 
 
+class MemoryEntry(EmbeddedDocument):
+    user_message = StringField(required=True)
+    assistant_response = StringField(required=True)
+    timestamp = DateTimeField(default=datetime.utcnow)
+
+
+class ChatMemoryDB(BaseModel):
+    """
+    MongoDB document class for storing chat buffer memory entries.
+    """
+
+    history = ListField(EmbeddedDocumentField(MemoryEntry), default=[])
+    date_updated = DateTimeField(default=datetime.utcnow)
+
+    meta = {
+        "collection": "chat_memory",
+        "indexes": [
+            {"fields": ["applicant_id", "attorney_id"], "unique": True},
+        ],
+    }
+
+
 class MetaExtract(BaseModel):
     """
     MongoDB document class for Meta details of the applicant
