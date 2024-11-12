@@ -59,7 +59,7 @@ class DocAssist(RequestHandler):
             message = f"Error generating response from DocAssist. Error code: {type(e).__name__}. Error message: {e}"
             self.logger.error(message, exc_info=True)
             return ErrorResponse(message)
-        return OKResponse(message="DocAssist response generated successfully")
+        return OKResponse(output_message)
 
 
 if __name__ == "__main__":

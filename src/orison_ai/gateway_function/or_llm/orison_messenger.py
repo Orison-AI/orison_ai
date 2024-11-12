@@ -297,7 +297,7 @@ class OrisonMessenger:
         use_memory: bool = False,
     ):
         """
-        Retrieve documents from the vector DB
+        Request the LLM to answer a question
         :param prompt: Prompt object
         :param use_memory: Use memory to store the context
         :return: Answer to the question
@@ -306,6 +306,8 @@ class OrisonMessenger:
 
         query = prompt.question
         detail_level = prompt.detail_level
+        if isinstance(detail_level, str):
+            detail_level = DetailLevel.from_keyword(detail_level)
         filter_conditions = []
         # Check if tag list exists and is not empty
         if prompt.tag:
