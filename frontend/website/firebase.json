@@ -1,0 +1,22 @@
+{
+  "hosting": {
+    "public": "build",
+    "target": "orison-ai-landing",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "targets": {
+    "orison-ai-landing": {
+      "project": "orison-ai-visa-apply"
+    }
+  }
+}
