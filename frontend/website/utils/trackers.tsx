@@ -1,23 +1,25 @@
 "use client";  // Marks the component as a Client Component
 
-import { analytics } from '../common/firebaseConfig';
+import { initializeAnalytics } from '../common/firebaseConfig';
 import { logEvent } from 'firebase/analytics';
 
-function handleButtonClick(event_label: string = "") {
+async function handleButtonClick(event_label: string = "") {
+    const analytics = await initializeAnalytics();
     if (analytics) {
         logEvent(analytics, "button_click", { label: event_label });
     }
     else {
-        console.log('Firebase analytics not initialized');
+        console.log('Firebase analytics not initialized for button click event');
     }
 }
 
-function trackPageVisit(pageName: string = "") {
+async function trackPageVisit(pageName: string = "") {
+    const analytics = await initializeAnalytics();
     if (analytics) {
-        logEvent(analytics, 'landing', { page_name: pageName });
+        logEvent(analytics, "landing", { label: pageName });
     }
     else {
-        console.log('Firebase analytics not initialized');
+        console.log('Firebase analytics not initialized for page landing event');
     }
 }
 

@@ -6,9 +6,17 @@ import { handleButtonClick } from "@/utils/trackers";
 
 export default function LogIn() {
     useEffect(() => {
-        handleButtonClick("App login button clicked");
-        // Directly redirects to the external site
-        window.location.href = 'https://www.app.orison.ai';
+        const logAndRedirect = async () => {
+            try {
+                await handleButtonClick("App login button clicked");
+                // Directly redirects to the external site after logging
+                window.location.href = 'https://www.app.orison.ai';
+            } catch (error) {
+                console.error("Failed to log button click:", error);
+            }
+        };
+
+        logAndRedirect();
     }, []);
 
     return (

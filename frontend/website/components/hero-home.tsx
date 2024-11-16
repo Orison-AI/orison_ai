@@ -5,7 +5,16 @@ import { useEffect } from "react";
 
 export default function HeroHome() {
   useEffect(() => {
-    trackPageVisit('Landing page visit');
+    // Define an async function to handle the page visit tracking
+    const trackPage = async () => {
+      try {
+        await trackPageVisit('Landing page visit');
+      } catch (error) {
+        console.error('Error tracking page visit:', error);
+      }
+    };
+
+    trackPage();
   }, []);
 
   return (
