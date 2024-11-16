@@ -1,12 +1,11 @@
 "use client";
 
 import { trackPageVisit } from "@/utils/trackers";
-
 import { useEffect } from "react";
 
 export default function HeroHome() {
   useEffect(() => {
-    trackPageVisit('home');
+    trackPageVisit('Landing page visit');
   }, []);
 
   return (
