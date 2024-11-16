@@ -47,4 +47,4 @@ async function initializeAnalytics(): Promise<Analytics | null> {
     }
 }
 
-export { app, analytics, initializeAnalytics };
+export { app, initializeAnalytics };
