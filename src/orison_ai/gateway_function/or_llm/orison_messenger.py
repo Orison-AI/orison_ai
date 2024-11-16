@@ -29,10 +29,8 @@ from langchain_core.prompts import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
 )
-from langchain.chains.llm import LLMChain
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.rate_limiters import InMemoryRateLimiter
-from langchain.memory import ConversationBufferWindowMemory
 from langchain.retrievers.multi_query import MultiQueryRetriever
 from qdrant_client.async_qdrant_client import AsyncQdrantClient
 from qdrant_client import QdrantClient
@@ -41,6 +39,9 @@ from langchain_openai import OpenAIEmbeddings
 from dataclasses import dataclass
 from enum import Enum
 from qdrant_client.http import models
+from typing import Annotated
+from typing_extensions import TypedDict, Dict
+from langgraph.graph import StateGraph, START, END, MessagesState
 
 # Internal
 
@@ -50,9 +51,8 @@ from exceptions import (
     LLM_INITIALIZATION_FAILED,
     RateLimiter_INITIALIZATION_FAILED,
     QDrant_INITIALIZATION_FAILED,
-    Retriever_INITIALIZATION_FAILED,
 )
-from or_store.db_interfaces import ChatMemoryClient
+from or_store.db_interfaces import ChatMemoryClient, FirestoreLangGraph
 
 
 logging.basicConfig(level=logging.INFO)
@@ -159,12 +159,7 @@ class OrisonMessenger:
             raise RateLimiter_INITIALIZATION_FAILED(exception=e)
 
         try:
-            self.chat_memory_client = ChatMemoryClient()
-            self.memory = ConversationBufferWindowMemory(
-                k=memory_window_size,  # Keep track of the last `k` interactions
-                memory_key="chat_history",  # Key for the memory in the prompt
-                return_messages=True,
-            )
+            graph_builder = StateGraph(MessagesState)
             self._system_prompt = ChatPromptTemplate(
                 messages=[
                     SystemMessagePromptTemplate.from_template(self.ROLE),
@@ -179,16 +174,37 @@ class OrisonMessenger:
                 max_tokens=max_tokens,
                 timeout=90.0,
                 rate_limiter=self._rate_limiter,
+                streaming=True,
                 **kwargs,
             )
-            self._parser = StrOutputParser()
-            self._system_chain = LLMChain(
-                llm=self._chat_bot,
-                prompt=self._system_prompt,
-                verbose=False,
-                output_parser=self._parser,
-                memory=self.memory,
-            )
+            parser = StrOutputParser()
+
+            async def prompt_node(state: MessagesState) -> MessagesState:
+                input_text = state["messages"][-1]["user"] if state["messages"] else ""
+                # Prepare prompt using system prompt template
+                prompt = self._system_prompt.format(
+                    text=input_text, chat_history=state["messages"]
+                )
+                return state
+
+            async def chatbot_node(state: MessagesState) -> MessagesState:
+                prompt = None
+                input_text = ""
+                # Get response from LLM
+                response = await self._chat_bot.ainvoke(
+                    {"messages": prompt["messages"]}
+                )
+                parsed_response = parser.parse(response)
+                # Append user input and assistant response to messages
+                state["messages"].append(
+                    {"user": input_text, "assistant": parsed_response}
+                )
+                return state
+
+            graph_builder.add_node("chatbot", chatbot_node)
+            graph_builder.add_edge(START, "chatbot")
+            graph_builder.add_edge("chatbot", END)
+            self._graph = graph_builder.compile()
             self._embeddings = OrisonEmbeddings(
                 model=embedding_model,
                 api_key=secrets.openai_api_key,
@@ -291,23 +307,15 @@ class OrisonMessenger:
         result = " and ".join(pairs)
         return result
 
-    async def request(
-        self,
-        prompt: Prompt,
-        use_memory: bool = False,
-    ):
+    async def _prepare_request(self, prompt: Prompt):
         """
-        Request the LLM to answer a question
-        :param prompt: Prompt object
-        :param use_memory: Use memory to store the context
-        :return: Answer to the question
-        :rtype: QandA
+        Shared setup for both streaming and non-streaming requests.
         """
-
         query = prompt.question
         detail_level = prompt.detail_level
         filter_conditions = []
-        # Check if tag list exists and is not empty
+
+        # Filtering logic
         if prompt.tag:
             filter_conditions.append(
                 models.FieldCondition(
@@ -317,7 +325,6 @@ class OrisonMessenger:
                     ),
                 )
             )
-        # If tag list is empty, add the filename condition
         if prompt.filename:
             filter_conditions.append(
                 models.FieldCondition(
@@ -328,30 +335,18 @@ class OrisonMessenger:
                 )
             )
 
-        # Construct the final filter
-        if filter_conditions:
-            filter = models.Filter(
-                should=filter_conditions  # `should` means it will match any of the conditions
-            )
-        else:
-            filter = None
-        try:
-            retriever = MultiQueryRetriever.from_llm(
-                retriever=self.vectordb.as_retriever(
-                    search_kwargs={"k": RETRIEVAL_DOC_LIMIT, "filter": filter},
-                ),
-                llm=self._chat_bot,
-            )
-        except Exception as e:
-            raise Retriever_INITIALIZATION_FAILED(exception=e)
+        filter = models.Filter(should=filter_conditions) if filter_conditions else None
 
-        if isinstance(detail_level, str):
-            detail_level = DetailLevel.from_keyword(detail_level)
-
-        retrieved_docs = await retriever.ainvoke(query)
-        logger.info(
-            f"Retrieved {len(retrieved_docs)} documents from the query: {query}"
+        # Retriever setup
+        retriever = MultiQueryRetriever.from_llm(
+            retriever=self.vectordb.as_retriever(
+                search_kwargs={"k": RETRIEVAL_DOC_LIMIT, "filter": filter},
+            ),
+            llm=self._chat_bot,
         )
+
+        # Fetch documents and format context
+        retrieved_docs = await retriever.ainvoke(query)
         context = "\n".join([doc.page_content for doc in retrieved_docs])
         source = defaultdict(list)
         for doc in retrieved_docs:
@@ -359,59 +354,91 @@ class OrisonMessenger:
                 doc.metadata.get("page", "unknown")
             )
         source = self.dict_to_string(source)
-
-        logger.info("Checking if context exceeds max tokens. Truncating if required")
         context = await OrisonMessenger.truncate_to_max_tokens(context)
-        logger.info(
-            "Checking if context exceeds max tokens. Truncating if required...DONE"
-        )
-        text = f"Given the context: \n{context}, \n answer the following: {query} in {detail_level.value}."
-        if use_memory:
-            await self.chat_memory_client.load_memory_into_buffer(
-                memory_buffer=self.memory,
-                applicant_id=prompt.applicant_id,
-                attorney_id=prompt.attorney_id,
-                window_size=CHAT_HISTORY_LIMIT,
-            )
-        chain_response = await self._system_chain.ainvoke({"text": text})
-        response = chain_response.get("text")
-        if use_memory:
-            await self.memory.asave_context(
-                inputs={"question": query}, outputs={"answer": response}
-            )
-            await self.chat_memory_client.update_memory(
-                applicant_id=prompt.applicant_id,
-                attorney_id=prompt.attorney_id,
-                user_message=query,
-                assistant_response=response,
-                window_size=CHAT_HISTORY_LIMIT,
-            )
-        return QandA(question=prompt.question, answer=response, source=source)
 
-    async def stream(
+        text = f"Given the context: \n{context}, \n answer the following: {query} in {detail_level.value}."
+
+        return query, detail_level, text, source
+
+    async def _load_memory_into_buffer(self, prompt: Prompt):
+        """
+        Load the memory into the buffer if required.
+        """
+        await self.chat_memory_client.load_memory_into_buffer(
+            memory_buffer=self.memory,
+            applicant_id=prompt.applicant_id,
+            attorney_id=prompt.attorney_id,
+            window_size=CHAT_HISTORY_LIMIT,
+        )
+
+    async def _save_to_memory(self, prompt: Prompt, query: str, response: str):
+        """
+        Save the query and response to memory if required.
+        """
+        await self.memory.asave_context(
+            inputs={"question": query}, outputs={"answer": response}
+        )
+        await self.chat_memory_client.update_memory(
+            applicant_id=prompt.applicant_id,
+            attorney_id=prompt.attorney_id,
+            user_message=query,
+            assistant_response=response,
+            window_size=CHAT_HISTORY_LIMIT,
+        )
+
+    async def request(
         self,
         prompt: Prompt,
+        use_memory: bool = False,
     ):
         """
-        Request the LLM to answer a question
+        Non-streaming request for the LLM to answer a question.
         :param prompt: Prompt object
+        :param use_memory: Use memory to store the context
         :return: Answer to the question
         :rtype: QandA
         """
 
-        retrieved_docs = await self._retrieve_docs(prompt)
-        detail_level = prompt.detail_level
-        if isinstance(detail_level, str):
-            detail_level = DetailLevel.from_keyword(detail_level)
-        source = {}
-        if len(retrieved_docs) == 0:
-            yield QandA(
-                question=prompt.question,
-                answer="No relevant sources were found. Check that your tag and filename are relevant and not conflicting exclusive.",
-                source=source,
+        # if use_memory:
+        #     await self._load_memory_into_buffer(prompt)
+        # Call a shared helper function to set up common parameters
+        query, _, text, source = await self._prepare_request(prompt)
+        # Non-streaming response
+        messages = MessagesState(messages=[])
+        chain_response = await self._graph.ainvoke(messages)
+        response = chain_response["messages"][-1]["assistant"]
+        # Optional memory handling
+        # if use_memory:
+        #     await self._save_to_memory(prompt, query, response)
+        return QandA(question=prompt.question, answer=response, source=source)
+
+    async def stream_request(
+        self,
+        prompt: Prompt,
+        use_memory: bool = False,
+    ):
+        """
+        Streaming request for the LLM to answer a question.
+        :param prompt: Prompt object
+        :param use_memory: Use memory to store the context
+        :yield: Chunked responses as QandA objects
+        """
+
+        if use_memory:
+            await self._load_memory_into_buffer(prompt)
+        # Call the same shared helper function to set up common parameters
+        query, _, text, source = await self._prepare_request(prompt)
+        response = ""
+        # Streaming response
+        async for chunk in self._system_chain.astream({"text": text}):
+            print("@@@@@")
+            response += chunk.get("text")
+            yield QandA(question=prompt.question, answer=response, source=source)
+
+        # Optional memory handling
+        if use_memory:
+            await self._save_to_memory(
+                prompt,
+                query,
+                response,
             )
-        else:
-            context, source = await self._generate_context(retrieved_docs)
-            prompt_text = f"Given the context: \n{context}, \n answer the following: {prompt.question} in {prompt.detail_level.value}."
-            async for chunk in self._system_chain.astream(prompt_text):
-                yield QandA(question=prompt.question, answer=chunk, source=source)

@@ -20,6 +20,9 @@ from typing import List
 from datetime import datetime, timezone
 from mongoengine import DoesNotExist
 from langchain.memory import ConversationBufferWindowMemory
+from langchain_community.chat_message_histories.firestore import (
+    FirestoreChatMessageHistory,
+)
 
 # Internal
 
@@ -191,3 +194,21 @@ class ChatMemoryClient(FirestoreClient):
                 {"question": entry.user_message},  # User's message
                 {"answer": entry.assistant_response},  # Assistant's response
             )
+
+
+class FirestoreLangGraph(FirestoreClient):
+
+    def __init__(self, applicant_id, session_id="default"):
+        """
+        Initializes an instance of a FirestoreLangGraph object, which interacts with the chat memory collection.
+        """
+
+        super(FirestoreLangGraph, self).__init__()
+        self._model = FirestoreLangGraph
+        self._collection = self.client.collection("chat_memory")
+        self._message_history = FirestoreChatMessageHistory(
+            collection_name="chat_memory",
+            session_id=session_id,
+            user_id=applicant_id,
+            firestore_client=self.client,
+        )
