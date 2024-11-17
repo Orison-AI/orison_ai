@@ -9,7 +9,7 @@ export default function Header() {
       await handleButtonClick("login");
       window.location.href = "https://www.app.orison.ai"; // Navigate after logging
     } catch (error) {
-      console.error("Failed to log button click:", error);
+      console.error("Failed to log button click for login:", error);
       window.location.href = "https://www.app.orison.ai"; // Ensure navigation even on error
     }
   };
@@ -32,11 +32,23 @@ export default function Header() {
       window.location.href =
         "https://www.app.orison.ai"; // Navigate after logging
     } catch (error) {
-      console.error("Failed to log button click for User Study:", error);
+      console.error("Failed to log button click for Sample Content:", error);
       window.location.href =
         "https://www.app.orison.ai"; // Ensure navigation even on error
     }
   };
+
+  const handleUserGuideClick = async () => {
+    try {
+      await handleButtonClick("user_guide");
+      window.location.href =
+        "https://docs.google.com/presentation/d/1c3chlMKTA1YztjSGzH8p0bovqKoC2p5x/edit#slide=id.g315e2679ae5_0_0"; // Navigate after logging
+    } catch (error) {
+      console.error("Failed to log button click for User Guide:", error);
+      window.location.href =
+        "https://docs.google.com/presentation/d/1c3chlMKTA1YztjSGzH8p0bovqKoC2p5x/edit#slide=id.g315e2679ae5_0_0"; // Ensure navigation even on error
+    }
+  }
 
   return (
     <header className="z-30 mt-2 w-full md:mt-5">
@@ -67,7 +79,15 @@ export default function Header() {
             </li>
             <li>
               <button
-                onClick={handleSampleContent} // Call handleLoginClick on button click
+                onClick={handleUserGuideClick} // Call handleUserGuideClick on button click
+                className="relative flex items-center justify-center bg-gradient-to-b from-gray-800 to-gray-800/60 bg-[length:100%_100%] bg-[bottom] py-[10px] px-[16px] text-lg text-gray-300 font-semibold before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:border before:border-transparent before:[background:linear-gradient(to_right,theme(colors.gray.800),theme(colors.gray.700),theme(colors.gray.800))_border-box] before:[mask-composite:exclude_!important] before:[mask:linear-gradient(white_0_0)_padding-box,_linear-gradient(white_0_0)] hover:bg-[length:100%_150%]"
+              >
+                User Guide
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={handleSampleContent} // Call handleSampleContent on button click
                 className="relative flex items-center justify-center bg-gradient-to-b from-gray-800 to-gray-800/60 bg-[length:100%_100%] bg-[bottom] py-[10px] px-[16px] text-lg text-gray-300 font-semibold before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:border before:border-transparent before:[background:linear-gradient(to_right,theme(colors.gray.800),theme(colors.gray.700),theme(colors.gray.800))_border-box] before:[mask-composite:exclude_!important] before:[mask:linear-gradient(white_0_0)_padding-box,_linear-gradient(white_0_0)] hover:bg-[length:100%_150%]"
               >
                 Sample Output
