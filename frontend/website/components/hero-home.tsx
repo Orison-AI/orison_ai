@@ -30,14 +30,16 @@ export default function HeroHome() {
             >
               Orison AI
             </h1>
-            <div className="mx-auto max-w-3xl">
+            <div className="mx-auto max-w-6xl"> {/* Control width using this xl */}
               <p
                 className="mb-8 text-xl text-indigo-200/65"
                 data-aos="fade-up"
                 data-aos-delay={200}
               >
-                Hybrid-AI assistant for EB1, EB2-NIW, and O-1 cases <br />
-                Improve efficiency, accuracy, and revenue with a secure and reliable platform
+                Hybrid-AI assistant for EB1, O-1, and Eb2 cases <br />
+                Information intelligence for building your visa story and analytics to find your standing <br />
+                Generate high quality analytics, reports, and content for visa evidence and cover letters <br />
+                {/* Improve efficiency, accuracy, and revenue with a secure and reliable platform */}
               </p>
             </div>
           </div>

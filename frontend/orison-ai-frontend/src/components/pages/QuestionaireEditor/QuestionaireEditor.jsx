@@ -6,6 +6,13 @@ import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../../../common/firebaseConfig'; // Assuming you have auth and db setup
 
 // Chakra
+import {
+  Divider, Text, Heading,
+  Collapse, HStack,
+} from '@chakra-ui/react';
+
+// React Markdown
+import ReactMarkdown from 'react-markdown';
 import { Box, Button, VStack, useToast } from '@chakra-ui/react';
 
 // Internal

@@ -100,7 +100,7 @@ const App = () => {
       <Header
         ref={headerRef}
         goHome={() => setCurrentView(Views.MANAGE_APPLICANTS)}
-        editQuestionaire={() => setCurrentView(Views.QUESTIONAIRE)}
+        landingPage={() => window.location.href = "https://orison.ai"}
         onSettingsOpen={onSettingsOpen}
       />
 

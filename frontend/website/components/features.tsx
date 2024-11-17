@@ -40,15 +40,13 @@ export default function Features() {
               </span>
             </div>
             <h2 className="animate-[gradient_6s_linear_infinite] bg-[linear-gradient(to_right,theme(colors.gray.200),theme(colors.indigo.200),theme(colors.gray.50),theme(colors.indigo.300),theme(colors.gray.200))] bg-[length:200%_auto] bg-clip-text pb-4 font-nacelle text-3xl font-semibold text-transparent md:text-4xl">
-              Your Search On How To Use AI Ends Here
+              Your Search On How To Write Your Story Ends Here
             </h2>
             <p className="text-lg text-indigo-200/65">
-              Orison reads and understands your applicants and bridges the gap between their work and your case story. Orison works alongside you
-              taking your valuable feedback and personalizes its content as per your needs. Packed with core benefits, we are ready to learn and grow
-              with you augment our AI toolkit with your valuable feedback.
+              Orison is packed with features in its AI toolkit. Orison is also looking to grow and improve with your valuable feedback.
             </p>
           </div>
-          <div className="flex justify-center pb-4 md:pb-12" data-aos="fade-up">
+          {/* <div className="flex justify-center pb-4 md:pb-12" data-aos="fade-up">
             <Image
               className="max-w-none"
               src={FeaturesImage}
@@ -56,7 +54,7 @@ export default function Features() {
               height={384}
               alt="Features"
             />
-          </div>
+          </div> */}
           {/* Items */}
           <div className="mx-auto grid max-w-sm gap-12 sm:max-w-none sm:grid-cols-2 md:gap-x-14 md:gap-y-16 lg:grid-cols-3">
             <article>
@@ -76,7 +74,10 @@ export default function Features() {
                 File Management
               </h3>
               <p className="text-indigo-200/65">
-                Securely add applicant technical documents, awards, and other media. Choose what AI uses to create your case story.
+                Securely upload your technical papers, awards, and other media.
+                Orison uses google cloud to store your files.
+                Platform is equivalent to using gmail or similar services.
+                Guide AI to appropriate set of files for higher quality output.
               </p>
             </article>
             <article>
@@ -93,7 +94,7 @@ export default function Features() {
                 Vectorization
               </h3>
               <p className="text-indigo-200/65">
-                AI sanitizes critical files for personal information and encrypts them for chat assistance and story narration tasks.
+                Orison generates quality output by fetching only the relevant content to a specific question in questionnaire or requirement in evidence.
               </p>
             </article>
             <article>
@@ -113,7 +114,7 @@ export default function Features() {
                 Network Builder
               </h3>
               <p className="text-indigo-200/65">
-                A connected tree of applicant and scholars in their network.
+                Reliable backend libraries provide information about your network.
                 Immediate access to key metrics and insights to make a decision on how strong the case is.
               </p>
             </article>
@@ -139,7 +140,8 @@ export default function Features() {
                 Security and Trust
               </h3>
               <p className="text-indigo-200/65">
-                Ensured by decades of proven track record, Orison uses reliable and secure software to build your applicant's story.
+                Orison uses reliable and secure software to build your applicant's story.
+                Built on libraries and cloud platform with a proven track record.
               </p>
             </article>
             <article>
@@ -156,10 +158,11 @@ export default function Features() {
                 <path d="m7.454 2.891.891-.454L7.437.655l-.891.454a12 12 0 0 0 0 21.382l.89.454.91-1.781-.892-.455a10 10 0 0 1 0-17.818ZM17.456 1.11l-.891-.454-.909 1.782.891.454a10 10 0 0 1 0 17.819l-.89.454.908 1.781.89-.454a12 12 0 0 0 0-21.382Z" />
               </svg>
               <h3 className="mb-1 font-nacelle text-[1rem] font-semibold text-gray-200">
-                Flexible Workflows
+                Questionnaire Editor
               </h3>
               <p className="text-indigo-200/65">
-                AI encodes your feedback via easy interfaces to create content suitable for you.
+                Orison uses a template of questions and evidence criteria to generate content for your case.
+                You have the ability to edit this template and add your own questions.
               </p>
             </article>
             <article>
@@ -179,7 +182,7 @@ export default function Features() {
                 DocAssist
               </h3>
               <p className="text-indigo-200/65">
-                Q&A your personal assistant to discover more about the applicant. Mitigate back-and-forth over emails and calls.
+                Q&A your personal assistant to discover more about the applicant. Mitigate the tedious search through copious information.
               </p>
             </article>
           </div>

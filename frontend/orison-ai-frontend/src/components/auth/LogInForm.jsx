@@ -3,8 +3,6 @@ import React, { useState } from 'react';
 
 // Firebase
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-
 // Chakra
 import {
   Button, FormControl, FormLabel, Input, useToast, VStack,

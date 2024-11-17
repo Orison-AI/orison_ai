@@ -5,6 +5,7 @@ const Views = {
   QUESTIONAIRE: 'questionaire',
   APPLICANT_DOCUMENTS: 'applicantDocuments',
   APPLICANT_SUMMARIZATION: 'applicantSummarization',
+  EVIDENCE: 'evidence',
   DOCASSIST: 'docAssist',
 };
 

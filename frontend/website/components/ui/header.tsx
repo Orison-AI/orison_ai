@@ -6,11 +6,35 @@ import Logo from "./logo";
 export default function Header() {
   const handleLoginClick = async () => {
     try {
-      await handleButtonClick("Header login button clicked");
+      await handleButtonClick("login");
       window.location.href = "https://www.app.orison.ai"; // Navigate after logging
     } catch (error) {
       console.error("Failed to log button click:", error);
       window.location.href = "https://www.app.orison.ai"; // Ensure navigation even on error
+    }
+  };
+
+  const handleUserStudyClick = async () => {
+    try {
+      await handleButtonClick("user_study");
+      window.location.href =
+        "https://docs.google.com/forms/d/e/1FAIpQLSe0Y6ji6P3vOPC2etx-0NnxLFIRXbVv_QgxOZCKWC3-oLPThg/viewform?usp=sf_link"; // Navigate after logging
+    } catch (error) {
+      console.error("Failed to log button click for User Study:", error);
+      window.location.href =
+        "https://docs.google.com/forms/d/e/1FAIpQLSe0Y6ji6P3vOPC2etx-0NnxLFIRXbVv_QgxOZCKWC3-oLPThg/viewform?usp=sf_link"; // Ensure navigation even on error
+    }
+  };
+
+  const handleSampleContent = async () => {
+    try {
+      await handleButtonClick("sample_content");
+      window.location.href =
+        "https://www.app.orison.ai"; // Navigate after logging
+    } catch (error) {
+      console.error("Failed to log button click for User Study:", error);
+      window.location.href =
+        "https://www.app.orison.ai"; // Ensure navigation even on error
     }
   };
 
@@ -31,6 +55,22 @@ export default function Header() {
                 className="relative flex items-center justify-center bg-gradient-to-b from-gray-800 to-gray-800/60 bg-[length:100%_100%] bg-[bottom] py-[10px] px-[16px] text-lg text-gray-300 font-semibold before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:border before:border-transparent before:[background:linear-gradient(to_right,theme(colors.gray.800),theme(colors.gray.700),theme(colors.gray.800))_border-box] before:[mask-composite:exclude_!important] before:[mask:linear-gradient(white_0_0)_padding-box,_linear-gradient(white_0_0)] hover:bg-[length:100%_150%]"
               >
                 Log In
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={handleUserStudyClick} // Call handleUserStudyClick on button click
+                className="relative flex items-center justify-center bg-gradient-to-b from-gray-800 to-gray-800/60 bg-[length:100%_100%] bg-[bottom] py-[10px] px-[16px] text-lg text-gray-300 font-semibold before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:border before:border-transparent before:[background:linear-gradient(to_right,theme(colors.gray.800),theme(colors.gray.700),theme(colors.gray.800))_border-box] before:[mask-composite:exclude_!important] before:[mask:linear-gradient(white_0_0)_padding-box,_linear-gradient(white_0_0)] hover:bg-[length:100%_150%]"
+              >
+                Feedback Form
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={handleSampleContent} // Call handleLoginClick on button click
+                className="relative flex items-center justify-center bg-gradient-to-b from-gray-800 to-gray-800/60 bg-[length:100%_100%] bg-[bottom] py-[10px] px-[16px] text-lg text-gray-300 font-semibold before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:border before:border-transparent before:[background:linear-gradient(to_right,theme(colors.gray.800),theme(colors.gray.700),theme(colors.gray.800))_border-box] before:[mask-composite:exclude_!important] before:[mask:linear-gradient(white_0_0)_padding-box,_linear-gradient(white_0_0)] hover:bg-[length:100%_150%]"
+              >
+                Sample Output
               </button>
             </li>
           </ul>

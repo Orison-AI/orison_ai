@@ -19,12 +19,18 @@ const Auth = () => {
 
   return (
     <VStack width="100%" height="100%">
-      <HStack width="100%" bg={headerColor}>
+      <HStack width="100%" bg={headerColor} alignItems="center" p="30px">
         <Box width="160px" />
-        <Center width="100%">
-          <Box fontSize="32px" p="8px">Orison AI</Box>
-        </Center>
-        <ColorModeToggle />
+        <Box
+          position="absolute"
+          left="50%"
+          transform="translateX(-50%)"
+          fontSize="32px"
+          fontWeight="bold"
+        >
+          Orison AI
+        </Box>
+        {/* <ColorModeToggle /> */}
       </HStack>
       <Center height="100%">
         <VStack maxHeight="90%">
@@ -32,9 +38,16 @@ const Auth = () => {
           <Box p="16px" borderWidth="1px" borderRadius="10px" overflow="hidden" minW="400px" maxW="90%">
             {isSignUp ? <SignUpForm /> : <LogInForm />}
           </Box>
-          <Link variant="link" mt="16px" onClick={() => setSignUp(!isSignUp)}>
-            {isSignUp ? "Already have an account? Login." : "Don't have an account? Create one."}
-          </Link>
+          <Text fontSize="22px">
+            Don't have an account? Contact us on{" "}
+            <Text as="span" fontSize="24px" fontWeight="bold">
+              sales@orison.ai
+            </Text>{" "}
+            for a free demo
+          </Text>
+          {/* <Link variant="link" mt="22px" onClick={() => setSignUp(!isSignUp)}>
+            {isSignUp ? "Already have an account? Login." : "Don't have an account? Create one by contacting us on sales@orison.ai"}
+          </Link> */}
         </VStack>
       </Center>
     </VStack>

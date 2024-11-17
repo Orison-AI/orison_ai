@@ -3,10 +3,10 @@
 import { initializeAnalytics } from '../common/firebaseConfig';
 import { logEvent } from 'firebase/analytics';
 
-async function handleButtonClick(event_label: string = "") {
+async function handleButtonClick(event: string = "button") {
     const analytics = await initializeAnalytics();
     if (analytics) {
-        logEvent(analytics, "button_click", { label: event_label });
+        logEvent(analytics, event, { label: "Button clicked" });
     }
     else {
         console.log('Firebase analytics not initialized for button click event');

@@ -33,13 +33,19 @@ const Navigation = React.forwardRef(({
     [Views.APPLICANT_DOCUMENTS]: "Documents",
     [Views.QUESTIONAIRE]: "Questionnaire",
     [Views.APPLICANT_SUMMARIZATION]: "Summarization",
+    [Views.EVIDENCE]: "EvidenceLetter",
     [Views.DOCASSIST]: "DocAssist",
   };
 
-  // Map the actual view values to user-friendly names
-  const viewOptions = Object.values(Views).filter(viewValue => viewValue !== Views.MANAGE_APPLICANTS).map(viewValue => (
-    <option key={viewValue} value={viewValue}>{viewDisplayNames[viewValue]}</option>
-  ));
+  // Generate options in the same order as `viewDisplayNames`
+  const viewOptions = Object.keys(viewDisplayNames)
+    .filter(viewKey => viewKey !== Views.MANAGE_APPLICANTS)
+    .map(viewKey => (
+      <option key={viewKey} value={viewKey}>
+        {viewDisplayNames[viewKey]}
+      </option>
+    ));
+
 
   const renderCurrentViewNav = () => {
     switch (currentView) {
@@ -49,12 +55,12 @@ const Navigation = React.forwardRef(({
             {viewDisplayNames[Views.MANAGE_APPLICANTS]}
           </Text>
         );
-      case Views.QUESTIONAIRE:
-        return (
-          <Text className="oai-nav-questionaire" alignSelf="flex-start" m="0" fontSize="32px">
-            {viewDisplayNames[Views.QUESTIONAIRE]}
-          </Text>
-        );
+      // case Views.QUESTIONAIRE:
+      //   return (
+      //     <Text className="oai-nav-questionaire" alignSelf="flex-start" m="0" fontSize="32px">
+      //       {viewDisplayNames[Views.QUESTIONAIRE]}
+      //     </Text>
+      //   );
       default:
         return (
           <HStack className="oai-nav-non-manage" width="100%" m="0">

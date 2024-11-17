@@ -1,7 +1,7 @@
 import Image from "next/image";
 import ScholarImage from "../public/images/scholar_network.jpg";
-import WorflowImg02 from "../public/images/workflow-02.png";
-import WorflowImg03 from "../public/images/workflow-03.png";
+import ContentGen from "../public/images/content_gen.png";
+import DocAssist from "../public/images/docassist.png";
 import Spotlight from "../components/spotlight";
 import ModalVideo from "@/components/modal-video";
 import VideoThumb from "@/public/images/orison_demo_thumbnail.png";
@@ -23,8 +23,19 @@ export default function Workflows() {
             </h2>
             <p className="text-lg text-indigo-200/65">
               Bridging the gap between technical research and story narration for visa officers is challenging and time consuming <br />
-              Collecting analytics from Google Scholar, wage comparisons, and professional info is mundane and intensive <br />
+              Collecting analytics from google scholar, wage comparisons, journal ratings, and professional tools is mundane and intensive <br />
               Orison is not here to advocate, it is here to assist you with these mundane tasks <br />
+            </p>
+
+            <br></br>
+
+            <h2 className="animate-[gradient_6s_linear_infinite] bg-[linear-gradient(to_right,theme(colors.gray.200),theme(colors.indigo.200),theme(colors.gray.50),theme(colors.indigo.300),theme(colors.gray.200))] bg-[length:200%_auto] bg-clip-text pb-4 font-nacelle text-3xl font-semibold text-transparent md:text-4xl">
+              Why Orison?
+            </h2>
+            <p className="text-lg text-indigo-200/65">
+              Feeding all documents to LLM chatbots confuses them with irrelevant data and produces less useful generic content<br />
+              LLM chatbots and custom gpts are not aware of your network, key metrics, and field of work <br />
+              Orison builds your information network and uses relevant information to produce high quality content <br />
             </p>
           </div>
           {/* Spotlight items */}
@@ -65,13 +76,13 @@ export default function Workflows() {
                   <div className="mb-3">
                     <span className="btn-sm relative rounded-full bg-gray-800/40 px-2.5 py-0.5 text-xs font-normal before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:border before:border-transparent before:[background:linear-gradient(to_bottom,theme(colors.gray.700/.15),theme(colors.gray.700/.5))_border-box] before:[mask-composite:exclude_!important] before:[mask:linear-gradient(white_0_0)_padding-box,_linear-gradient(white_0_0)] hover:bg-gray-800/60">
                       <span className="bg-gradient-to-r from-indigo-500 to-indigo-200 bg-clip-text text-transparent">
-                        Scholar Network
+                        Network Builder
                       </span>
                     </span>
                   </div>
                   <p className="text-indigo-200/65">
-                    Graphing key metrics like citations, awards, wages, designations, and more for the applicant and
-                    people in their google scholar and professional network.
+                    Fetching key metrics like citations, journal ratings, publications, wages, industry, and more for the applicant and
+                    people in their network. High quality inputs to produce compelling content for cover letters.
                   </p>
                 </div>
               </div>
@@ -102,7 +113,7 @@ export default function Workflows() {
                 {/* Image */}
                 <Image
                   className="inline-flex"
-                  src={WorflowImg02}
+                  src={ContentGen}
                   width={350}
                   height={288}
                   alt="Workflow 02"
@@ -112,13 +123,13 @@ export default function Workflows() {
                   <div className="mb-3">
                     <span className="btn-sm relative rounded-full bg-gray-800/40 px-2.5 py-0.5 text-xs font-normal before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:border before:border-transparent before:[background:linear-gradient(to_bottom,theme(colors.gray.700/.15),theme(colors.gray.700/.5))_border-box] before:[mask-composite:exclude_!important] before:[mask:linear-gradient(white_0_0)_padding-box,_linear-gradient(white_0_0)] hover:bg-gray-800/60">
                       <span className="bg-gradient-to-r from-indigo-500 to-indigo-200 bg-clip-text text-transparent">
-                        Personalized Letters
+                        Personalized Content
                       </span>
                     </span>
                   </div>
                   <p className="text-indigo-200/65">
-                    Generate compelling story from technical papers and supporting documents
-                    for the cover letters. Orison's signature AI to mimic your writing style for personal touch.
+                    Generate compelling story from your papers and supporting documents
+                    for the cover letters. Get content for questionnaires and find out how you meet evidence criteria.
                   </p>
                 </div>
               </div>
@@ -149,7 +160,7 @@ export default function Workflows() {
                 {/* Image */}
                 <Image
                   className="inline-flex"
-                  src={WorflowImg03}
+                  src={DocAssist}
                   width={350}
                   height={288}
                   alt="Workflow 03"
@@ -164,7 +175,8 @@ export default function Workflows() {
                     </span>
                   </div>
                   <p className="text-indigo-200/65">
-                    Q&A with applicant documents instantly and mitigate the email back-and-forth. Navigate copious documents with ease.
+                    LLM chatbot to Q&A with your documents instantly. Navigate all your information with ease.
+                    Generate quality content additions per your style.
                   </p>
                 </div>
               </div>
