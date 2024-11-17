@@ -47,12 +47,12 @@ const Header = React.forwardRef(({ goHome, onSettingsOpen, landingPage }, ref) =
       />
 
       {/* Home Button (Website Homepage) */}
-      <IconButton
+      {/* <IconButton
         aria-label="Website Home"
         icon={<AiOutlineAppstore />}
         onClick={landingPage}
         ml="auto"
-      />
+      /> */}
     </HStack>
   );
 });
