@@ -71,7 +71,7 @@ class Summarize(RequestHandler):
                 for task in js.get("task", []):
                     question = task.get("question")
                     detail_level = task.get("detail_level")
-                    tag = [task.get("tag")]
+                    tag = task.get("tag")
 
                     # Create a Prompt object and append to the prompts list
                     prompts.append(

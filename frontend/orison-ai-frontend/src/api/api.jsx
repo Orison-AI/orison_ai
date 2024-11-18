@@ -11,6 +11,7 @@ const endpoints = {
   processScholarNetwork: "process-scholar-network",
   vectorizeFiles: "vectorize-files",
   summarize: "summarize",
+  evidence: "evidence",
   deleteFileVectors: "delete-file-vectors",
   docassist: "docassist",
 }
@@ -115,6 +116,21 @@ export const summarize = async (attorneyId, applicantId) => {
 
   if (!response.data) {
     throw new Error('Failed to start summarization');
+  }
+
+  return response.data;
+};
+
+export const evidence = async (attorneyId, applicantId) => {
+  const response = await gateway(endpoints.evidence, {
+    attorneyId,
+    applicantId,
+  });
+
+  console.log(`INFO: evidence: response=${JSON.stringify(response)}`);
+
+  if (!response.data) {
+    throw new Error('Failed to start evidence');
   }
 
   return response.data;

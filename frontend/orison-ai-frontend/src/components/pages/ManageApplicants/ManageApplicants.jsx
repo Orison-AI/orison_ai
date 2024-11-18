@@ -1,29 +1,47 @@
-// React
-import React, { useEffect, useState, useRef } from 'react';
-
-// Firebase
-import { useAuthState } from 'react-firebase-hooks/auth';
+import React, { useEffect, useState, useRef } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
 import {
-  addDoc, collection, deleteDoc, doc,
-  onSnapshot, query, setDoc, where,
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  query,
+  setDoc,
+  where,
+  updateDoc,
 } from "firebase/firestore";
-
-// Chakra
 import {
-  Box, Button, Center, IconButton, Input,
-  Table, Thead, Tbody, Tr, Th, Td,
-  useDisclosure, Menu, MenuButton, MenuItem, MenuList
-} from '@chakra-ui/react';
-import { EditIcon, CloseIcon, CheckIcon, ChevronDownIcon } from '@chakra-ui/icons';
+  Box,
+  Button,
+  Center,
+  IconButton,
+  Input,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  useDisclosure,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Select,
+} from "@chakra-ui/react";
+import { EditIcon, CloseIcon, CheckIcon, ChevronDownIcon } from "@chakra-ui/icons";
+import { db, auth } from "../../../common/firebaseConfig";
+import Views from "../../../common/views";
+import DeleteApplicantModal from "./DeleteApplicantModal";
 
-// Internal
-import { db, auth } from '../../../common/firebaseConfig';
-import Views from '../../../common/views';
-import DeleteApplicantModal from './DeleteApplicantModal';
+const visaCategories = ["EB1", "O1", "EB2"]; // Predefined visa categories
 
 const ManageApplicants = ({
-  applicants, setApplicants,
-  selectedApplicant, setSelectedApplicant,
+  applicants,
+  setApplicants,
+  selectedApplicant,
+  setSelectedApplicant,
   setCurrentView,
 }) => {
   const [editId, setEditId] = useState(null);
@@ -31,11 +49,13 @@ const ManageApplicants = ({
   const [applicantToDelete, setApplicantToDelete] = useState(null);
   const [user] = useAuthState(auth);
 
+  // State for selected visa category
+  const [selectedVisa, setSelectedVisa] = useState("");
+
   // Refs for edit fields
   const nameRef = useRef();
   const emailRef = useRef();
 
-  // Set the applicants list
   useEffect(() => {
     let unsubscribe = () => { };
 
@@ -44,12 +64,12 @@ const ManageApplicants = ({
         const q = query(collection(db, "applicants"), where("attorney_id", "==", user.uid));
 
         unsubscribe = onSnapshot(
-          q, (snapshot) => {
-            const newApplicants = snapshot.docs
-              .map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              }));
+          q,
+          (snapshot) => {
+            const newApplicants = snapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            }));
             setApplicants(newApplicants);
           },
           (error) => {
@@ -59,10 +79,8 @@ const ManageApplicants = ({
       }
     }
 
-    // Call the async function
     fetchApplicants();
 
-    // Return the cleanup function
     return () => {
       unsubscribe();
     };
@@ -76,6 +94,7 @@ const ManageApplicants = ({
         email: "",
         files: [],
         vectorized_files: [],
+        visaCategory: "", // Add visaCategory field
       });
       startEdit(newDoc.id);
     } catch (error) {
@@ -89,14 +108,19 @@ const ManageApplicants = ({
   const saveEdit = async (applicant) => {
     try {
       if (user) {
-        await setDoc(doc(collection(db, "applicants"), applicant.id), {
-          attorney_id: user.uid,
-          name: nameRef.current.value || "",
-          email: emailRef.current.value || "",
-        }, { merge: true });
+        await setDoc(
+          doc(collection(db, "applicants"), applicant.id),
+          {
+            attorney_id: user.uid,
+            name: nameRef.current.value || "",
+            email: emailRef.current.value || "",
+            visaCategory: selectedVisa || applicant.visaCategory, // Save visaCategory
+          },
+          { merge: true }
+        );
       }
     } catch (error) {
-      console.error("Failed to add new applicant:", error);
+      console.error("Failed to save applicant:", error);
     }
     setEditId(null);
   };
@@ -107,7 +131,7 @@ const ManageApplicants = ({
         setSelectedApplicant(null);
       }
       await deleteDoc(doc(collection(db, "applicants"), applicant.id));
-      onClose(); // Only close the modal if deletion is successful
+      onClose();
     } catch (error) {
       console.error("Failed to delete applicant:", error);
     }
@@ -119,31 +143,51 @@ const ManageApplicants = ({
   };
 
   const handleKeyDown = (e, applicant) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       saveEdit(applicant);
     }
   };
 
-  // Handle navigation to views when menu items are clicked
+  const handleVisaCategoryChange = async (applicant, newVisaCategory) => {
+    try {
+      setSelectedVisa(newVisaCategory); // Update the state
+      if (applicant) {
+        await updateDoc(doc(db, "applicants", applicant.id), { visaCategory: newVisaCategory });
+      }
+    } catch (error) {
+      console.error("Failed to update visa category:", error);
+    }
+  };
+
   const handleNavigate = (view, applicant) => {
     setSelectedApplicant(applicant);
     setCurrentView(view);
   };
 
+  // Full Component Code with Adjustments
   return (
     <Box className="oai-manage-view" width="100%">
       <Center className="oai-manage-table-center">
-        <Box className="oai-manage-table-container" overflowX="auto" minWidth="60%" maxWidth="90%" border="1px" borderColor="gray.600" borderRadius="8px">
+        <Box
+          className="oai-manage-table-container"
+          overflowX="auto"
+          minWidth="60%"
+          maxWidth="90%"
+          border="1px"
+          borderColor="gray.600"
+          borderRadius="8px"
+        >
           <Table className="oai-manage-table" variant="simple">
             <Thead className="oai-manage-thead">
               <Tr>
                 <Th>Name</Th>
                 <Th>Email</Th>
+                <Th>Visa Type</Th>
                 <Th></Th>
               </Tr>
             </Thead>
             <Tbody className="oai-manage-tbody">
-              {applicants.map(applicant => (
+              {applicants.map((applicant) => (
                 <Tr key={applicant.id}>
                   <Td whiteSpace="nowrap">
                     {editId === applicant.id ? (
@@ -152,7 +196,9 @@ const ManageApplicants = ({
                         ref={nameRef}
                         onKeyDown={(e) => handleKeyDown(e, applicant)}
                       />
-                    ) : applicant.name}
+                    ) : (
+                      applicant.name
+                    )}
                   </Td>
                   <Td whiteSpace="nowrap">
                     {editId === applicant.id ? (
@@ -161,24 +207,38 @@ const ManageApplicants = ({
                         ref={emailRef}
                         onKeyDown={(e) => handleKeyDown(e, applicant)}
                       />
-                    ) : applicant.email}
-                  </Td>
-                  <Td isNumeric whiteSpace="nowrap">
-                    {editId === applicant.id ? (
-                      <>
-                        <IconButton icon={<CheckIcon />} onClick={() => saveEdit(applicant)} colorScheme="green" mr="4px" />
-                        <IconButton icon={<CloseIcon />} onClick={cancelEdit} colorScheme="red" />
-                      </>
                     ) : (
-                      <>
-                        <IconButton icon={<EditIcon />} onClick={() => startEdit(applicant.id)} colorScheme="blue" />
-                      </>
+                      applicant.email
                     )}
-
-                    {/* Dropdown Menu for all options */}
+                  </Td>
+                  <Td>
+                    {editId === applicant.id ? (
+                      <Select
+                        placeholder="Select Visa Type"
+                        value={selectedVisa || applicant.visaCategory || ""}
+                        onChange={(e) => {
+                          const newVisaCategory = e.target.value;
+                          setSelectedVisa(newVisaCategory); // Update the selectedVisa state
+                        }}
+                      >
+                        {visaCategories.map((category) => (
+                          <option key={category} value={category}>
+                            {category}
+                          </option>
+                        ))}
+                      </Select>
+                    ) : (
+                      applicant.visaCategory || "N/A"
+                    )}
+                  </Td>
+                  <Td>
                     <Menu>
-                      <MenuButton as={Button} rightIcon={<ChevronDownIcon />} ml="8px">
-                        AI ToolBox
+                      <MenuButton
+                        as={Button}
+                        rightIcon={<ChevronDownIcon />}
+                        isDisabled={!applicant.visaCategory || applicant.visaCategory === "N/A"}
+                      >
+                        AI Toolbox
                       </MenuButton>
                       <MenuList>
                         <MenuItem onClick={() => handleNavigate(Views.APPLICANT_DOCUMENTS, applicant)}>
@@ -190,7 +250,7 @@ const ManageApplicants = ({
                         <MenuItem onClick={() => handleNavigate(Views.APPLICANT_SUMMARIZATION, applicant)}>
                           Summarization
                         </MenuItem>
-                        <MenuItem onClick={() => handleNavigate(Views.APPLICANT_SUMMARIZATION, applicant)}>
+                        <MenuItem onClick={() => handleNavigate(Views.EVIDENCE, applicant)}>
                           EvidenceLetter
                         </MenuItem>
                         <MenuItem onClick={() => handleNavigate(Views.DOCASSIST, applicant)}>
@@ -198,17 +258,40 @@ const ManageApplicants = ({
                         </MenuItem>
                       </MenuList>
                     </Menu>
-
-                    <IconButton ml="8px" icon={<CloseIcon />} onClick={() => confirmDelete(applicant)} colorScheme="red" variant="ghost" />
+                    {editId === applicant.id ? (
+                      <IconButton
+                        ml="8px"
+                        icon={<CheckIcon />}
+                        onClick={() => saveEdit({ ...applicant, visaCategory: selectedVisa })}
+                        colorScheme="green"
+                      />
+                    ) : (
+                      <IconButton
+                        ml="8px"
+                        icon={<EditIcon />}
+                        onClick={() => startEdit(applicant.id)}
+                        colorScheme="blue"
+                      />
+                    )}
+                    <IconButton
+                      ml="8px"
+                      icon={<CloseIcon />}
+                      onClick={() => confirmDelete(applicant)}
+                      colorScheme="red"
+                      variant="ghost"
+                    />
                   </Td>
                 </Tr>
+
               ))}
             </Tbody>
           </Table>
         </Box>
       </Center>
       <Center className="oai-manage-addnewapp-button-center">
-        <Button mt="16px" colorScheme="blue" onClick={addNewApplicant}>Add New Applicant</Button>
+        <Button mt="16px" colorScheme="blue" onClick={addNewApplicant}>
+          Add New Applicant
+        </Button>
       </Center>
       <DeleteApplicantModal
         isOpen={isOpen}
@@ -219,5 +302,6 @@ const ManageApplicants = ({
     </Box>
   );
 };
+
 
 export default ManageApplicants;

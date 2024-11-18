@@ -9,8 +9,11 @@ import { Center, VStack } from '@chakra-ui/react';
 // Orison
 import ScholarLinkForm from './ScholarData/ScholarLinkForm';
 import FileUploader from './ApplicantUploads/FileUploader';
+import { useApplicantContext } from '../../../context/ApplicantContext';
 
-const ApplicantDocuments = ({ selectedApplicant }) => {
+const ApplicantDocuments = ({ }) => {
+  const { selectedApplicant } = useApplicantContext();
+
   return (
     <Center className="oai-appdocs-center" width="100%" flex="1">
       <VStack className="oai-appdocs-stack" width="70%">

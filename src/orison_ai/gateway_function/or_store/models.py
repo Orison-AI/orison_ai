@@ -109,6 +109,21 @@ class GoogleScholarDB(BaseModel):
     homepage = StringField()
     other_details = DictField()
 
+    def to_json(self):
+        return {
+            "author": self.author,
+            "co_authors": self.co_authors,
+            "keywords": self.keywords,
+            "cited_by": self.cited_by,
+            "h_index": self.h_index,
+            "cited_by_5y": self.cited_by_5y,
+            "h_index_5y": self.h_index_5y,
+            "cited_each_year": self.cited_each_year,
+            "publications": [pub.to_json() for pub in self.publications],
+            "homepage": self.homepage,
+            "other_details": self.other_details,
+        }
+
 
 class SimplifiedScholarSummary(EmbeddedDocument):
     name = StringField()
@@ -116,6 +131,14 @@ class SimplifiedScholarSummary(EmbeddedDocument):
     citations = IntField()
     hindex = IntField()
     publication_count = IntField()
+
+
+class EvidenceBuilder(BaseModel):
+    """
+    MongoDB document class for Evidence of the applicant
+    """
+
+    summary = StringField()
 
 
 class GoogleScholarNetworkDB(BaseModel):

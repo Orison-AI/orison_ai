@@ -19,13 +19,15 @@ import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 // Orison AI
 import { summarize } from '../../../api/api';
 import SummarizationDataDisplay from './SummarizationDataDisplay';
+import { useApplicantContext } from '../../../context/ApplicantContext';
 
-const ApplicantSummarization = ({ selectedApplicant }) => {
+const ApplicantSummarization = ({ }) => {
   const [user] = useAuthState(auth);
   const [summarizationDataStatus, setSummarizationDataStatus] = useState('');
   const [summarizationData, setSummarizationData] = useState(null);
   const [summarizationProgress, setSummarizationProgress] = useState('');
   const toast = useToast();
+  const { selectedApplicant } = useApplicantContext();
 
   const fetchSummarizationData = useCallback(async () => {
     if (user && selectedApplicant) {
