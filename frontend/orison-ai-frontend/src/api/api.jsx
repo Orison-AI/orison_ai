@@ -11,6 +11,7 @@ const endpoints = {
   processScholarNetwork: "process-scholar-network",
   vectorizeFiles: "vectorize-files",
   summarize: "summarize",
+  evidence: "evidence",
   deleteFileVectors: "delete-file-vectors",
   docassist: "docassist",
 }
@@ -121,7 +122,7 @@ export const summarize = async (attorneyId, applicantId) => {
 };
 
 export const evidence = async (attorneyId, applicantId) => {
-  const response = await gateway(endpoints.summarize, {
+  const response = await gateway(endpoints.evidence, {
     attorneyId,
     applicantId,
   });
