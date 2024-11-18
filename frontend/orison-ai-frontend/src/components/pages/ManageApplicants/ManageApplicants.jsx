@@ -139,6 +139,7 @@ const ManageApplicants = ({
               <Tr>
                 <Th>Name</Th>
                 <Th>Email</Th>
+                <Th>Visa Type</Th>
                 <Th></Th>
               </Tr>
             </Thead>

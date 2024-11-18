@@ -1,40 +1,83 @@
-// ./components/pages/QuestionaireEditor/QuestionEditor.jsx
-
-import React, { useState, useEffect } from 'react';
-import { Input, Button, HStack, Spacer, Select } from '@chakra-ui/react';
+import React, { useState } from "react";
+import {
+  Input,
+  Button,
+  HStack,
+  VStack,
+  Select,
+  Tag,
+  TagLabel,
+  TagCloseButton,
+  Spacer,
+  Text,
+  Box,
+} from "@chakra-ui/react";
 
 const DETAIL_LEVELS = [
   { label: "Light", value: "light" },
   { label: "Moderate", value: "moderate" },
   { label: "Lengthy", value: "lengthy" },
-  { label: "Very Heavy", value: "very heavy" },
+  { label: "Heavy", value: "heavy" },
 ];
 
-const QuestionEditor = ({ question, onSave, onEdit, onDelete, tags }) => {
-  const [text, setText] = useState(question.text);  // Initialize text state
-  const [tag, setTag] = useState(question.tag);  // Initialize tag state
-  const [detailLevel, setDetailLevel] = useState(question.detail_level);  // Initialize detail_level state
+const QuestionEditor = ({ question, onSave, onEdit, onDelete, allTags }) => {
+  const [text, setText] = useState(question.text);
+  const [selectedTags, setSelectedTags] = useState(question.tag || []);
+  const [detailLevel, setDetailLevel] = useState(question.detail_level);
+
+  // Handle adding a new tag
+  const handleAddTag = (e) => {
+    const tag = e.target.value;
+    if (tag && !selectedTags.includes(tag)) {
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
+
+  // Handle removing a tag
+  const handleRemoveTag = (tagToRemove) => {
+    setSelectedTags(selectedTags.filter((tag) => tag !== tagToRemove));
+  };
 
   return (
-    <HStack width="100%" spacing={4}>
+    <Box
+      width="100%"
+      p={4}
+      border="1px solid"
+      borderColor="gray.200"
+      borderRadius="md"
+      shadow="sm"
+    >
       {question.isEditing ? (
-        <>
+        <VStack spacing={4} align="stretch">
           <Input
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Edit question"
           />
-          <Select
-            value={tag}
-            onChange={(e) => setTag(e.target.value)}
-            placeholder="Select tag"
-          >
-            {tags.map((tagOption) => (
-              <option key={tagOption.value} value={tagOption.value}>
-                {tagOption.label}
-              </option>
-            ))}
-          </Select>
+          <VStack align="stretch">
+            <Text fontWeight="bold">Tags:</Text>
+            <HStack spacing={2} wrap="wrap">
+              {selectedTags.map((tag) => (
+                <Tag
+                  key={tag}
+                  size="md"
+                  borderRadius="full"
+                  variant="solid"
+                  colorScheme="blue"
+                >
+                  <TagLabel>{tag}</TagLabel>
+                  <TagCloseButton onClick={() => handleRemoveTag(tag)} />
+                </Tag>
+              ))}
+            </HStack>
+            <Select placeholder="Add a tag" onChange={handleAddTag}>
+              {allTags.map((tagOption) => (
+                <option key={tagOption} value={tagOption}>
+                  {tagOption}
+                </option>
+              ))}
+            </Select>
+          </VStack>
           <Select
             value={detailLevel}
             onChange={(e) => setDetailLevel(e.target.value)}
@@ -46,23 +89,61 @@ const QuestionEditor = ({ question, onSave, onEdit, onDelete, tags }) => {
               </option>
             ))}
           </Select>
-          <Spacer />
-          <Button
-            onClick={() => onSave(question.id, text, tag, detailLevel)}  // Pass all values on save
-            colorScheme="green"
-          >
-            Save
-          </Button>
-        </>
+          <HStack justifyContent="flex-end" width="100%">
+            <Button
+              onClick={() =>
+                onSave(question.id, text, selectedTags, detailLevel)
+              }
+              colorScheme="green"
+            >
+              Save
+            </Button>
+          </HStack>
+        </VStack>
       ) : (
-        <>
-          <div>{text} (Tag: {tag}, Detail Level: {detailLevel})</div>
-          <Spacer />
-          <Button onClick={onEdit} colorScheme="yellow">Edit</Button>
-          <Button onClick={onDelete} colorScheme="red">Delete</Button>
-        </>
+        <VStack spacing={2} align="stretch">
+          <Text fontWeight="bold">{text}</Text>
+          <HStack alignItems="center">
+            <VStack align="start" spacing={1}>
+              <HStack spacing={2} wrap="wrap">
+                <Text fontSize="sm" color="gray.500">
+                  <strong>Tags:</strong>
+                </Text>
+                {selectedTags.length > 0 ? (
+                  selectedTags.map((tag) => (
+                    <Tag
+                      key={tag}
+                      size="md"
+                      borderRadius="full"
+                      variant="solid"
+                      colorScheme="blue"
+                    >
+                      {tag}
+                    </Tag>
+                  ))
+                ) : (
+                  <Text fontSize="sm" color="gray.500">
+                    None
+                  </Text>
+                )}
+              </HStack>
+              <Text fontSize="sm" color="gray.500">
+                <strong>Detail Level:</strong> {detailLevel || "N/A"}
+              </Text>
+            </VStack>
+            <Spacer />
+            <HStack spacing={2}>
+              <Button onClick={onEdit} colorScheme="yellow" size="sm">
+                Edit
+              </Button>
+              <Button onClick={onDelete} colorScheme="red" size="sm">
+                Delete
+              </Button>
+            </HStack>
+          </HStack>
+        </VStack>
       )}
-    </HStack>
+    </Box>
   );
 };
 
