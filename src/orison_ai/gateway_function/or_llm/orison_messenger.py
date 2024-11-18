@@ -58,7 +58,7 @@ from or_store.db_interfaces import ChatMemoryClient
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = "gpt-4-turbo"
+MODEL_NAME = "gpt-4o"
 EMBEDDING_MODEL = "text-embedding-ada-002"
 RETRIEVAL_DOC_LIMIT = 10
 CHAT_HISTORY_LIMIT = 10

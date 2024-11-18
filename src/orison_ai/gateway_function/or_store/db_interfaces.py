@@ -30,6 +30,7 @@ from or_store.models import (
     ScreeningBuilder,
     MemoryEntry,
     ChatMemoryDB,
+    EvidenceBuilder,
 )
 from or_store.firebase import FirestoreClient
 
@@ -65,6 +66,17 @@ class GoogleScholarClient(FirestoreClient):
         super(GoogleScholarClient, self).__init__()
         self._model = GoogleScholarDB
         self._collection = self.client.collection("google_scholar")
+
+
+class EvidenceClient(FirestoreClient):
+    def __init__(self):
+        """
+        Initializes an instance of a GoogleScholarClient object, which can be used
+        to insert into or update a database collection given a file
+        """
+        super(EvidenceClient, self).__init__()
+        self._model = EvidenceBuilder
+        self._collection = self.client.collection("evidence_letter")
 
 
 class GoogleScholarNetworkClient(FirestoreClient):

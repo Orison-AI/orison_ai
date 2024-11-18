@@ -120,6 +120,21 @@ export const summarize = async (attorneyId, applicantId) => {
   return response.data;
 };
 
+export const evidence = async (attorneyId, applicantId) => {
+  const response = await gateway(endpoints.summarize, {
+    attorneyId,
+    applicantId,
+  });
+
+  console.log(`INFO: evidence: response=${JSON.stringify(response)}`);
+
+  if (!response.data) {
+    throw new Error('Failed to start evidence');
+  }
+
+  return response.data;
+};
+
 export const docassist = async (attorneyId, applicantId, message, tag, filename) => {
   const response = await gateway(endpoints.docassist, {
     attorneyId,

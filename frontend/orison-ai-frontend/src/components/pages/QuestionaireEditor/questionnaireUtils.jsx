@@ -1,10 +1,25 @@
 import { doc, getDoc, getDocs, setDoc, updateDoc, collection } from "firebase/firestore";
 import { auth, db } from "../../../common/firebaseConfig";
 
-export const fetchTags = async () => {
+export const fetchTags = async (selectedApplicant) => {
+    let templateFileName;
+    switch (selectedApplicant.visaCategory) {
+        case "EB1":
+            templateFileName = "eb1_a_questionnaire";
+            break;
+        case "O1":
+            templateFileName = "eb1_a_questionnaire";
+            break;
+        case "EB2":
+            templateFileName = "eb1_a_questionnaire";
+            break;
+        default:
+            templateFileName = "eb1_a_questionnaire";
+    }
+
     try {
         // Reference the specific document in Firestore
-        const questionnaireDocRef = doc(db, "templates", "eb1_a_questionnaire");
+        const questionnaireDocRef = doc(db, "templates", templateFileName);
 
         // Fetch the document
         const questionnaireDoc = await getDoc(questionnaireDocRef);
@@ -13,7 +28,7 @@ export const fetchTags = async () => {
             const data = questionnaireDoc.data();
             return data.tags || []; // Return the tags field or an empty array if it doesn't exist
         } else {
-            console.error("eb1_a_questionnaire document does not exist.");
+            console.error("questionnaire document does not exist.");
             return [];
         }
     } catch (error) {
@@ -118,16 +133,31 @@ export const addQuestion = (setIdCounter, questions, setQuestions) => {
     setIdCounter((prev) => prev + 1);
 };
 
-export const createFromTemplate = async (applicantId, setQuestions, setDocumentExists) => {
+export const createFromTemplate = async (selectedApplicant, setQuestions, setDocumentExists) => {
+    let templateFileName;
+    switch (selectedApplicant.visaCategory) {
+        case "EB1":
+            templateFileName = "eb1_a_questionnaire";
+            break;
+        case "O1":
+            templateFileName = "eb1_a_questionnaire";
+            break;
+        case "EB2":
+            templateFileName = "eb1_a_questionnaire";
+            break;
+        default:
+            templateFileName = "eb1_a_questionnaire";
+    }
+
     try {
-        const templateDocRef = doc(db, "templates", "eb1_a_questionnaire");
+        const templateDocRef = doc(db, "templates", templateFileName);
         const templateDoc = await getDoc(templateDocRef);
 
         if (templateDoc.exists()) {
             const templateData = templateDoc.data();
             const templateTasks = templateData.task || [];
 
-            const questionnaireDocRef = doc(db, "templates", applicantId);
+            const questionnaireDocRef = doc(db, "templates", selectedApplicant.id);
             const userDocSnapshot = await getDoc(questionnaireDocRef);
 
             let updatedTaskArray;

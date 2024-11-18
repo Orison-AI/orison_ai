@@ -1,35 +1,30 @@
 // ./App.jsx
 
-// React
-import React, { useEffect, useRef, useState } from 'react';
-
-// Firebase
+import React, { useEffect, useRef, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
+import { Box, Text, useDisclosure, Flex } from "@chakra-ui/react";
 
-// Chakra
-import {
-  Box, Text, useDisclosure, Flex,
-} from '@chakra-ui/react';
+import { auth } from "./common/firebaseConfig";
+import ApplicantDocuments from "./components/pages/ApplicantDocuments/ApplicantDocuments";
+import ApplicantSummarization from "./components/pages/ApplicantSummarization/ApplicantSummarization";
+import Evidence from "./components/pages/EvidenceLetter/evidence";
+import DocAssist from "./components/pages/DocAssist/DocAssist";
+import Auth from "./components/auth/Auth";
+import Header from "./components/Header";
+import QuestionaireEditor from "./components/pages/QuestionaireEditor/QuestionaireEditor";
+import ManageApplicants from "./components/pages/ManageApplicants/ManageApplicants";
+import Navigation from "./components/Navigation";
+import Settings from "./components/settings/Settings";
+import Views from "./common/views";
+import { ApplicantProvider, useApplicantContext } from "./context/ApplicantContext";
 
-// Internal
-import { auth } from './common/firebaseConfig';
-import ApplicantDocuments from './components/pages/ApplicantDocuments/ApplicantDocuments';
-import ApplicantSummarization from './components/pages/ApplicantSummarization/ApplicantSummarization';
-import DocAssist from './components/pages/DocAssist/DocAssist';
-import Auth from './components/auth/Auth';
-import Header from './components/Header';
-import QuestionaireEditor from './components/pages/QuestionaireEditor/QuestionaireEditor';
-import ManageApplicants from './components/pages/ManageApplicants/ManageApplicants';
-import Navigation from './components/Navigation';
-import Settings from './components/settings/Settings';
-import Views from './common/views';
-
-const App = () => {
+const AppContent = () => {
   const [user, setUser] = useState(null);
   const { isOpen: isSettingsOpen, onOpen: onSettingsOpen, onClose: onSettingsClose } = useDisclosure();
   const [currentView, setCurrentView] = useState(Views.MANAGE_APPLICANTS);
   const [applicants, setApplicants] = useState([]);
-  const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const { selectedApplicant, setSelectedApplicant } = useApplicantContext();
+
   const headerRef = useRef(null);
   const [headerHeight, setHeaderHeight] = useState(0);
   const navRef = useRef(null);
@@ -39,15 +34,12 @@ const App = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
-        // User is signed in
         setUser(currentUser);
       } else {
-        // No user is signed in
         setUser(null);
       }
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
@@ -61,10 +53,10 @@ const App = () => {
       }
     };
 
-    handleResize(); // Call once on mount
-    window.addEventListener('resize', handleResize); // Adjust on window resize
+    handleResize();
+    window.addEventListener("resize", handleResize);
 
-    return () => window.removeEventListener('resize', handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   if (!user) {
@@ -74,13 +66,15 @@ const App = () => {
   const renderCurrentView = () => {
     switch (currentView) {
       case Views.MANAGE_APPLICANTS:
-        return <ManageApplicants
-          applicants={applicants}
-          setApplicants={setApplicants}
-          selectedApplicant={selectedApplicant}
-          setSelectedApplicant={setSelectedApplicant}
-          setCurrentView={setCurrentView}
-        />;
+        return (
+          <ManageApplicants
+            applicants={applicants}
+            setApplicants={setApplicants}
+            selectedApplicant={selectedApplicant}
+            setSelectedApplicant={setSelectedApplicant}
+            setCurrentView={setCurrentView}
+          />
+        );
       case Views.QUESTIONAIRE:
         return <QuestionaireEditor selectedApplicant={selectedApplicant} />;
       case Views.APPLICANT_DOCUMENTS:
@@ -89,24 +83,22 @@ const App = () => {
         return <ApplicantSummarization selectedApplicant={selectedApplicant} />;
       case Views.DOCASSIST:
         return <DocAssist selectedApplicant={selectedApplicant} />;
+      case Views.EVIDENCE:
+        return <Evidence selectedApplicant={selectedApplicant} />;
       default:
-        return <Text>Invalid View</Text>
+        return <Text>Invalid View</Text>;
     }
   };
 
   return (
     <Flex className="oai-app" direction="column" height="100vh" width="100vw">
-      {/* Header */}
       <Header
         ref={headerRef}
         goHome={() => setCurrentView(Views.MANAGE_APPLICANTS)}
-        landingPage={() => window.location.href = "https://orison.ai"}
+        landingPage={() => (window.location.href = "https://orison.ai")}
         onSettingsOpen={onSettingsOpen}
       />
-
-      {/* Main Content Area */}
       <Flex className="oai-nav-and-view" direction="column" flex="1" width="100%" padding="0 40px" overflow="hidden">
-        {/* Navigation */}
         <Navigation
           ref={navRef}
           applicants={applicants}
@@ -115,8 +107,6 @@ const App = () => {
           currentView={currentView}
           setCurrentView={setCurrentView}
         />
-
-        {/* View (main content) */}
         <Box
           className="oai-view"
           ref={viewRef}
@@ -128,11 +118,15 @@ const App = () => {
           {renderCurrentView()}
         </Box>
       </Flex>
-
-      {/* Settings Modal */}
       <Settings isOpen={isSettingsOpen} onClose={onSettingsClose} />
     </Flex>
   );
-}
+};
+
+const App = () => (
+  <ApplicantProvider>
+    <AppContent />
+  </ApplicantProvider>
+);
 
 export default App;

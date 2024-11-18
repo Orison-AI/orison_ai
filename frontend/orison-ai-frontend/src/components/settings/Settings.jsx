@@ -13,10 +13,12 @@ import {
 
 // Internal
 import { auth, db } from '../../common/firebaseConfig';  // Ensure Firestore (db) is imported
+import { useApplicantContext } from '../../context/ApplicantContext';
 
 function Settings({ isOpen, onClose }) {
   const toast = useToast();
   const user = auth.currentUser;  // Get the current user for account deletion
+  const { selectedApplicant } = useApplicantContext();
 
   const handleLogout = () => {
     signOut(auth).then(() => {
@@ -39,7 +41,7 @@ function Settings({ isOpen, onClose }) {
     });
   };
 
-  const handleDeleteAccount = async ({ selectedApplicant }) => {
+  const handleDeleteAccount = async ({ }) => {
     try {
       if (user) {
         // Step 1: Delete the attorney's document from Firestore

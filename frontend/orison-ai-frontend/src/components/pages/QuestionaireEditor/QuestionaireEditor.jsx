@@ -17,14 +17,16 @@ import {
   createFromTemplate,
   deleteAllQuestions,
 } from "./questionnaireUtils";
+import { useApplicantContext } from "../../../context/ApplicantContext";
 
-const QuestionnaireEditor = ({ selectedApplicant }) => {
+const QuestionnaireEditor = ({ }) => {
   const [questions, setQuestions] = useState([]);
   const [idCounter, setIdCounter] = useState(0);
   const [allTags, setAllTags] = useState([]);
   const [documentExists, setDocumentExists] = useState(false);
   const toast = useToast();
   const [isAdding, setIsAdding] = useState(false);
+  const { selectedApplicant } = useApplicantContext();
 
   // Fetch tags and questionnaire data
   useEffect(() => {
@@ -35,7 +37,7 @@ const QuestionnaireEditor = ({ selectedApplicant }) => {
 
     (async () => {
       try {
-        const tags = await fetchTags();
+        const tags = await fetchTags(selectedApplicant);
         setAllTags(tags);
 
         const { questions: fetchedQuestions, exists } = await fetchQuestionnaire(
@@ -94,7 +96,7 @@ const QuestionnaireEditor = ({ selectedApplicant }) => {
       <HStack spacing={4} mb={4}>
         <Button
           onClick={() =>
-            createFromTemplate(selectedApplicant.id, setQuestions, setDocumentExists)
+            createFromTemplate(selectedApplicant, setQuestions, setDocumentExists)
           }
           colorScheme="blue" // Changed color scheme
         >

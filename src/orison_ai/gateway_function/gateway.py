@@ -50,6 +50,7 @@ class GatewayRequestType(Enum):
     DELETE_FILE_VECTORS = "delete-file-vectors"
     SUMMARIZE = "summarize"
     DOCASSIST = "docassist"
+    EVIDENCEGENERATOR = "evidencegenerator"
 
 
 @dataclass

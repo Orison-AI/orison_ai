@@ -6,6 +6,7 @@ import { auth, db } from '../../../common/firebaseConfig';
 import { doc, getDoc, collection, query, orderBy, getDocs, limit } from 'firebase/firestore';
 import ReactMarkdown from 'react-markdown';
 import Select, { components } from 'react-select'; // Import react-select and components
+import { useApplicantContext } from '../../../context/ApplicantContext';
 
 const customStyles = {
     control: (provided, state) => ({
@@ -72,7 +73,7 @@ const CustomValueContainer = ({ children, ...props }) => {
     );
 };
 
-const DocAssist = ({ selectedApplicant }) => {
+const DocAssist = ({ }) => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
@@ -83,6 +84,7 @@ const DocAssist = ({ selectedApplicant }) => {
     const toast = useToast();
     const [user] = useAuthState(auth);
     const messagesEndRef = useRef(null);
+    const { selectedApplicant } = useApplicantContext();
 
     // Refs to track dropdown components
     const tagDropdownRef = useRef(null);
@@ -207,7 +209,7 @@ const DocAssist = ({ selectedApplicant }) => {
     }, [user, selectedApplicant]);
 
     useEffect(() => {
-        fetchTags(); // Fetch tags on component mount or when user/selectedApplicant changes
+        fetchTags(selectedApplicant); // Fetch tags on component mount or when user/selectedApplicant changes
     }, [fetchTags]);
 
     // Function to close dropdown without clearing selection

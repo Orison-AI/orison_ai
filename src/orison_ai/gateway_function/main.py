@@ -32,6 +32,7 @@ from fetch_scholar import FetchScholar
 from fetch_scholar_network import FetchScholarNetwork
 from summarize import Summarize
 from docassist import DocAssist
+from evidence import EvidenceGenerator
 from vectorize_files import VectorizeFiles, DeleteFileVectors
 from gateway import GatewayRequestType, router
 
@@ -64,6 +65,7 @@ def init_routes():
             GatewayRequestType.DELETE_FILE_VECTORS: DeleteFileVectors(),
             GatewayRequestType.SUMMARIZE: Summarize(),
             GatewayRequestType.DOCASSIST: DocAssist(),
+            GatewayRequestType.EVIDENCEGENERATOR: EvidenceGenerator(),
         }
         _logger.info("Initializing routes....DONE")
 

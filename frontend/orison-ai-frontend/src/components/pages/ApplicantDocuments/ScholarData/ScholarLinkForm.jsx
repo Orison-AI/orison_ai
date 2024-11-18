@@ -23,14 +23,16 @@ import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 import { processScholarLink } from '../../../../api/api';
 import { processScholarNetwork } from '../../../../api/api';
 import ScholarDataModal from './ScholarDataModal';
+import { useApplicantContext } from '../../../../context/ApplicantContext';
 
-const ScholarLinkForm = ({ selectedApplicant }) => {
+const ScholarLinkForm = ({ }) => {
   const [user] = useAuthState(auth);
   const [scholarLink, setScholarLink] = useState('');
   const [scholarDataStatus, setScholarDataStatus] = useState('');
   const [scholarData, setScholarData] = useState(null);
   const { isOpen: isScholarDataModalOpen, onOpen: onScholarDataModalOpen, onClose: onScholarDataModalClose } = useDisclosure();
   const toast = useToast();
+  const { selectedApplicant } = useApplicantContext();
 
   const fetchScholarData = useCallback(async () => {
     if (user && selectedApplicant) {
@@ -53,7 +55,7 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
       } else {
         const data = querySnapshot.docs[0].data();
         const networkData = networkSnapshot.docs[0].data();
-        const mergedData = {...data, ...networkData};
+        const mergedData = { ...data, ...networkData };
         setScholarData(mergedData);
         setScholarDataStatus('found');
       }
@@ -94,7 +96,7 @@ const ScholarLinkForm = ({ selectedApplicant }) => {
           processScholarLink(user.uid, selectedApplicant.id, scholarLink),
           processScholarNetwork(user.uid, selectedApplicant.id, scholarLink)
         ]);
-        
+
         toast({
           title: 'Google Scholar Data Found',
           description: `Link: ${scholarLink}`,

@@ -28,8 +28,9 @@ import UploadingFileModal from './UploadingFileModal';
 import ViewFileModal from './ViewFileModal';
 import DeleteFileModal from './DeleteFileModal';
 import DeletingFileModal from './DeletingFileModal';
+import { useApplicantContext } from "../../../../context/ApplicantContext";
 
-const FileUploader = ({ selectedApplicant }) => {
+const FileUploader = ({ }) => {
   const [user] = useAuthState(auth);
   const [documents, setDocuments] = useState([]);
   // Set "main" as the default tag and initialize state with it
@@ -73,12 +74,29 @@ const FileUploader = ({ selectedApplicant }) => {
     onClose: onDeleteInProgressModalClose,
   } = useDisclosure();
   const toast = useToast();
+  const { selectedApplicant } = useApplicantContext();
 
   const fetchApplicantData = useCallback(async () => {
     if (user && selectedApplicant) {
+      // Use switch-case to assign file names based on visaCategory
+      let templateFileName;
+      switch (selectedApplicant.visaCategory) {
+        case "EB1":
+          templateFileName = "eb1_a_questionnaire";
+          break;
+        case "O1":
+          templateFileName = "eb1_a_questionnaire";
+          break;
+        case "EB2":
+          templateFileName = "eb1_a_questionnaire";
+          break;
+        default:
+          templateFileName = "eb1_a_questionnaire";
+      }
+
       try {
         // Fetch tags from the templates collection
-        const templateDocRef = doc(db, "templates", "eb1_a_questionnaire");
+        const templateDocRef = doc(db, "templates", templateFileName);
         const templateDocSnap = await getDoc(templateDocRef);
 
         let templateTags = [];
