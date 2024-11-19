@@ -29,6 +29,7 @@ import {
   MenuItem,
   MenuList,
   Select,
+  Text,
 } from "@chakra-ui/react";
 import { EditIcon, CloseIcon, CheckIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import { db, auth } from "../../../common/firebaseConfig";
@@ -177,6 +178,29 @@ const ManageApplicants = ({
           borderColor="gray.600"
           borderRadius="8px"
         >
+          <Box
+            p="6"
+            // bg="blue.800"
+            borderRadius="md"
+            boxShadow="lg"
+            // border="1px solid"
+            borderColor="blue.600"
+            color="white"
+            mb="6"
+            mt="8" /* Add margin-top for spacing before the section */
+          >
+            <Text fontSize="2xl" fontWeight="bold" mb="4" color="white">
+              How to Use Orison
+            </Text>
+            <Box as="ul" pl="6" fontSize="md" lineHeight="1.8" color="blue.100">
+              <Box as="li" mb="2">Use the AI Toolbox to navigate</Box>
+              <Box as="li" mb="2">Enter relevant links, upload documents, and provide additional information</Box>
+              <Box as="li" mb="2">Choose default questionnaire templates or create custom questions</Box>
+              <Box as="li" mb="2">Generate answers for questionnaires using your provided information</Box>
+              <Box as="li" mb="2">Generate evidence letters seamlessly</Box>
+              <Box as="li">Use DocAssist to chat with your documents and quickly find specific information</Box>
+            </Box>
+          </Box>
           <Table className="oai-manage-table" variant="simple">
             <Thead className="oai-manage-thead">
               <Tr>
@@ -287,7 +311,7 @@ const ManageApplicants = ({
             </Tbody>
           </Table>
         </Box>
-      </Center>
+      </Center >
       <Center className="oai-manage-addnewapp-button-center">
         <Button mt="16px" colorScheme="blue" onClick={addNewApplicant}>
           Add New Applicant
@@ -299,7 +323,7 @@ const ManageApplicants = ({
         onDelete={() => deleteApplicant(applicantToDelete)}
         applicant={applicantToDelete}
       />
-    </Box>
+    </Box >
   );
 };
 
