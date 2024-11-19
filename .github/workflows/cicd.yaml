@@ -4,10 +4,10 @@ name: orison_staging_deploy
 # Controls when the action will run. 
 on:
   push:
-    branches: [ staging, devel ]
+    # branches: [ staging, devel ] # Fix this later
 
   pull_request:
-    branches: [ staging ]
+    # branches: [ staging ] # Fix this later
 
   workflow_dispatch:
 
