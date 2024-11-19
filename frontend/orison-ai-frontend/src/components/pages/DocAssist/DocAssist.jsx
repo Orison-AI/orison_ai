@@ -116,21 +116,21 @@ const DocAssist = ({ }) => {
     const fetchMemory = useCallback(async () => {
         if (user && selectedApplicant) {
             const memoryRef = collection(db, "chat_memory", user.uid, selectedApplicant.id);
-            const q = query(memoryRef, orderBy("date_created", "desc"), limit(1));  // Get the latest document
+            const q = query(memoryRef, orderBy("date_created", "desc"), limit(1)); // Get the latest document
             const querySnapshot = await getDocs(q);
 
             if (!querySnapshot.empty) {
-                const latestDoc = querySnapshot.docs[0];  // Get the latest document
+                const latestDoc = querySnapshot.docs[0];
                 const data = latestDoc.data();
-                let history = data.history || [];  // Access the history field
+                let history = data.history || [];
 
                 // Sort the history by timestamp in ascending order
                 history = history.sort((a, b) => a.timestamp.toMillis() - b.timestamp.toMillis());
 
-                // Extract user and assistant messages from sorted history
+                // Extract user and assistant messages from sorted history with timestamps
                 const allMessages = history.flatMap(entry => [
-                    { text: entry.user_message, sender: 'user' },
-                    { text: entry.assistant_response, sender: 'bot' }
+                    { text: entry.user_message, sender: 'user', timestamp: entry.timestamp.toDate() },
+                    { text: entry.assistant_response, sender: 'bot', timestamp: entry.timestamp.toDate() }
                 ]);
 
                 setMessages(allMessages);
@@ -139,6 +139,7 @@ const DocAssist = ({ }) => {
             }
         }
     }, [user, selectedApplicant]);
+
 
 
     useEffect(() => {
@@ -345,19 +346,28 @@ const DocAssist = ({ }) => {
 
 export default DocAssist;
 
-// MessageCard component
 const MessageCard = ({ message }) => {
-    const { text, sender } = message;
+    const { text, sender, timestamp } = message;
+
+    // Format the timestamp for display
+    const formattedTime = new Intl.DateTimeFormat('en-US', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(timestamp);
 
     return (
-        <HStack justify={sender === 'user' ? 'flex-end' : 'flex-start'} width="100%">
+        <VStack
+            align={sender === 'user' ? 'flex-end' : 'flex-start'}
+            spacing={0}
+            width="100%"
+        >
             <Box
                 bg={sender === 'user' ? 'blue.700' : 'gray.900'}
                 color="white"
                 borderRadius="md"
                 p="3"
                 pl="4"
-                maxWidth={sender === 'user' ? "75%" : "100%"}
+                maxWidth="75%"
                 wordBreak="break-word"
             >
                 <ReactMarkdown
@@ -373,6 +383,9 @@ const MessageCard = ({ message }) => {
                     {text}
                 </ReactMarkdown>
             </Box>
-        </HStack>
+            <Text fontSize="sm" color="gray.400" pr={sender === 'user' ? '4' : '0'}>
+                {formattedTime}
+            </Text>
+        </VStack>
     );
 };

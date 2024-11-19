@@ -35,7 +35,7 @@ class EvidenceGenerator(RequestHandler):
 
     def initialize(self, secrets):
         try:
-            self._orison_messenger = OrisonMessenger(secrets=secrets)
+            self._orison_messenger = OrisonMessenger(secrets=secrets, max_tokens=16384)
         except Exception as e:
             raise OrisonMessenger_INITIALIZATION_FAILED(exception=e)
 

@@ -127,9 +127,9 @@ const QuestionEditor = ({ question, onSave, onEdit, onDelete, allTags }) => {
                   </Text>
                 )}
               </HStack>
-              <Text fontSize="sm" color="gray.500">
+              {/* <Text fontSize="sm" color="gray.500">
                 <strong>Detail Level:</strong> {detailLevel || "N/A"}
-              </Text>
+              </Text> */}
             </VStack>
             <Spacer />
             <HStack spacing={2}>

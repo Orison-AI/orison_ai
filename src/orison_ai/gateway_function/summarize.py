@@ -87,13 +87,35 @@ class Summarize(RequestHandler):
 
         return prompts
 
+    async def validate_response(self, prompt):
+        response_verification_prompt = f"Here is a question: {prompt.question}.\nHere is the answer: {prompt.answer}.\nIs this answer even a little bit appropriate response to the question? Respond in true or false. no additional text."
+        chat_response = await self._orison_messenger._system_chain.ainvoke(
+            response_verification_prompt
+        )
+        response = chat_response.get("text")
+        if "false" in response:
+            prompt.answer = "Invalid response from AI. Either data is missing or question is not applicable to you."
+            prompt.source = "N/A"
+        return prompt
+
     async def summarize(self, prompts: List[Prompt]):
         self.logger.info("Generating screening")
-        tasks = [self._orison_messenger.request(prompt) for prompt in prompts]
+
+        async def process_prompt(prompt):
+            # First, send the request
+            response = await self._orison_messenger.request(prompt)
+            # Then, validate the response
+            validated_response = await self.validate_response(response)
+            return validated_response
+
+        # Chain request and validation for each prompt
+        tasks = [process_prompt(prompt) for prompt in prompts]
         results = await asyncio.gather(*tasks)
+
         screening = ScreeningBuilder()
         for result in results:
             screening.summary.append(result)
+
         self.logger.info("Generating screening...DONE")
         return screening
 
@@ -128,8 +150,8 @@ class Summarize(RequestHandler):
 
 if __name__ == "__main__":
     request_json = {
-        "attorneyId": "xlMsyQpatdNCTvgRfW4TcysSDgX2",
-        "applicantId": "tYdtBdc7lJHyVCxquubj",
+        "attorneyId": "jVRK827jk3YLi6NWIyjKDZ0MgCv2",
+        "applicantId": "wt3YHwT0xEp5e7f5vp3L",
     }
     summarize = Summarize()
     asyncio.run(summarize.handle_request(request_json))
