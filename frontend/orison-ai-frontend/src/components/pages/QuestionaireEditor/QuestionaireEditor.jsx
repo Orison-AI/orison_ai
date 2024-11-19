@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 
 // Chakra
-import { Box, Button, VStack, HStack, useToast, Spacer } from "@chakra-ui/react";
+import { Box, Button, VStack, HStack, useToast, Alert, AlertIcon, AlertDescription, } from "@chakra-ui/react";
 
 // Internal
 import QuestionEditor from "./QuestionEditor";
@@ -107,6 +107,14 @@ const QuestionnaireEditor = ({ }) => {
           Delete All Questions
         </Button>
       </HStack>
+
+      <Alert status="warning" minHeight="80px" borderRadius="10px" mb="4" fontSize="16px">
+        <AlertIcon />
+        <AlertDescription>
+          - Tag ensures your corresponding vectorized document is used for content generation for answering questions. <br />
+          - Extra tags are not harmful (You may remove them if you'd like). Ensure your new custom tags are added by editing the question. <br />
+        </AlertDescription>
+      </Alert>
 
       {/* Render Questions */}
       <VStack spacing={4} align="stretch">

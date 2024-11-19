@@ -39,6 +39,7 @@ const Evidence = () => {
     const [evidenceProgress, setEvidenceProgress] = useState("");
     const toast = useToast();
     const { selectedApplicant } = useApplicantContext();
+    const [lastUpdated, setLastUpdated] = useState('');
 
     // Fetch the latest evidence letter
     const fetchEvidenceData = useCallback(async () => {
@@ -56,10 +57,17 @@ const Evidence = () => {
             if (querySnapshot.empty) {
                 setEvidenceData(null);
                 setEvidenceDataStatus("not_found");
+                setLastUpdated(''); // Reset timestamp when no data is found
             } else {
                 const data = querySnapshot.docs[0].data();
                 setEvidenceData(data);
                 setEvidenceDataStatus("found");
+                // Update the last updated timestamp
+                const timestamp = data.date_created.toDate(); // Firestore timestamp to JS Date
+                setLastUpdated(new Intl.DateTimeFormat('en-US', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                }).format(timestamp));
             }
         }
     }, [user, selectedApplicant]);
@@ -124,6 +132,13 @@ const Evidence = () => {
                             </Box>
                         )}
                     </HStack>
+                    {evidenceDataStatus === 'found' && (
+                        <>
+                            <Text fontSize="sm" color="gray.500">
+                                Last Updated: {lastUpdated}
+                            </Text>
+                        </>
+                    )}
                     {evidenceDataStatus === "found" && (
                         <Box
                             padding="20px"

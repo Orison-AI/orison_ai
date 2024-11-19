@@ -1,31 +1,23 @@
-// ./components/pages/ApplicantSummarization/ApplicantSummarization.jsx
-
-// React
 import React, { useCallback, useEffect, useState } from 'react';
-
-// Firebase
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../../../common/firebaseConfig';
 import {
   collection, getDocs, orderBy, query, limit, doc,
 } from 'firebase/firestore';
-
-// Chakra UI
 import {
   Box, Button, Center, HStack, Text, useToast, VStack, Spinner,
 } from '@chakra-ui/react';
 import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
-
-// Orison AI
 import { summarize } from '../../../api/api';
 import SummarizationDataDisplay from './SummarizationDataDisplay';
 import { useApplicantContext } from '../../../context/ApplicantContext';
 
-const ApplicantSummarization = ({ }) => {
+const ApplicantSummarization = () => {
   const [user] = useAuthState(auth);
   const [summarizationDataStatus, setSummarizationDataStatus] = useState('');
   const [summarizationData, setSummarizationData] = useState(null);
   const [summarizationProgress, setSummarizationProgress] = useState('');
+  const [lastUpdated, setLastUpdated] = useState('');
   const toast = useToast();
   const { selectedApplicant } = useApplicantContext();
 
@@ -41,10 +33,17 @@ const ApplicantSummarization = ({ }) => {
       if (querySnapshot.empty) {
         setSummarizationData(null);
         setSummarizationDataStatus('not_found');
+        setLastUpdated(''); // Reset timestamp when no data is found
       } else {
         const data = querySnapshot.docs[0].data();
         setSummarizationData(data);
         setSummarizationDataStatus('found');
+        // Update the last updated timestamp
+        const timestamp = data.date_created.toDate(); // Firestore timestamp to JS Date
+        setLastUpdated(new Intl.DateTimeFormat('en-US', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }).format(timestamp));
       }
     }
   }, [user, selectedApplicant]);
@@ -109,7 +108,12 @@ const ApplicantSummarization = ({ }) => {
             )}
           </HStack>
           {summarizationDataStatus === 'found' && (
-            <SummarizationDataDisplay data={summarizationData} />
+            <>
+              <Text fontSize="sm" color="gray.500">
+                Last Updated: {lastUpdated}
+              </Text>
+              <SummarizationDataDisplay data={summarizationData} />
+            </>
           )}
           {summarizationDataStatus === 'loading' && (
             <Box className="oai-appsum-loading" bg="gray.900" p="20px" borderRadius="20px" width="60%" minWidth="600px">

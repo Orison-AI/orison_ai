@@ -458,13 +458,17 @@ const FileUploader = ({ }) => {
 
   return (
     <VStack width="100%" flex="1" mt="20px" overflowY="auto" overflowX="auto">
-      <HStack width="100%" fontSize="24px" spacing={4}>
+      <HStack width="100%" fontSize="24px" spacing={4} alignItems="center">
         <Text width="100%">Applicant Files</Text>
-        <Box minWidth="200px" fontSize="24px">
+
+        {/* Tag Label and Dropdown */}
+        <HStack spacing={2} alignItems="center" width="50%">
+          <Text fontSize="lg" color="gray.300" flexShrink={0}>Select Tag:</Text>
           <Select
             value={selectedTag}
             onChange={(e) => setSelectedTag(e.target.value)}
             color="blue.100"
+            width="250px" /* Widen the dropdown */
           >
             {tags.map((tag) => (
               <option key={tag} value={tag}>
@@ -472,7 +476,7 @@ const FileUploader = ({ }) => {
               </option>
             ))}
           </Select>
-        </Box>
+        </HStack>
 
         {/* Input Box for Tag Name */}
         <Box minWidth="200px">
@@ -541,18 +545,18 @@ const FileUploader = ({ }) => {
           Del
         </Button>
       </HStack>
-
-
       {/* Rest of the component remains unchanged */}
       <VStack width="100%" flex="1" overflowY="auto" overflowX="auto">
         <Alert status="warning" minHeight="80px" borderRadius="10px" mb="4" fontSize="16px">
           <AlertIcon />
           <AlertDescription>
-            Tags are used by AI to find relevant information for content generation. Use your best judgement to match the document with correct tag. <br></br>
-            You can add custom tags but make sure to specify new tags in questionnaire so AI can use them. <br></br>
-            Remember to vectorize the file after uploading or re-uploading. Vectorization is used by AI to find relevent information. Support for vectorizing multiple files is in works.
+            - Use tags to help AI find relevant information. Match documents to the right tags. Not all tags may apply. <br />
+            - Add/Del tags, but update the questionnaire with new tags. AI will not use your documents otherwise. <br />
+            - Vectorize files after upload for AI search. Avoid uploading large files (>300 pages or 50 MB). <br />
+            - Vectorization may take up to 5 minutes per document. Wait for the green marker. <br />
           </AlertDescription>
         </Alert>
+
         <FileDropzone onDrop={onDrop} disabled={uploadInProgress} />
         <FileTable
           documents={documents}
