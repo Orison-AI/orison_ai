@@ -95,6 +95,7 @@ const ManageApplicants = ({
         email: "",
         files: [],
         vectorized_files: [],
+        vectorize_in_progress: [],
         visaCategory: "", // Add visaCategory field
       });
       startEdit(newDoc.id);
