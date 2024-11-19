@@ -1,5 +1,3 @@
-// ./components/pages/ApplicantDocuments/ApplicantUploads/FileTable.jsx
-
 // React
 import React from 'react';
 
@@ -17,6 +15,7 @@ const FileTable = ({
   vectorizeAllFiles,
   unvectorizeAllFiles,
   deleteFile,
+  deleteAllFiles, // Add deleteAllFiles prop
   viewFile,
   vectorizingFiles,
   vectorizeStatus,
@@ -49,6 +48,21 @@ const FileTable = ({
                 >
                   Unvectorize All
                 </Button>
+                <Button
+                  colorScheme="red"
+                  onClick={async () => {
+                    if (
+                      window.confirm(
+                        'Are you sure you want to delete all files? This action cannot be undone.'
+                      )
+                    ) {
+                      await deleteAllFiles(); // Call deleteAllFiles when clicked
+                    }
+                  }}
+                  isDisabled={documents.length === 0} // Disable if no files
+                >
+                  Delete All Files
+                </Button>
               </HStack>
             </Th>
           </Tr>
@@ -59,7 +73,7 @@ const FileTable = ({
 
             return (
               <Tr key={fileName}>
-                <Td whiteSpace="nowrap">{fileName}</Td>
+                <Td whiteSpace="wrap">{fileName}</Td>
                 <Td whiteSpace="nowrap">
                   {vectorized ? (
                     <Badge colorScheme="green">Vectorized</Badge>
@@ -84,8 +98,8 @@ const FileTable = ({
                     ml="16px"
                     colorScheme="red"
                     onClick={() => unvectorizeFile(fileName)}
-                    isDisabled={!vectorized}  // Disable if not vectorized
-                    visibility={!vectorized ? 'hidden' : 'visible'}  // Optional: hide button completely if not vectorized
+                    isDisabled={!vectorized} // Disable if not vectorized
+                    visibility={!vectorized ? 'hidden' : 'visible'} // Optional: hide button completely if not vectorized
                   >
                     Unvectorize
                   </Button>

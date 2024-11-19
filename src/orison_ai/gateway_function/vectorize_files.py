@@ -264,6 +264,12 @@ class VectorizeFiles(RequestHandler):
             applicant_id = request_json["applicantId"]
             file_id = request_json["fileId"]
             tag = request_json["tag"]
+            await client.update_collection_document(
+                collection_name="applicants",
+                document_name=applicant_id,
+                field="vectorize_in_progress",
+                value=file_id,
+            )
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             VectorizeFiles._orison_messenger(secrets)
             self.logger.info(
@@ -304,6 +310,13 @@ class VectorizeFiles(RequestHandler):
         except Exception as e:
             self.logger.error(f"Error processing files: {e}")
             return ErrorResponse(str(e))
+        finally:
+            await client.remove_value_from_field(
+                collection_name="applicants",
+                document_name=applicant_id,
+                field="vectorize_in_progress",
+                value=file_id,
+            )
         return OKResponse("Success!")
 
 

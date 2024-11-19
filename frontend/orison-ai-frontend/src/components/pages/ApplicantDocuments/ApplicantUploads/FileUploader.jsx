@@ -16,7 +16,7 @@ import {
 import {
   Alert, AlertIcon, AlertDescription,
   Box, HStack, Select, Text,
-  useDisclosure, useToast, VStack, Button,
+  useDisclosure, useToast, VStack, Button, Spinner, Center,
 } from '@chakra-ui/react';
 
 // Orison
@@ -33,9 +33,9 @@ import { useApplicantContext } from "../../../../context/ApplicantContext";
 const FileUploader = ({ }) => {
   const [user] = useAuthState(auth);
   const [documents, setDocuments] = useState([]);
-  // Set "main" as the default tag and initialize state with it
-  const [tags, setTags] = useState(["main"]);
-  const [selectedTag, setSelectedTag] = useState("main");
+  // Set "default" as the default tag and initialize state with it
+  const [tags, setTags] = useState(["default"]);
+  const [selectedTag, setSelectedTag] = useState("default");
   const [fileToOverwrite, setFileToOverwrite] = useState(null);
   const [newTagName, setNewTagName] = useState('');
 
@@ -75,6 +75,7 @@ const FileUploader = ({ }) => {
   } = useDisclosure();
   const toast = useToast();
   const { selectedApplicant } = useApplicantContext();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const fetchApplicantData = useCallback(async () => {
     if (user && selectedApplicant) {
@@ -113,7 +114,7 @@ const FileUploader = ({ }) => {
 
         if (docSnap.exists()) {
           const data = docSnap.data();
-          const applicantTags = data.customTags || ["main"]; // Get tags from applicant or default to "main"
+          const applicantTags = data.customTags || ["default"]; // Get tags from applicant or default to "default"
 
           // Merge tags, ensuring no duplicates
           const mergedTags = Array.from(new Set([...applicantTags, ...templateTags]));
@@ -129,11 +130,11 @@ const FileUploader = ({ }) => {
           setTags(mergedTags);
         } else {
           console.warn("Applicant document does not exist.");
-          setTags(templateTags.length > 0 ? templateTags : ["main"]); // Use template tags or default to "main"
+          setTags(templateTags.length > 0 ? templateTags : ["default"]); // Use template tags or default to "default"
         }
       } catch (error) {
         console.error("Error fetching applicant data or tags:", error);
-        setTags(["main"]); // Fallback to default in case of an error
+        setTags(["default"]); // Fallback to default in case of an error
       }
     }
   }, [user, selectedApplicant]);
@@ -249,6 +250,53 @@ const FileUploader = ({ }) => {
     onDeleteModalOpen();
   };
 
+  const deleteAllFiles = async () => {
+    if (user && selectedApplicant) {
+      try {
+        setIsProcessing(true); // Block the UI
+
+        const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/`;
+        const storage = getStorage();
+        const listRef = ref(storage, filePath);
+
+        // Fetch and delete all files in the selected tag
+        const res = await listAll(listRef);
+
+        for (const fileRef of res.items) {
+          const fileName = fileRef.name;
+
+          // Delete file vectors and the actual file
+          await deleteFileVectors(user.uid, selectedApplicant.id, selectedTag, fileName);
+          await deleteObject(fileRef);
+
+          // Update local state
+          setDocuments((prevDocuments) =>
+            prevDocuments.filter((doc) => doc.fileName !== fileName)
+          );
+        }
+
+        toast({
+          title: "Delete All Completed",
+          description: "All files have been successfully deleted.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+      } catch (error) {
+        console.error("Error deleting all files:", error);
+        toast({
+          title: "Error",
+          description: "An error occurred while deleting files.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setIsProcessing(false); // Re-enable the UI
+      }
+    }
+  };
+
   const deleteAllFileVectorsInTag = useCallback(async () => {
     if (user && selectedApplicant && selectedTag) {
       const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/`;
@@ -335,67 +383,104 @@ const FileUploader = ({ }) => {
 
   const vectorizeFile = useCallback(async (fileName) => {
     if (user && selectedApplicant) {
-      setVectorizingFiles((prev) => [...prev, fileName]);
-      setVectorizeStatus('loading');
-
       try {
-        // Call the vectorization API (or function)
+        setIsProcessing(true); // Block the UI during vectorization
+
+        const docRef = doc(db, "applicants", selectedApplicant.id);
+
+        // Call the vectorization function
         await vectorizeFiles(user.uid, selectedApplicant.id, selectedTag, fileName);
 
-        // Fetch current vectorized files from Firestore
-        const docRef = doc(db, 'applicants', selectedApplicant.id);
+        // Update Firestore with the vectorized file
         const docSnap = await getDoc(docRef);
-        let currentVectorizedFiles = [];
+        const currentVectorized = docSnap.exists() ? docSnap.data().vectorized_files || [] : [];
 
-        if (docSnap.exists()) {
-          currentVectorizedFiles = docSnap.data().vectorized_files || [];
-        }
-
-        // Add the new file to the vectorized_files list if it's not already there
-        if (!currentVectorizedFiles.includes(fileName)) {
-          const updatedVectorizedFiles = [...currentVectorizedFiles, fileName];
-
-          // Update the vectorized_files field in Firestore
+        if (!currentVectorized.includes(fileName)) {
           await updateDoc(docRef, {
-            vectorized_files: updatedVectorizedFiles
+            vectorized_files: [...currentVectorized, fileName],
           });
         }
 
-        // Show success toast
+        // Update the documents state immediately
+        setDocuments((prevDocuments) =>
+          prevDocuments.map((doc) =>
+            doc.fileName === fileName
+              ? { ...doc, vectorized: true } // Mark as vectorized
+              : doc
+          )
+        );
+
         toast({
-          title: 'Vectorization Completed',
-          description: `Vectorization for ${fileName} has completed successfully.`,
-          status: 'success',
+          title: "Vectorization Completed",
+          description: `${fileName} vectorized successfully.`,
+          status: "success",
           duration: 5000,
           isClosable: true,
         });
-        setVectorizeStatus('success');
-
       } catch (error) {
-        // Show error toast if vectorization or Firestore update fails
+        console.error("Error vectorizing file:", error);
         toast({
-          title: 'Vectorization Failed',
-          description: error.message,
-          status: 'error',
+          title: "Error",
+          description: `An error occurred while vectorizing ${fileName}.`,
+          status: "error",
           duration: 5000,
           isClosable: true,
         });
-        setVectorizeStatus('error');
-
       } finally {
-        // Remove the file from the vectorizing state
-        setVectorizingFiles((prev) => prev.filter((file) => file !== fileName));
+        setIsProcessing(false); // Re-enable UI when done
       }
     }
   }, [user, selectedApplicant, selectedTag, toast]);
 
 
   const vectorizeAllFiles = useCallback(async () => {
-    const nonVectorizedFiles = documents.filter(doc => !doc.vectorized).map(doc => doc.fileName);
-    for (const fileName of nonVectorizedFiles) {
-      await vectorizeFile(fileName);
+    if (user && selectedApplicant) {
+      try {
+        setIsProcessing(true); // Block the UI during processing
+
+        const docRef = doc(db, "applicants", selectedApplicant.id);
+        const docSnap = await getDoc(docRef);
+        const vectorizedFiles = docSnap.exists() ? docSnap.data().vectorized_files || [] : [];
+
+        // Filter files that are not yet vectorized
+        const nonVectorizedFiles = documents
+          .filter((doc) => !vectorizedFiles.includes(doc.fileName))
+          .map((doc) => doc.fileName);
+
+        for (const fileName of nonVectorizedFiles) {
+          await vectorizeFile(fileName);
+
+          // Update the state immediately after each file
+          setDocuments((prevDocuments) =>
+            prevDocuments.map((doc) =>
+              doc.fileName === fileName
+                ? { ...doc, vectorized: true } // Mark as vectorized
+                : doc
+            )
+          );
+        }
+
+        toast({
+          title: "Vectorize All Completed",
+          description: "All non-vectorized files have been processed.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+        });
+      } catch (error) {
+        console.error("Error during vectorize all:", error);
+        toast({
+          title: "Error",
+          description: "An error occurred while processing all files.",
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setIsProcessing(false); // Re-enable UI when done
+      }
     }
-  }, [documents, vectorizeFile]);
+  }, [user, selectedApplicant, documents, vectorizeFile, toast]);
 
   const unvectorizeFile = (fileName) => {
     toast({
@@ -521,30 +606,70 @@ const FileUploader = ({ }) => {
         <Button
           colorScheme="red"
           onClick={async () => {
-            if (selectedTag !== "main" && window.confirm(`Delete all files and their vectors in the "${selectedTag}" tag?`)) {
-              await deleteAllFileVectorsInTag(); // Call the function to delete vectors
-              const updatedTags = tags.filter((tag) => tag !== selectedTag);
-              setTags(updatedTags);
-              setSelectedTag("main"); // Reset to "main" if the selected tag is deleted
+            if (
+              selectedTag !== "default" &&
+              window.confirm(
+                `Delete all files and their vectors in the "${selectedTag}" tag?`
+              )
+            ) {
+              try {
+                setIsProcessing(true); // Block the screen and dim the UI
 
-              // Update Firestore with the updated tag list
-              const docRef = doc(db, "applicants", selectedApplicant.id);
-              await updateDoc(docRef, { customTags: updatedTags });
+                // Call the function to delete all vectors
+                await deleteAllFileVectorsInTag();
 
-              toast({
-                title: 'Tag Deleted',
-                description: `Tag "${selectedTag}" and all associated file vectors were deleted.`,
-                status: 'success',
-                duration: 5000,
-                isClosable: true,
-              });
+                // Update the tags in state and Firestore
+                const updatedTags = tags.filter((tag) => tag !== selectedTag);
+                setTags(updatedTags);
+                setSelectedTag("default"); // Reset to "default" if the selected tag is deleted
+
+                const docRef = doc(db, "applicants", selectedApplicant.id);
+                await updateDoc(docRef, { customTags: updatedTags });
+
+                toast({
+                  title: "Tag Deleted",
+                  description: `Tag "${selectedTag}" and all associated file vectors were deleted.`,
+                  status: "success",
+                  duration: 5000,
+                  isClosable: true,
+                });
+              } catch (error) {
+                console.error("Error deleting tag and vectors:", error);
+                toast({
+                  title: "Error",
+                  description: "An error occurred while deleting the tag.",
+                  status: "error",
+                  duration: 5000,
+                  isClosable: true,
+                });
+              } finally {
+                setIsProcessing(false); // Re-enable the screen
+              }
             }
           }}
-          isDisabled={selectedTag === "main"} // Disable deletion for "main" tag
+          isDisabled={selectedTag === "default"} // Disable deletion for "default" tag
         >
           Del
         </Button>
       </HStack>
+
+      {isProcessing && (
+        <Center
+          position="absolute"
+          top="0"
+          left="0"
+          width="100%"
+          height="100%"
+          bg="rgba(0, 0, 0, 0.5)"
+          zIndex="overlay"
+        >
+          <Spinner size="xl" color="white" />
+          <Text mt={4} color="white" fontSize="lg">
+            Processing files. Please wait...
+          </Text>
+        </Center>
+      )}
+
       {/* Rest of the component remains unchanged */}
       <VStack width="100%" flex="1" overflowY="auto" overflowX="auto">
         <Alert status="warning" minHeight="80px" borderRadius="10px" mb="4" fontSize="16px">
@@ -553,7 +678,8 @@ const FileUploader = ({ }) => {
             - Use tags to help AI find relevant information. Match documents to the right tags. Not all tags may apply. <br />
             - Add/Del tags, but update the questionnaire with new tags. AI will not use your documents otherwise. <br />
             - Vectorize files after upload for AI search. Avoid uploading large files (>300 pages or 50 MB). <br />
-            - Vectorization may take up to 5 minutes per document. Wait for the green marker. <br />
+            - Vectorization may take ~10 seconds per page. You may switch windows but donot close this window. <br />
+            - Supported extensions: .txt, .json, .md, .html, .csv, .pdf, .docx, .doc, .docs, .pptx, .xls, .xlsx, .xml <br />
           </AlertDescription>
         </Alert>
 
@@ -565,6 +691,7 @@ const FileUploader = ({ }) => {
           vectorizeAllFiles={vectorizeAllFiles}
           unvectorizeAllFiles={unvectorizeAllFiles}
           deleteFile={deleteFile}
+          deleteAllFiles={deleteAllFiles}
           viewFile={viewFile}
           vectorizingFiles={vectorizingFiles}
           vectorizeStatus={vectorizeStatus}
