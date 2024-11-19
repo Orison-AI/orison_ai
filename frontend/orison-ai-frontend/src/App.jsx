@@ -128,7 +128,7 @@ const AppContent = () => {
           padding="10px"
           bg="gray.900"
         >
-          © 2024 Orison AI. All rights reserved. This application can make mistakes. Please verify the information.
+          © 2024 Orison AI. All rights reserved. AI can make mistakes. Please verify the information.
         </Box>
       </Flex>
       <Settings isOpen={isSettingsOpen} onClose={onSettingsClose} />
