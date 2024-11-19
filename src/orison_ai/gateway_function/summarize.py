@@ -150,8 +150,8 @@ class Summarize(RequestHandler):
 
 if __name__ == "__main__":
     request_json = {
-        "attorneyId": "xlMsyQpatdNCTvgRfW4TcysSDgX2",
-        "applicantId": "tYdtBdc7lJHyVCxquubj",
+        "attorneyId": "jVRK827jk3YLi6NWIyjKDZ0MgCv2",
+        "applicantId": "wt3YHwT0xEp5e7f5vp3L",
     }
     summarize = Summarize()
     asyncio.run(summarize.handle_request(request_json))
