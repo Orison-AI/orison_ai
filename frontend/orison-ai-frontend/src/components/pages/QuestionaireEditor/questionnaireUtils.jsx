@@ -2,40 +2,26 @@ import { doc, getDoc, getDocs, setDoc, updateDoc, collection } from "firebase/fi
 import { auth, db } from "../../../common/firebaseConfig";
 
 export const fetchTags = async (selectedApplicant) => {
-    let templateFileName;
-    switch (selectedApplicant.visaCategory) {
-        case "EB1":
-            templateFileName = "eb1_a_questionnaire";
-            break;
-        case "O1":
-            templateFileName = "eb1_a_questionnaire";
-            break;
-        case "EB2":
-            templateFileName = "eb1_a_questionnaire";
-            break;
-        default:
-            templateFileName = "eb1_a_questionnaire";
-    }
-
     try {
-        // Reference the specific document in Firestore
-        const questionnaireDocRef = doc(db, "templates", templateFileName);
+        // Reference the applicant's document in Firestore
+        const applicantDocRef = doc(db, "applicants", selectedApplicant.id);
 
         // Fetch the document
-        const questionnaireDoc = await getDoc(questionnaireDocRef);
+        const applicantDoc = await getDoc(applicantDocRef);
 
-        if (questionnaireDoc.exists()) {
-            const data = questionnaireDoc.data();
-            return data.tags || []; // Return the tags field or an empty array if it doesn't exist
+        if (applicantDoc.exists()) {
+            const data = applicantDoc.data();
+            return data.customTags || []; // Return the customTags field or an empty array if it doesn't exist
         } else {
-            console.error("questionnaire document does not exist.");
+            console.error("Applicant document does not exist.");
             return [];
         }
     } catch (error) {
-        console.error("Error fetching tags:", error);
+        console.error("Error fetching custom tags:", error);
         return [];
     }
 };
+
 
 export const fetchQuestionnaire = async (applicantId) => {
     try {
