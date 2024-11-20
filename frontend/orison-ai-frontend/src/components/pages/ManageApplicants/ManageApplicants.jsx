@@ -191,6 +191,13 @@ const ManageApplicants = ({
             mt="8" /* Add margin-top for spacing before the section */
           >
             <Text fontSize="2xl" fontWeight="bold" mb="4" color="white">
+              Improve Your Case Story and Strength with "The Orison Way"
+            </Text>
+            <Box as="ul" pl="6" fontSize="md" lineHeight="1.8" color="blue.100">
+              <Box as="li" mb="2">Get a compelling story for your visa application as content for questionnaire and cover letter</Box>
+              <Box as="li" mb="2">Determine your visa eligibility and gaps in your profile</Box>
+            </Box>
+            <Text fontSize="2xl" fontWeight="bold" mb="4" color="white">
               How to Use Orison
             </Text>
             <Box as="ul" pl="6" fontSize="md" lineHeight="1.8" color="blue.100">
