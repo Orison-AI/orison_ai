@@ -27,6 +27,7 @@ from langchain_community.document_loaders import (
     UnstructuredHTMLLoader,
     JSONLoader,
 )
+from concurrent.futures import ThreadPoolExecutor
 from langchain_community.document_loaders.powerpoint import UnstructuredPowerPointLoader
 from langchain_community.document_loaders.word_document import (
     UnstructuredWordDocumentLoader,
@@ -34,6 +35,7 @@ from langchain_community.document_loaders.word_document import (
 from langchain_community.document_loaders.xml import UnstructuredXMLLoader
 from langchain_community.document_loaders.excel import UnstructuredExcelLoader
 from langchain_experimental.text_splitter import SemanticChunker
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 import numpy as np
 from qdrant_client.http import models
 import nltk
@@ -57,6 +59,9 @@ class VectorizeFiles(RequestHandler):
     orison_messenger = None
     embedding_client = None
     async_db_client = None
+    MIN_TOKEN_SIZE = 144
+    CHUNK_SIZE = 512
+    CHUNK_OVERLAP = 50
 
     def __init__(self):
         super().__init__(str(self.__class__.__qualname__))
@@ -157,85 +162,118 @@ class VectorizeFiles(RequestHandler):
         chunks, async_db_client, logger, collection_name, index_data
     ):
         async def process_chunk(chunk, index_data):
+            # Asynchronously embed and prepare payload
             embedding = await VectorizeFiles.embedding_client.aembed_query(
-                chunk.page_content
+                chunk["content"]
             )
             payload = index_data | {
-                "page_content": chunk.page_content,
-                "metadata": chunk.metadata,
+                "page_content": chunk["content"],
+                "metadata": chunk["metadata"],
             }
-
             return embedding, payload
 
-        # Process each chunk in parallel
+        # Process chunks concurrently
         tasks = [process_chunk(chunk, index_data) for chunk in chunks]
         results = await asyncio.gather(*tasks)
+
         embeddings, payloads = zip(*results)
 
-        # Upload vectors to the vector database
+        # Upload vectors to vector database
         logger.info("Uploading vectors")
         async_db_client.upload_collection(
             collection_name=collection_name,
             vectors=np.array(embeddings),
             payload=payloads,
             parallel=4,
-            ids=None,  # Let Qdrant generate IDs
+            ids=None,  # Generate IDs automatically
         )
         logger.info("Uploading vectors....DONE")
 
     @staticmethod
-    async def _vectorize(
-        documents,
-        tag,
-        collection_name,
-        filename,
-        logger,
-    ):
-        MIN_TOKEN_SIZE = 144
+    async def _vectorize(documents, tag, collection_name, filename, logger):
         async_db_client = VectorizeFiles.async_db_client
-        logger.info(
-            f"Chunking, indexing, and storing in collection {collection_name}.\nChunker type: {SemanticChunker.__name__}. Collection type: {VectorizeFiles.async_db_client.__class__.__name__}"
-        )
-        sample_embedding = VectorizeFiles.embedding_client.embed_query(
-            "Generate a sample embedding to get the length of the vector"
-        )
-        # Ensure the collection exists
-        collection_exists = await VectorizeFiles.async_db_client.collection_exists(
+        embedding_client = VectorizeFiles.embedding_client
+
+        # Ensure the vector DB collection exists
+        sample_embedding = embedding_client.embed_query("Sample for vector size")
+        collection_exists = await async_db_client.collection_exists(
             collection_name=collection_name
         )
         if not collection_exists:
-            await VectorizeFiles.async_db_client.create_collection(
+            await async_db_client.create_collection(
                 collection_name=collection_name,
                 vectors_config=models.VectorParams(
-                    size=len(sample_embedding),  # Length of the embedding vectors
-                    distance=models.Distance.COSINE,  # Distance metric
+                    size=len(sample_embedding),
+                    distance=models.Distance.COSINE,
                 ),
             )
-        index_data = {
-            "tag": tag.lower(),
-            "filename": filename,
-        }
+
+        index_data = {"tag": tag.lower(), "filename": filename}
+
+        # Use LangChain's RecursiveCharacterTextSplitter
         logger.info("Splitting documents")
-        text_splitter = SemanticChunker(
-            VectorizeFiles.embedding_client,
-            breakpoint_threshold_type="percentile",
-            breakpoint_threshold_amount=75,
-            buffer_size=10,
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=VectorizeFiles.CHUNK_SIZE,
+            chunk_overlap=VectorizeFiles.CHUNK_OVERLAP,
         )
-        chunks = text_splitter.split_documents(documents)
-        # Filter chunks based on token size
+
+        # Offload document processing to ThreadPoolExecutor
+        def process_document(doc, index):
+            # Split document into chunks
+            chunks = text_splitter.split_text(doc.page_content)
+            # Add metadata to each chunk
+            enriched_chunks = [
+                {"content": chunk, "metadata": {"source": filename, "page": index}}
+                for chunk in chunks
+            ]
+            return enriched_chunks
+
+        with ThreadPoolExecutor() as executor:
+            loop = asyncio.get_event_loop()
+            tasks = [
+                loop.run_in_executor(executor, process_document, doc, idx)
+                for idx, doc in enumerate(documents)
+            ]
+            results = await asyncio.gather(*tasks)
+
+        # Flatten the list of enriched chunks
+        all_chunks = [chunk for result in results for chunk in result]
+
+        # Merge smaller chunks to meet token size requirements
+        logger.info("Merging smaller chunks")
+        merged_chunks = []
+        current_chunk = None
+
+        for chunk in all_chunks:
+            token_count = OrisonMessenger.number_tokens(chunk["content"])
+            if current_chunk is None:
+                current_chunk = chunk
+            elif (
+                token_count + OrisonMessenger.number_tokens(current_chunk["content"])
+                <= VectorizeFiles.CHUNK_SIZE
+            ):
+                current_chunk["content"] += " " + chunk["content"]
+                current_chunk["metadata"][
+                    "source"
+                ] += f", {chunk['metadata']['source']}"
+            else:
+                merged_chunks.append(current_chunk)
+                current_chunk = chunk
+
+        if current_chunk:
+            merged_chunks.append(current_chunk)
+
+        # Filter out chunks below the minimum token size
         filtered_chunks = [
             chunk
-            for chunk in chunks
-            if OrisonMessenger.number_tokens(chunk.page_content) >= MIN_TOKEN_SIZE
+            for chunk in merged_chunks
+            if OrisonMessenger.number_tokens(chunk["content"])
+            >= VectorizeFiles.MIN_TOKEN_SIZE
         ]
         logger.info("Splitting documents....DONE")
-        logger.info(
-            f"Number of chunks: {len(chunks)}. Number of filtered chunks: {len(filtered_chunks)}"
-        )
-        if len(filtered_chunks) > 0:
-            # Store the filtered chunks in the vector DB
-            logger.info(f"Storing filtered chunks in vector DB.")
+
+        if filtered_chunks:
+            logger.info(f"Storing {len(filtered_chunks)} filtered chunks in vector DB.")
             await VectorizeFiles._store_chunks(
                 chunks=filtered_chunks,
                 async_db_client=async_db_client,
@@ -243,8 +281,7 @@ class VectorizeFiles(RequestHandler):
                 collection_name=collection_name,
                 index_data=index_data,
             )
-            logger.info(f"Storing chunks in vector DB....DONE")
-        return
+            logger.info("Storing chunks in vector DB....DONE")
 
     async def handle_request(self, request_json):
         """
