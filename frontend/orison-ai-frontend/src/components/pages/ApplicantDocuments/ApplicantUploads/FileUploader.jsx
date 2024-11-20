@@ -77,17 +77,28 @@ const FileUploader = ({ }) => {
   const { selectedApplicant } = useApplicantContext();
   const [isProcessing, setIsProcessing] = useState(false);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchApplicantData();
+      await fetchDocuments();
+    };
+    fetchData();
+  }, [selectedTag, user, selectedApplicant]);
+
+  useEffect(() => {
+    if (vectorizeStatus === 'success') {
+      fetchApplicantData(); // Refetch data after successful vectorization
+    }
+  }, [vectorizeStatus, fetchApplicantData]);
+
+
   const fetchApplicantData = useCallback(async () => {
     if (user && selectedApplicant) {
       // Use switch-case to assign file names based on visaCategory
       let templateFileName;
       switch (selectedApplicant.visaCategory) {
         case "EB1":
-          templateFileName = "eb1_a_questionnaire";
-          break;
         case "O1":
-          templateFileName = "eb1_a_questionnaire";
-          break;
         case "EB2":
           templateFileName = "eb1_a_questionnaire";
           break;
@@ -114,23 +125,23 @@ const FileUploader = ({ }) => {
 
         if (docSnap.exists()) {
           const data = docSnap.data();
-          const applicantTags = data.customTags || ["default"]; // Get tags from applicant or default to "default"
 
-          // Merge tags, ensuring no duplicates
-          const mergedTags = Array.from(new Set([...applicantTags, ...templateTags]));
+          let applicantTags = data.customTags;
 
-          // Update Firestore if there are new tags to add
-          if (mergedTags.length > applicantTags.length) {
-            await updateDoc(docRef, { customTags: mergedTags });
-            console.log("Missing tags added to applicant collection.");
+          // Initialize customTags with templateTags if not present
+          if (!applicantTags || applicantTags.length === 0) {
+            applicantTags = templateTags.length > 0 ? templateTags : ["default"];
+            await updateDoc(docRef, { customTags: applicantTags });
+            console.log("Initialized customTags with templateTags.");
           }
 
           // Update state
           setVectorizedFiles(data.vectorized_files || []);
-          setTags(mergedTags);
+          setTags(applicantTags);
         } else {
           console.warn("Applicant document does not exist.");
-          setTags(templateTags.length > 0 ? templateTags : ["default"]); // Use template tags or default to "default"
+          const defaultTags = templateTags.length > 0 ? templateTags : ["default"];
+          setTags(defaultTags); // Use template tags or default to "default"
         }
       } catch (error) {
         console.error("Error fetching applicant data or tags:", error);
@@ -163,21 +174,6 @@ const FileUploader = ({ }) => {
       console.error("User, selectedApplicant, or selectedTag is undefined.");
     }
   }, [user, selectedApplicant, selectedTag, vectorizedFiles]);
-
-
-  useEffect(() => {
-    fetchApplicantData(); // Fetch both vectorized files and custom tags on component mount
-  }, [fetchApplicantData]);
-
-  useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments, selectedTag]);
-
-  useEffect(() => {
-    if (vectorizeStatus === 'success') {
-      fetchApplicantData(); // Refetch data after successful vectorization
-    }
-  }, [vectorizeStatus, fetchApplicantData]);
 
   const onDrop = async (acceptedFiles) => {
     const storage = getStorage();
