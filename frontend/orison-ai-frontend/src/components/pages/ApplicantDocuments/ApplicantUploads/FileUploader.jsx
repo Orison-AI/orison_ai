@@ -83,11 +83,7 @@ const FileUploader = ({ }) => {
       let templateFileName;
       switch (selectedApplicant.visaCategory) {
         case "EB1":
-          templateFileName = "eb1_a_questionnaire";
-          break;
         case "O1":
-          templateFileName = "eb1_a_questionnaire";
-          break;
         case "EB2":
           templateFileName = "eb1_a_questionnaire";
           break;
@@ -114,23 +110,23 @@ const FileUploader = ({ }) => {
 
         if (docSnap.exists()) {
           const data = docSnap.data();
-          const applicantTags = data.customTags || ["default"]; // Get tags from applicant or default to "default"
 
-          // Merge tags, ensuring no duplicates
-          const mergedTags = Array.from(new Set([...applicantTags, ...templateTags]));
+          let applicantTags = data.customTags;
 
-          // Update Firestore if there are new tags to add
-          if (mergedTags.length > applicantTags.length) {
-            await updateDoc(docRef, { customTags: mergedTags });
-            console.log("Missing tags added to applicant collection.");
+          // Initialize customTags with templateTags if not present
+          if (!applicantTags || applicantTags.length === 0) {
+            applicantTags = templateTags.length > 0 ? templateTags : ["default"];
+            await updateDoc(docRef, { customTags: applicantTags });
+            console.log("Initialized customTags with templateTags.");
           }
 
           // Update state
           setVectorizedFiles(data.vectorized_files || []);
-          setTags(mergedTags);
+          setTags(applicantTags);
         } else {
           console.warn("Applicant document does not exist.");
-          setTags(templateTags.length > 0 ? templateTags : ["default"]); // Use template tags or default to "default"
+          const defaultTags = templateTags.length > 0 ? templateTags : ["default"];
+          setTags(defaultTags); // Use template tags or default to "default"
         }
       } catch (error) {
         console.error("Error fetching applicant data or tags:", error);
@@ -151,9 +147,12 @@ const FileUploader = ({ }) => {
 
       try {
         const res = await listAll(listRef);
+        const vectorizedSnap = await getDoc(doc(db, "applicants", selectedApplicant.id));
+        const currentVectorized = vectorizedSnap.exists() ? vectorizedSnap.data().vectorized_files || [] : [];
+
         const docs = res.items.map(itemRef => ({
           fileName: itemRef.name,
-          vectorized: vectorizedFiles.includes(itemRef.name),
+          vectorized: currentVectorized.includes(itemRef.name),
         }));
         setDocuments(docs);
       } catch (error) {
@@ -162,16 +161,23 @@ const FileUploader = ({ }) => {
     } else {
       console.error("User, selectedApplicant, or selectedTag is undefined.");
     }
-  }, [user, selectedApplicant, selectedTag, vectorizedFiles]);
-
-
-  useEffect(() => {
-    fetchApplicantData(); // Fetch both vectorized files and custom tags on component mount
-  }, [fetchApplicantData]);
+  }, [user, selectedApplicant, selectedTag]);
 
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments, selectedTag]);
+    const fetchData = async () => {
+      await fetchApplicantData();
+      await fetchDocuments();
+    };
+
+    // Ensure selectedTag remains stable
+    if (selectedTag !== "default" && !tags.includes(selectedTag)) {
+      console.warn(`Resetting selectedTag to default. Found: ${selectedTag}`);
+      setSelectedTag("default");
+    }
+
+    fetchData();
+  }, [selectedTag, user, selectedApplicant, fetchApplicantData, fetchDocuments]);
+
 
   useEffect(() => {
     if (vectorizeStatus === 'success') {
@@ -482,24 +488,103 @@ const FileUploader = ({ }) => {
     }
   }, [user, selectedApplicant, documents, vectorizeFile, toast]);
 
-  const unvectorizeFile = (fileName) => {
-    toast({
-      title: 'Unvectorize Not Implemented',
-      description: `Unvectorizing ${fileName} is not yet implemented.`,
-      status: 'warning',
-      duration: 3000,
-      isClosable: true,
-    });
+  const unvectorizeFile = async (fileName) => {
+    if (user && selectedApplicant) {
+      try {
+        setIsProcessing(true); // Block the UI during the process
+
+        // Delete file vectors from backend
+        await deleteFileVectors(user.uid, selectedApplicant.id, selectedTag, fileName);
+
+        // Update Firestore to remove the file from the `vectorized_files`
+        const docRef = doc(db, 'applicants', selectedApplicant.id);
+        const docSnap = await getDoc(docRef);
+        const vectorizedFiles = docSnap.exists() ? docSnap.data().vectorized_files || [] : [];
+
+        if (vectorizedFiles.includes(fileName)) {
+          await updateDoc(docRef, {
+            vectorized_files: vectorizedFiles.filter((file) => file !== fileName),
+          });
+        }
+
+        // Update the local state to reflect the unvectorized file
+        setDocuments((prevDocuments) =>
+          prevDocuments.map((doc) =>
+            doc.fileName === fileName
+              ? { ...doc, vectorized: false } // Set the file as unvectorized
+              : doc
+          )
+        );
+
+        toast({
+          title: 'Unvectorization Completed',
+          description: `${fileName} has been unvectorized successfully.`,
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } catch (error) {
+        console.error('Error unvectorizing file:', error);
+        toast({
+          title: 'Error',
+          description: `An error occurred while unvectorizing ${fileName}.`,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setIsProcessing(false); // Re-enable the UI
+      }
+    }
   };
 
-  const unvectorizeAllFiles = () => {
-    toast({
-      title: 'Unvectorize Not Implemented',
-      description: 'Unvectorizing all files is not yet implemented.',
-      status: 'warning',
-      duration: 3000,
-      isClosable: true,
-    });
+  const unvectorizeAllFiles = async () => {
+    if (user && selectedApplicant) {
+      try {
+        setIsProcessing(true); // Block the UI during processing
+
+        const docRef = doc(db, 'applicants', selectedApplicant.id);
+        const docSnap = await getDoc(docRef);
+        const vectorizedFiles = docSnap.exists() ? docSnap.data().vectorized_files || [] : [];
+
+        for (const fileName of vectorizedFiles) {
+          await deleteFileVectors(user.uid, selectedApplicant.id, selectedTag, fileName);
+
+          // Update Firestore to remove the file from `vectorized_files`
+          await updateDoc(docRef, {
+            vectorized_files: vectorizedFiles.filter((file) => file !== fileName),
+          });
+
+          // Update the local state for each file as it is processed
+          setDocuments((prevDocuments) =>
+            prevDocuments.map((doc) =>
+              doc.fileName === fileName
+                ? { ...doc, vectorized: false } // Set the file as unvectorized
+                : doc
+            )
+          );
+        }
+
+        toast({
+          title: 'Unvectorize All Completed',
+          description: 'All files have been unvectorized successfully.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } catch (error) {
+        console.error('Error unvectorizing all files:', error);
+        toast({
+          title: 'Error',
+          description: 'An error occurred while unvectorizing all files.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setIsProcessing(false); // Re-enable the UI
+      }
+    }
   };
 
   const viewFile = useCallback(async (fileName) => {
@@ -677,8 +762,8 @@ const FileUploader = ({ }) => {
           <AlertDescription>
             - Use tags to help AI find relevant information. Match documents to the right tags. Not all tags may apply. <br />
             - Add/Del tags, but update the questionnaire with new tags. AI will not use your documents otherwise. <br />
-            - Vectorize files after upload for AI search. Avoid uploading large files (>300 pages or 50 MB). <br />
-            - Vectorization may take ~10 seconds per page. You may switch windows but donot close this window. <br />
+            - Vectorize files after upload for AI search. Avoid uploading large files (>1000 pages or 50 MB). <br />
+            - Vectorization may take an estimated 15 seconds per 100 pages. You may switch windows but donot close this window. <br />
             - Supported extensions: .txt, .json, .md, .html, .csv, .pdf, .docx, .doc, .docs, .pptx, .xls, .xlsx, .xml <br />
           </AlertDescription>
         </Alert>
