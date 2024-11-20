@@ -482,24 +482,103 @@ const FileUploader = ({ }) => {
     }
   }, [user, selectedApplicant, documents, vectorizeFile, toast]);
 
-  const unvectorizeFile = (fileName) => {
-    toast({
-      title: 'Unvectorize Not Implemented',
-      description: `Unvectorizing ${fileName} is not yet implemented.`,
-      status: 'warning',
-      duration: 3000,
-      isClosable: true,
-    });
+  const unvectorizeFile = async (fileName) => {
+    if (user && selectedApplicant) {
+      try {
+        setIsProcessing(true); // Block the UI during the process
+
+        // Delete file vectors from backend
+        await deleteFileVectors(user.uid, selectedApplicant.id, selectedTag, fileName);
+
+        // Update Firestore to remove the file from the `vectorized_files`
+        const docRef = doc(db, 'applicants', selectedApplicant.id);
+        const docSnap = await getDoc(docRef);
+        const vectorizedFiles = docSnap.exists() ? docSnap.data().vectorized_files || [] : [];
+
+        if (vectorizedFiles.includes(fileName)) {
+          await updateDoc(docRef, {
+            vectorized_files: vectorizedFiles.filter((file) => file !== fileName),
+          });
+        }
+
+        // Update the local state to reflect the unvectorized file
+        setDocuments((prevDocuments) =>
+          prevDocuments.map((doc) =>
+            doc.fileName === fileName
+              ? { ...doc, vectorized: false } // Set the file as unvectorized
+              : doc
+          )
+        );
+
+        toast({
+          title: 'Unvectorization Completed',
+          description: `${fileName} has been unvectorized successfully.`,
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } catch (error) {
+        console.error('Error unvectorizing file:', error);
+        toast({
+          title: 'Error',
+          description: `An error occurred while unvectorizing ${fileName}.`,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setIsProcessing(false); // Re-enable the UI
+      }
+    }
   };
 
-  const unvectorizeAllFiles = () => {
-    toast({
-      title: 'Unvectorize Not Implemented',
-      description: 'Unvectorizing all files is not yet implemented.',
-      status: 'warning',
-      duration: 3000,
-      isClosable: true,
-    });
+  const unvectorizeAllFiles = async () => {
+    if (user && selectedApplicant) {
+      try {
+        setIsProcessing(true); // Block the UI during processing
+
+        const docRef = doc(db, 'applicants', selectedApplicant.id);
+        const docSnap = await getDoc(docRef);
+        const vectorizedFiles = docSnap.exists() ? docSnap.data().vectorized_files || [] : [];
+
+        for (const fileName of vectorizedFiles) {
+          await deleteFileVectors(user.uid, selectedApplicant.id, selectedTag, fileName);
+
+          // Update Firestore to remove the file from `vectorized_files`
+          await updateDoc(docRef, {
+            vectorized_files: vectorizedFiles.filter((file) => file !== fileName),
+          });
+
+          // Update the local state for each file as it is processed
+          setDocuments((prevDocuments) =>
+            prevDocuments.map((doc) =>
+              doc.fileName === fileName
+                ? { ...doc, vectorized: false } // Set the file as unvectorized
+                : doc
+            )
+          );
+        }
+
+        toast({
+          title: 'Unvectorize All Completed',
+          description: 'All files have been unvectorized successfully.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } catch (error) {
+        console.error('Error unvectorizing all files:', error);
+        toast({
+          title: 'Error',
+          description: 'An error occurred while unvectorizing all files.',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+      } finally {
+        setIsProcessing(false); // Re-enable the UI
+      }
+    }
   };
 
   const viewFile = useCallback(async (fileName) => {
