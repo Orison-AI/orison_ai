@@ -184,7 +184,7 @@ class VectorizeFiles(RequestHandler):
             collection_name=collection_name,
             vectors=np.array(embeddings),
             payload=payloads,
-            parallel=4,
+            parallel=1,
             ids=None,  # Generate IDs automatically
         )
         logger.info("Uploading vectors....DONE")
@@ -211,7 +211,10 @@ class VectorizeFiles(RequestHandler):
         index_data = {"tag": tag.lower(), "filename": filename}
 
         # Use LangChain's RecursiveCharacterTextSplitter
-        logger.info("Splitting documents")
+        logger.info(f"Splitting documents. Length of documents: {len(documents)}")
+        import time
+
+        start = time.time()
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=VectorizeFiles.CHUNK_SIZE,
             chunk_overlap=VectorizeFiles.CHUNK_OVERLAP,
@@ -235,6 +238,9 @@ class VectorizeFiles(RequestHandler):
                 for idx, doc in enumerate(documents)
             ]
             results = await asyncio.gather(*tasks)
+
+        logger.info(f"Time taken to split documents: {time.time() - start}")
+        start = time.time()
 
         # Flatten the list of enriched chunks
         all_chunks = [chunk for result in results for chunk in result]
@@ -270,6 +276,8 @@ class VectorizeFiles(RequestHandler):
             if OrisonMessenger.number_tokens(chunk["content"])
             >= VectorizeFiles.MIN_TOKEN_SIZE
         ]
+        logger.info(f"Time taken to merge chunks: {time.time() - start}")
+        start = time.time()
         logger.info("Splitting documents....DONE")
 
         if filtered_chunks:
@@ -281,6 +289,7 @@ class VectorizeFiles(RequestHandler):
                 collection_name=collection_name,
                 index_data=index_data,
             )
+            logger.info(f"Time taken to store chunks: {time.time() - start}")
             logger.info("Storing chunks in vector DB....DONE")
 
     async def handle_request(self, request_json):
