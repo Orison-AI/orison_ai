@@ -158,38 +158,6 @@ class VectorizeFiles(RequestHandler):
         return documents
 
     @staticmethod
-    async def _store_chunks(
-        chunks, async_db_client, logger, collection_name, index_data
-    ):
-        async def process_chunk(chunk, index_data):
-            # Asynchronously embed and prepare payload
-            embedding = await VectorizeFiles.embedding_client.aembed_query(
-                chunk["content"]
-            )
-            payload = index_data | {
-                "page_content": chunk["content"],
-                "metadata": chunk["metadata"],
-            }
-            return embedding, payload
-
-        # Process chunks concurrently
-        tasks = [process_chunk(chunk, index_data) for chunk in chunks]
-        results = await asyncio.gather(*tasks)
-
-        embeddings, payloads = zip(*results)
-
-        # Upload vectors to vector database
-        logger.info("Uploading vectors")
-        async_db_client.upload_collection(
-            collection_name=collection_name,
-            vectors=np.array(embeddings),
-            payload=payloads,
-            parallel=1,
-            ids=None,  # Generate IDs automatically
-        )
-        logger.info("Uploading vectors....DONE")
-
-    @staticmethod
     async def _vectorize(documents, tag, collection_name, filename, logger):
         async_db_client = VectorizeFiles.async_db_client
         embedding_client = VectorizeFiles.embedding_client
@@ -212,9 +180,6 @@ class VectorizeFiles(RequestHandler):
 
         # Use LangChain's RecursiveCharacterTextSplitter
         logger.info(f"Splitting documents. Length of documents: {len(documents)}")
-        import time
-
-        start = time.time()
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=VectorizeFiles.CHUNK_SIZE,
             chunk_overlap=VectorizeFiles.CHUNK_OVERLAP,
@@ -239,58 +204,67 @@ class VectorizeFiles(RequestHandler):
             ]
             results = await asyncio.gather(*tasks)
 
-        logger.info(f"Time taken to split documents: {time.time() - start}")
-        start = time.time()
-
         # Flatten the list of enriched chunks
         all_chunks = [chunk for result in results for chunk in result]
 
         # Merge smaller chunks to meet token size requirements
         logger.info("Merging smaller chunks")
         merged_chunks = []
+        payloads = []
+        texts = []
         current_chunk = None
 
         for chunk in all_chunks:
             token_count = OrisonMessenger.number_tokens(chunk["content"])
             if current_chunk is None:
                 current_chunk = chunk
+                current_chunk["metadata"]["source"] = chunk["metadata"]["source"]
+                current_chunk["metadata"]["page"] = chunk["metadata"]["page"]
             elif (
                 token_count + OrisonMessenger.number_tokens(current_chunk["content"])
                 <= VectorizeFiles.CHUNK_SIZE
             ):
                 current_chunk["content"] += " " + chunk["content"]
-                current_chunk["metadata"][
-                    "source"
-                ] += f", {chunk['metadata']['source']}"
             else:
                 merged_chunks.append(current_chunk)
+                payloads.append(
+                    index_data
+                    | {
+                        "page_content": current_chunk["content"],
+                        "metadata": current_chunk["metadata"],
+                    }
+                )
+                texts.append(current_chunk["content"])
                 current_chunk = chunk
 
         if current_chunk:
             merged_chunks.append(current_chunk)
-
-        # Filter out chunks below the minimum token size
-        filtered_chunks = [
-            chunk
-            for chunk in merged_chunks
-            if OrisonMessenger.number_tokens(chunk["content"])
-            >= VectorizeFiles.MIN_TOKEN_SIZE
-        ]
-        logger.info(f"Time taken to merge chunks: {time.time() - start}")
-        start = time.time()
+            payloads.append(
+                index_data
+                | {
+                    "page_content": current_chunk["content"],
+                    "metadata": current_chunk["metadata"],
+                }
+            )
+            texts.append(current_chunk["content"])
         logger.info("Splitting documents....DONE")
 
-        if filtered_chunks:
-            logger.info(f"Storing {len(filtered_chunks)} filtered chunks in vector DB.")
-            await VectorizeFiles._store_chunks(
-                chunks=filtered_chunks,
-                async_db_client=async_db_client,
-                logger=logger,
-                collection_name=collection_name,
-                index_data=index_data,
+        if merged_chunks:
+            logger.info(f"Storing {len(merged_chunks)} filtered chunks in vector DB.")
+            embeddings = await VectorizeFiles.embedding_client.aembed_documents(
+                texts=texts,
+                chunk_size=len(sample_embedding),
             )
-            logger.info(f"Time taken to store chunks: {time.time() - start}")
-            logger.info("Storing chunks in vector DB....DONE")
+            # Upload vectors to vector database
+            logger.info("Uploading vectors")
+            async_db_client.upload_collection(
+                collection_name=collection_name,
+                vectors=np.array(embeddings),
+                payload=payloads,
+                parallel=1,
+                ids=None,  # Generate IDs automatically
+            )
+            logger.info("Uploading vectors....DONE")
 
     async def handle_request(self, request_json):
         """

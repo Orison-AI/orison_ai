@@ -128,6 +128,32 @@ class OrisonEmbeddings(OpenAIEmbeddings):
             logger.error(f"Failed to get embeddings for text: {text}. Error: {e}")
             raise e
 
+    def embed_documents(self, texts: models.List[str], chunk_size: int | None = None):
+        try:
+            token_acquired = True
+            if self.rate_limiter:
+                token_acquired = self.rate_limiter.acquire()
+            if token_acquired:
+                embeddings = super().embed_documents(texts, chunk_size)
+            return embeddings
+        except Exception as e:
+            logger.error(f"Failed to get embeddings for texts: {texts}. Error: {e}")
+            raise
+
+    async def aembed_documents(
+        self, texts: models.List[str], chunk_size: int | None = None
+    ) -> models.List[models.List[float]]:
+        try:
+            token_acquired = True
+            if self.rate_limiter:
+                token_acquired = await self.rate_limiter.aacquire()
+            if token_acquired:
+                embeddings = await super().aembed_documents(texts, chunk_size)
+            return embeddings
+        except Exception as e:
+            logger.error(f"Failed to get embeddings for texts: {texts}. Error: {e}")
+            raise e
+
 
 class OrisonMessenger:
     ROLE = """
