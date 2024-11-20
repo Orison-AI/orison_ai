@@ -191,7 +191,7 @@ class VectorizeFiles(RequestHandler):
             chunks = text_splitter.split_text(doc.page_content)
             # Add metadata to each chunk
             enriched_chunks = [
-                {"content": chunk, "metadata": {"source": filename, "page": index}}
+                {"content": chunk, "metadata": {"source": filename, "page": index + 1}}
                 for chunk in chunks
             ]
             return enriched_chunks

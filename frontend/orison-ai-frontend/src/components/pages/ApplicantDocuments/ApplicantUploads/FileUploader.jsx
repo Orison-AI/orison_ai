@@ -762,8 +762,8 @@ const FileUploader = ({ }) => {
           <AlertDescription>
             - Use tags to help AI find relevant information. Match documents to the right tags. Not all tags may apply. <br />
             - Add/Del tags, but update the questionnaire with new tags. AI will not use your documents otherwise. <br />
-            - Vectorize files after upload for AI search. Avoid uploading large files (>300 pages or 50 MB). <br />
-            - Vectorization may take ~10 seconds per page. You may switch windows but donot close this window. <br />
+            - Vectorize files after upload for AI search. Avoid uploading large files (>1000 pages or 50 MB). <br />
+            - Vectorization may take an estimated 15 seconds per 100 pages. You may switch windows but donot close this window. <br />
             - Supported extensions: .txt, .json, .md, .html, .csv, .pdf, .docx, .doc, .docs, .pptx, .xls, .xlsx, .xml <br />
           </AlertDescription>
         </Alert>
