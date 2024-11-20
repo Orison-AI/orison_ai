@@ -77,21 +77,6 @@ const FileUploader = ({ }) => {
   const { selectedApplicant } = useApplicantContext();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      await fetchApplicantData();
-      await fetchDocuments();
-    };
-    fetchData();
-  }, [selectedTag, user, selectedApplicant]);
-
-  useEffect(() => {
-    if (vectorizeStatus === 'success') {
-      fetchApplicantData(); // Refetch data after successful vectorization
-    }
-  }, [vectorizeStatus, fetchApplicantData]);
-
-
   const fetchApplicantData = useCallback(async () => {
     if (user && selectedApplicant) {
       // Use switch-case to assign file names based on visaCategory
@@ -162,9 +147,12 @@ const FileUploader = ({ }) => {
 
       try {
         const res = await listAll(listRef);
+        const vectorizedSnap = await getDoc(doc(db, "applicants", selectedApplicant.id));
+        const currentVectorized = vectorizedSnap.exists() ? vectorizedSnap.data().vectorized_files || [] : [];
+
         const docs = res.items.map(itemRef => ({
           fileName: itemRef.name,
-          vectorized: vectorizedFiles.includes(itemRef.name),
+          vectorized: currentVectorized.includes(itemRef.name),
         }));
         setDocuments(docs);
       } catch (error) {
@@ -173,7 +161,29 @@ const FileUploader = ({ }) => {
     } else {
       console.error("User, selectedApplicant, or selectedTag is undefined.");
     }
-  }, [user, selectedApplicant, selectedTag, vectorizedFiles]);
+  }, [user, selectedApplicant, selectedTag]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchApplicantData();
+      await fetchDocuments();
+    };
+
+    // Ensure selectedTag remains stable
+    if (selectedTag !== "default" && !tags.includes(selectedTag)) {
+      console.warn(`Resetting selectedTag to default. Found: ${selectedTag}`);
+      setSelectedTag("default");
+    }
+
+    fetchData();
+  }, [selectedTag, user, selectedApplicant, fetchApplicantData, fetchDocuments]);
+
+
+  useEffect(() => {
+    if (vectorizeStatus === 'success') {
+      fetchApplicantData(); // Refetch data after successful vectorization
+    }
+  }, [vectorizeStatus, fetchApplicantData]);
 
   const onDrop = async (acceptedFiles) => {
     const storage = getStorage();
