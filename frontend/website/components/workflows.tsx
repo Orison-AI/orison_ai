@@ -24,7 +24,6 @@ export default function Workflows() {
             <p className="text-lg text-indigo-200/65">
               Bridging the gap between technical research and story narration for visa officers is challenging and time consuming <br />
               Collecting analytics from google scholar, wage comparisons, journal ratings, and professional tools is mundane and intensive <br />
-              Orison is not here to advocate, it is here to assist you with these mundane tasks <br />
             </p>
 
             <br></br>
@@ -33,8 +32,8 @@ export default function Workflows() {
               Why Orison?
             </h2>
             <p className="text-lg text-indigo-200/65">
-              Feeding all documents to LLM chatbots confuses them with irrelevant data and produces less useful generic content<br />
-              LLM chatbots and custom gpts are not aware of your network, key metrics, and field of work <br />
+              Orison is not another AI tool to advocate, it is here to assist you <br />
+              Chat LLMs are worthless without the right data. Orison is an interface to securely provide inputs for valuable AI ouput <br />
               Orison builds your information network and uses relevant information to produce high quality content <br />
             </p>
           </div>

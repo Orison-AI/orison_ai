@@ -40,10 +40,10 @@ export default function Features() {
               </span>
             </div>
             <h2 className="animate-[gradient_6s_linear_infinite] bg-[linear-gradient(to_right,theme(colors.gray.200),theme(colors.indigo.200),theme(colors.gray.50),theme(colors.indigo.300),theme(colors.gray.200))] bg-[length:200%_auto] bg-clip-text pb-4 font-nacelle text-3xl font-semibold text-transparent md:text-4xl">
-              Your Search On How To Write Your Story Ends Here
+              The Orison Way
             </h2>
             <p className="text-lg text-indigo-200/65">
-              Orison is packed with features in its AI toolkit. Orison is also looking to grow and improve with your valuable feedback.
+              Orison is packed with features in its AI toolkit.
             </p>
           </div>
           {/* <div className="flex justify-center pb-4 md:pb-12" data-aos="fade-up">
@@ -185,6 +185,29 @@ export default function Features() {
                 Q&A your personal assistant to discover more about the applicant. Mitigate the tedious search through copious information.
               </p>
             </article>
+          </div>
+          <br></br>
+          <br></br>
+          {/* Section header */}
+          <div className="pb-12 text-center md:pb-1">
+            <h1
+              className="animate-[gradient_6s_linear_infinite] bg-[linear-gradient(to_right,theme(colors.gray.200),theme(colors.indigo.200),theme(colors.gray.50),theme(colors.indigo.300),theme(colors.gray.200))] bg-[length:200%_auto] bg-clip-text pb-5 font-nacelle text-4xl font-semibold text-transparent md:text-4xl"
+              data-aos="fade-up"
+            >
+              Room For Improvement
+            </h1>
+            <div className="mx-auto max-w-6xl"> {/* Control width using this xl */}
+              <p
+                className="mb-8 text-xl text-indigo-200/65"
+                data-aos="fade-up"
+                data-aos-delay={200}
+              >
+                With your feedback, Orison can improve its AI toolkit.
+                Add ability to download a structured case file- cover letter, highlighted evidence snapshots, and more.
+                Provide feedback to AI output and reiterate on the story in moments.
+                Thorough analysis to determine eligibility.
+              </p>
+            </div>
           </div>
         </div>
       </div>

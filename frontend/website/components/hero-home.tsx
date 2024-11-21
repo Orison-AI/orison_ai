@@ -36,10 +36,10 @@ export default function HeroHome() {
                 data-aos="fade-up"
                 data-aos-delay={200}
               >
-                Hybrid-AI assistant for EB1, O-1, and Eb2 cases <br />
-                Information intelligence for building your visa story and analytics to find your standing <br />
-                Generate high quality analytics, reports, and content for visa evidence and cover letters <br />
-                {/* Improve efficiency, accuracy, and revenue with a secure and reliable platform */}
+                Hybrid-AI agent for EB1, O-1, and Eb2 cases <br />
+                Information intelligence for building your visa story and analytics to find your eligibility <br />
+                Time is of essence in law so why use it on mundane tasks? <br />
+                Take your heap of documents to review ready case file in minutes.
               </p>
             </div>
           </div>
