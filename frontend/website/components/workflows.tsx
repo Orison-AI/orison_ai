@@ -15,26 +15,27 @@ export default function Workflows() {
           <div className="mx-auto max-w-6xl pb-12 text-center md:pb-20">
             <div className="inline-flex items-center gap-3 pb-3 before:h-px before:w-8 before:bg-gradient-to-r before:from-transparent before:to-indigo-200/50 after:h-px after:w-8 after:bg-gradient-to-l after:from-transparent after:to-indigo-200/50">
               <span className="inline-flex bg-gradient-to-r from-indigo-500 to-indigo-200 bg-clip-text text-transparent text-2xl">
-                We Understand the Gaps
+                We Understand The Gaps
               </span>
             </div>
             <h2 className="animate-[gradient_6s_linear_infinite] bg-[linear-gradient(to_right,theme(colors.gray.200),theme(colors.indigo.200),theme(colors.gray.50),theme(colors.indigo.300),theme(colors.gray.200))] bg-[length:200%_auto] bg-clip-text pb-4 font-nacelle text-3xl font-semibold text-transparent md:text-4xl">
-              Case Story and Case Strength
+              Discover ways AI can help with case story and strength
             </h2>
             <p className="text-lg text-indigo-200/65">
-              Bridging the gap between technical research and story narration for visa officers is challenging and time consuming <br />
-              Collecting analytics from google scholar, wage comparisons, journal ratings, and professional tools is mundane and intensive <br />
+              Crafting a compelling narrative for visa officers demands translating technicalities into impactful stories <br />
+              Collecting analytics from google scholar, wage tools, journal ratings, and other platforms is mundane, repetitive, and labor-intensive <br />
             </p>
 
+            <br></br>
             <br></br>
 
             <h2 className="animate-[gradient_6s_linear_infinite] bg-[linear-gradient(to_right,theme(colors.gray.200),theme(colors.indigo.200),theme(colors.gray.50),theme(colors.indigo.300),theme(colors.gray.200))] bg-[length:200%_auto] bg-clip-text pb-4 font-nacelle text-3xl font-semibold text-transparent md:text-4xl">
               Why Orison?
             </h2>
             <p className="text-lg text-indigo-200/65">
-              Orison is not another AI tool to advocate, it is here to assist you <br />
-              Chat LLMs are worthless without the right data. Orison is an interface to securely provide inputs for valuable AI ouput <br />
-              Orison builds your information network and uses relevant information to produce high quality content <br />
+              Your search for accurate AI ends here. Get immediate value with Orison which increases as we grow together <br />
+              AI output is only as good as the data it works with. Reduce the time to insights from hard-to-process disparate data sources <br />
+              Orison isn’t here to advocate—it’s here to assist. Automaically collect and use relevant and high-quality inputs to LLMs <br />
             </p>
           </div>
           {/* Spotlight items */}

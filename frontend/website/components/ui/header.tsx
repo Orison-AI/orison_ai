@@ -34,10 +34,10 @@ export default function Header() {
   const handleSampleContent = async () => {
     try {
       await handleButtonClick("sample_content");
-      window.open("https://www.app.orison.ai", "_blank");
+      window.open("https://drive.google.com/file/d/1uY63OwmyeRqXr3avZ6Vbqe8UmyvCNN06/view?usp=sharing", "_blank");
     } catch (error) {
       console.error("Failed to log button click for Sample Content:", error);
-      window.open("https://www.app.orison.ai", "_blank");
+      window.open("https://drive.google.com/file/d/1uY63OwmyeRqXr3avZ6Vbqe8UmyvCNN06/view?usp=sharing", "_blank");
     }
   };
 
