@@ -35,7 +35,19 @@ export default function Workflows() {
             <p className="text-lg text-indigo-200/65">
               Your search for accurate AI ends here. Get immediate value with Orison which increases as we grow together <br />
               AI output is only as good as the data it works with. Reduce the time to insights from hard-to-process disparate data sources <br />
-              Orison isn’t here to advocate—it’s here to assist. Automaically collect and use relevant and high-quality inputs to LLMs <br />
+              Orison isn’t here to advocate—it’s here to assist. Automaically collect and use relevant and high-quality inputs to AI <br />
+            </p>
+
+            <br></br>
+            <br></br>
+
+            <h2 className="animate-[gradient_6s_linear_infinite] bg-[linear-gradient(to_right,theme(colors.gray.200),theme(colors.indigo.200),theme(colors.gray.50),theme(colors.indigo.300),theme(colors.gray.200))] bg-[length:200%_auto] bg-clip-text pb-4 font-nacelle text-3xl font-semibold text-transparent md:text-4xl">
+              Why Now?
+            </h2>
+            <p className="text-lg text-indigo-200/65">
+              Surge in immigration demand and Request For Evidene (RFEs), lead to growing workloads and the need for efficient case preparation <br />
+              Decades of software security and recent LLM breakthroughs enable secure handling of complex legal narratives <br />
+              Modern cloud technologies enable seamless data management and remote access, ensuring you can work efficiently from anywhere <br />
             </p>
           </div>
           {/* Spotlight items */}
