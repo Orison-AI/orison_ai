@@ -9,12 +9,13 @@ import {
   ModalBody, ModalFooter, Button,
 } from '@chakra-ui/react';
 
-// Orison AI
+// Demo AI
 import StructuredData from '../../../StructuredData';
 
 const ScholarDataModal = ({ isOpen, onClose, data }) => {
   const keys = [
-    { key: "author", collapsible: true, subKeys: [
+    {
+      key: "author", collapsible: true, subKeys: [
         { key: "name" },
         { key: "affiliation" },
         { key: "scholar_id" },
@@ -28,20 +29,23 @@ const ScholarDataModal = ({ isOpen, onClose, data }) => {
     { key: "cited_by" },
     { key: "cited_by_5y" },
     { key: "cited_each_year", collapsible: true, dynamic: true },
-    { key: "network", collapsible: true, dynamic: true, dynamic_collapsible: true, subKeys: [
-        {key: "name"},
-        {key: "citations"},
-        {key: "hindex"},
-        {key: "publication_count"},
+    {
+      key: "network", collapsible: true, dynamic: true, dynamic_collapsible: true, subKeys: [
+        { key: "name" },
+        { key: "citations" },
+        { key: "hindex" },
+        { key: "publication_count" },
       ]
     },
-    { key: "co_authors", collapsible: true, dynamic: true, dynamic_collapsible: true, subKeys: [
+    {
+      key: "co_authors", collapsible: true, dynamic: true, dynamic_collapsible: true, subKeys: [
         { key: "name" },
         { key: "affiliation" },
         { key: "scholar_id" },
       ]
     },
-    { key: "publications", collapsible: true, dynamic: true, dynamic_collapsible: true, subKeys: [
+    {
+      key: "publications", collapsible: true, dynamic: true, dynamic_collapsible: true, subKeys: [
         { key: "authors" },
         { key: "title" },
         { key: "year" },

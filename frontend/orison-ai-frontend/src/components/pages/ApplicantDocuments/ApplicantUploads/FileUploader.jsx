@@ -629,7 +629,7 @@ const FileUploader = ({ }) => {
   return (
     <VStack width="100%" flex="1" mt="20px" overflowY="auto" overflowX="auto">
       <HStack width="100%" fontSize="24px" spacing={4} alignItems="center">
-        <Text width="100%">Applicant Files</Text>
+        <Text width="100%">Files Manager</Text>
 
         {/* Tag Label and Dropdown */}
         <HStack spacing={2} alignItems="center" width="50%">

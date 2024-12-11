@@ -116,7 +116,7 @@ const ManageApplicants = ({
             attorney_id: user.uid,
             name: nameRef.current.value || "",
             email: emailRef.current.value || "",
-            visaCategory: selectedVisa || applicant.visaCategory, // Save visaCategory
+            visaCategory: "EB1", // Save visaCategory
           },
           { merge: true }
         );
@@ -179,42 +179,11 @@ const ManageApplicants = ({
           borderColor="gray.600"
           borderRadius="8px"
         >
-          <Box
-            p="6"
-            // bg="blue.800"
-            borderRadius="md"
-            boxShadow="lg"
-            // border="1px solid"
-            borderColor="blue.600"
-            color="white"
-            mb="6"
-            mt="8" /* Add margin-top for spacing before the section */
-          >
-            <Text fontSize="2xl" fontWeight="bold" mb="4" color="white">
-              Improve Your Case Story and Strength with "The Orison Way"
-            </Text>
-            <Box as="ul" pl="6" fontSize="md" lineHeight="1.8" color="blue.100">
-              <Box as="li" mb="2">Get a compelling story for your visa application as content for questionnaire and cover letter</Box>
-              <Box as="li" mb="2">Determine your visa eligibility and gaps in your profile</Box>
-            </Box>
-            <Text fontSize="2xl" fontWeight="bold" mb="4" color="white">
-              How to Use Orison
-            </Text>
-            <Box as="ul" pl="6" fontSize="md" lineHeight="1.8" color="blue.100">
-              <Box as="li" mb="2">Use the AI Toolbox to navigate</Box>
-              <Box as="li" mb="2">Enter relevant links, upload documents, and provide additional information</Box>
-              <Box as="li" mb="2">Choose default questionnaire templates or create custom questions</Box>
-              <Box as="li" mb="2">Generate answers for questionnaires using your provided information</Box>
-              <Box as="li" mb="2">Generate evidence letters seamlessly</Box>
-              <Box as="li">Use DocAssist to chat with your documents and quickly find specific information</Box>
-            </Box>
-          </Box>
           <Table className="oai-manage-table" variant="simple">
             <Thead className="oai-manage-thead">
               <Tr>
                 <Th>Name</Th>
                 <Th>Email</Th>
-                <Th>Visa Type</Th>
                 <Th></Th>
               </Tr>
             </Thead>
@@ -244,26 +213,6 @@ const ManageApplicants = ({
                     )}
                   </Td>
                   <Td>
-                    {editId === applicant.id ? (
-                      <Select
-                        placeholder="Select Visa Type"
-                        value={selectedVisa || applicant.visaCategory || ""}
-                        onChange={(e) => {
-                          const newVisaCategory = e.target.value;
-                          setSelectedVisa(newVisaCategory); // Update the selectedVisa state
-                        }}
-                      >
-                        {visaCategories.map((category) => (
-                          <option key={category} value={category}>
-                            {category}
-                          </option>
-                        ))}
-                      </Select>
-                    ) : (
-                      applicant.visaCategory || "N/A"
-                    )}
-                  </Td>
-                  <Td>
                     <Menu>
                       <MenuButton
                         as={Button}
@@ -281,9 +230,6 @@ const ManageApplicants = ({
                         </MenuItem>
                         <MenuItem onClick={() => handleNavigate(Views.APPLICANT_SUMMARIZATION, applicant)}>
                           Summarization
-                        </MenuItem>
-                        <MenuItem onClick={() => handleNavigate(Views.EVIDENCE, applicant)}>
-                          EvidenceLetter
                         </MenuItem>
                         <MenuItem onClick={() => handleNavigate(Views.DOCASSIST, applicant)}>
                           DocAssist
@@ -322,7 +268,7 @@ const ManageApplicants = ({
       </Center >
       <Center className="oai-manage-addnewapp-button-center">
         <Button mt="16px" colorScheme="blue" onClick={addNewApplicant}>
-          Add New Applicant
+          Add New User
         </Button>
       </Center>
       <DeleteApplicantModal

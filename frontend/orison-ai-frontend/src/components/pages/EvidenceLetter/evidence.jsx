@@ -28,7 +28,7 @@ import {
 } from "@chakra-ui/react";
 import { CheckCircleIcon, WarningIcon } from "@chakra-ui/icons";
 
-// Orison AI
+// Demo AI
 import { evidence } from "../../../api/api"; // Replace with your API function for generating evidence
 import { useApplicantContext } from "../../../context/ApplicantContext";
 

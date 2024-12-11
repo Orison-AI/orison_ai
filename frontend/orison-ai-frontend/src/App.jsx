@@ -7,7 +7,6 @@ import { Box, Text, useDisclosure, Flex } from "@chakra-ui/react";
 import { auth } from "./common/firebaseConfig";
 import ApplicantDocuments from "./components/pages/ApplicantDocuments/ApplicantDocuments";
 import ApplicantSummarization from "./components/pages/ApplicantSummarization/ApplicantSummarization";
-import Evidence from "./components/pages/EvidenceLetter/evidence";
 import DocAssist from "./components/pages/DocAssist/DocAssist";
 import Auth from "./components/auth/Auth";
 import Header from "./components/Header";
@@ -83,8 +82,6 @@ const AppContent = () => {
         return <ApplicantSummarization selectedApplicant={selectedApplicant} />;
       case Views.DOCASSIST:
         return <DocAssist selectedApplicant={selectedApplicant} />;
-      case Views.EVIDENCE:
-        return <Evidence selectedApplicant={selectedApplicant} />;
       default:
         return <Text>Invalid View</Text>;
     }
@@ -128,7 +125,7 @@ const AppContent = () => {
           padding="10px"
           bg="gray.900"
         >
-          © 2024 Orison AI. All rights reserved. AI can make mistakes. Please verify the information.
+          © 2024 Demo AI. All rights reserved. AI can make mistakes. Please verify the information.
         </Box>
       </Flex>
       <Settings isOpen={isSettingsOpen} onClose={onSettingsClose} />

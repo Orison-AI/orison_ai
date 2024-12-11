@@ -33,7 +33,7 @@ const Header = React.forwardRef(({ goHome, onSettingsOpen, landingPage }, ref) =
         fontSize="32px"
         fontWeight="bold"
       >
-        Orison AI
+        Demo AI
       </Box>
 
       {/* Color Mode Toggle */}
