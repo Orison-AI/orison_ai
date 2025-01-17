@@ -14,11 +14,14 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-import os
-import json
+# External
+
 import asyncio
 from typing import List, Dict
 from langgraph.graph import Graph, StateGraph
+
+# Internal
+
 from or_store.firebase import OrisonSecrets
 from or_store.db_interfaces import GoogleScholarClient, ScreeningClient, EvidenceClient
 from or_store.models import EvidenceBuilder
