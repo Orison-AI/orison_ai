@@ -97,7 +97,7 @@ gcloud auth list
 ## Gcloud Deployment
 - Be in the directory containing gateway_function directory or change source accordingly
 ```
-gcloud functions deploy gateway_function --runtime python310 --memory 512 --trigger-http --allow-unauthenticated --entry-point gateway_function --source=gateway_function --gen2 --max-instances 5 --timeout 540
+gcloud functions deploy gateway_function --runtime python311 --memory 1024 --trigger-http --allow-unauthenticated --entry-point gateway_function --source=gateway_function --no-gen2 --max-instances 100 --timeout 540
 ```
 
 ## Firebase CLI for frontend deployment
