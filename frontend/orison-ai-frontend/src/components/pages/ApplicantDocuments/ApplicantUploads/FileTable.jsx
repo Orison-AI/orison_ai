@@ -1,7 +1,4 @@
-// React
 import React from 'react';
-
-// Chakra UI
 import {
   Badge, Box, Button, IconButton, Spinner,
   Table, Thead, Tbody, Tr, Th, Td, HStack,
@@ -15,7 +12,7 @@ const FileTable = ({
   vectorizeAllFiles,
   unvectorizeAllFiles,
   deleteFile,
-  deleteAllFiles, // Add deleteAllFiles prop
+  deleteAllFiles,
   viewFile,
   vectorizingFiles,
   vectorizeStatus,
@@ -24,16 +21,17 @@ const FileTable = ({
     <Box
       mb="10px"
       width="100%"
+      overflowX="auto"
       border="1px"
       borderColor="gray.600"
       borderRadius="10px"
     >
-      <Table variant="simple">
+      <Table variant="simple" tableLayout="fixed" width="100%">
         <Thead>
           <Tr>
-            <Th>File Name</Th>
-            <Th>Status</Th>
-            <Th>
+            <Th width="40%">File Name</Th>
+            <Th width="20%">Status</Th>
+            <Th width="40%">
               <HStack spacing={4} justifyContent="flex-end">
                 <Button
                   colorScheme="blue"
@@ -42,10 +40,7 @@ const FileTable = ({
                 >
                   Vectorize All
                 </Button>
-                <Button
-                  colorScheme="red"
-                  onClick={unvectorizeAllFiles}
-                >
+                <Button colorScheme="red" onClick={unvectorizeAllFiles}>
                   Unvectorize All
                 </Button>
                 <Button
@@ -56,10 +51,10 @@ const FileTable = ({
                         'Are you sure you want to delete all files? This action cannot be undone.'
                       )
                     ) {
-                      await deleteAllFiles(); // Call deleteAllFiles when clicked
+                      await deleteAllFiles();
                     }
                   }}
-                  isDisabled={documents.length === 0} // Disable if no files
+                  isDisabled={documents.length === 0}
                 >
                   Delete All Files
                 </Button>
@@ -73,7 +68,11 @@ const FileTable = ({
 
             return (
               <Tr key={fileName}>
-                <Td whiteSpace="wrap">{fileName}</Td>
+                {/* Ensure long filenames wrap */}
+                <Td wordBreak="break-word" whiteSpace="normal">
+                  {fileName}
+                </Td>
+
                 <Td whiteSpace="nowrap">
                   {vectorized ? (
                     <Badge colorScheme="green">Vectorized</Badge>
@@ -81,43 +80,49 @@ const FileTable = ({
                     <Badge colorScheme="orange">Not Vectorized</Badge>
                   )}
                 </Td>
-                <Td isNumeric whiteSpace="nowrap">
-                  {isVectorizing && vectorizeStatus === 'loading' && <Spinner color="blue.500" size="sm" />}
-                  {isVectorizing && vectorizeStatus === 'success' && <CheckCircleIcon color="green.500" />}
-                  {isVectorizing && vectorizeStatus === 'error' && <WarningIcon color="red.500" />}
 
-                  <Button
-                    ml="16px"
-                    colorScheme="blue"
-                    onClick={() => vectorizeFile(fileName)}
-                    isDisabled={isVectorizing || vectorized}
-                  >
-                    Vectorize
-                  </Button>
-                  <Button
-                    ml="16px"
-                    colorScheme="red"
-                    onClick={() => unvectorizeFile(fileName)}
-                    isDisabled={!vectorized} // Disable if not vectorized
-                    visibility={!vectorized ? 'hidden' : 'visible'} // Optional: hide button completely if not vectorized
-                  >
-                    Unvectorize
-                  </Button>
-                  <Button
-                    ml="16px"
-                    onClick={() => viewFile(fileName)}
-                    isDisabled={isVectorizing}
-                  >
-                    View
-                  </Button>
-                  <IconButton
-                    icon={<CloseIcon />}
-                    ml="16px"
-                    colorScheme="red"
-                    variant="ghost"
-                    onClick={() => deleteFile(fileName)}
-                    isDisabled={isVectorizing}
-                  />
+                {/* Ensure action buttons stay within table boundaries */}
+                <Td whiteSpace="normal">
+                  <HStack spacing={2} flexWrap="wrap" justifyContent="flex-end">
+                    {isVectorizing && vectorizeStatus === 'loading' && (
+                      <Spinner color="blue.500" size="sm" />
+                    )}
+                    {isVectorizing && vectorizeStatus === 'success' && (
+                      <CheckCircleIcon color="green.500" />
+                    )}
+                    {isVectorizing && vectorizeStatus === 'error' && (
+                      <WarningIcon color="red.500" />
+                    )}
+
+                    <Button
+                      colorScheme="blue"
+                      onClick={() => vectorizeFile(fileName)}
+                      isDisabled={isVectorizing || vectorized}
+                    >
+                      Vectorize
+                    </Button>
+
+                    <Button
+                      colorScheme="red"
+                      onClick={() => unvectorizeFile(fileName)}
+                      isDisabled={!vectorized}
+                      style={{ visibility: !vectorized ? 'hidden' : 'visible' }}
+                    >
+                      Unvectorize
+                    </Button>
+
+                    <Button onClick={() => viewFile(fileName)} isDisabled={isVectorizing}>
+                      View
+                    </Button>
+
+                    <IconButton
+                      icon={<CloseIcon />}
+                      colorScheme="red"
+                      variant="ghost"
+                      onClick={() => deleteFile(fileName)}
+                      isDisabled={isVectorizing}
+                    />
+                  </HStack>
                 </Td>
               </Tr>
             );

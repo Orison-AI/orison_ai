@@ -276,15 +276,15 @@ const ManageApplicants = ({
                         <MenuItem onClick={() => handleNavigate(Views.APPLICANT_DOCUMENTS, applicant)}>
                           Documents
                         </MenuItem>
-                        <MenuItem onClick={() => handleNavigate(Views.QUESTIONAIRE, applicant)}>
+                        {/* <MenuItem onClick={() => handleNavigate(Views.QUESTIONAIRE, applicant)}>
                           Questionnaire
-                        </MenuItem>
+                        </MenuItem> */}
                         <MenuItem onClick={() => handleNavigate(Views.APPLICANT_SUMMARIZATION, applicant)}>
                           Summarization
                         </MenuItem>
-                        <MenuItem onClick={() => handleNavigate(Views.EVIDENCE, applicant)}>
+                        {/* <MenuItem onClick={() => handleNavigate(Views.EVIDENCE, applicant)}>
                           EvidenceLetter
-                        </MenuItem>
+                        </MenuItem> */}
                         <MenuItem onClick={() => handleNavigate(Views.DOCASSIST, applicant)}>
                           DocAssist
                         </MenuItem>

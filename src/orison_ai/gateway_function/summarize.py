@@ -45,12 +45,10 @@ class Summarize(RequestHandler):
         self._screening_client = ScreeningClient()
 
     @staticmethod
-    async def prompts(logger, applicant_id: str) -> List[Prompt]:
+    async def prompts(logger) -> List[Prompt]:
         """
         Load prompts from Firestore using attorney ID.
         :param logger: Logger object
-        :param applicant_id: Applicant ID
-        :return: List of prompts
         """
 
         prompts = []
@@ -60,7 +58,7 @@ class Summarize(RequestHandler):
             client = FireStoreDB().client
 
             # Reference the document in Firestore
-            doc_ref = client.collection("templates").document(applicant_id)
+            doc_ref = client.collection("templates").document("eb1_a_questionnaire")
             doc = doc_ref.get()
 
             if doc.exists:
@@ -78,12 +76,10 @@ class Summarize(RequestHandler):
                         Prompt(question=question, detail_level=detail_level, tag=tag)
                     )
             else:
-                logger.error(f"No questionnaire found for applicant ID: {applicant_id}")
+                logger.error(f"No questionnaire found for applicant.")
 
         except Exception as e:
-            logger.error(
-                f"Error fetching questionnaire for applicant ID {applicant_id}: {e}"
-            )
+            logger.error(f"Error fetching questionnaire for applicant. {e}")
 
         return prompts
 
@@ -127,7 +123,7 @@ class Summarize(RequestHandler):
             secrets = OrisonSecrets.from_attorney_applicant(attorney_id, applicant_id)
             self.logger.info("Initializing summarizer with secrets")
             self.initialize(secrets)
-            prompts = await self.prompts(logger=self.logger, applicant_id=applicant_id)
+            prompts = await self.prompts(logger=self.logger)
             self.logger.info("Initializing summarizer with secrets...done")
             if not prompts:
                 message = f"No prompts found for attorney ID: {attorney_id}"
@@ -150,8 +146,8 @@ class Summarize(RequestHandler):
 
 if __name__ == "__main__":
     request_json = {
-        "attorneyId": "jVRK827jk3YLi6NWIyjKDZ0MgCv2",
-        "applicantId": "wt3YHwT0xEp5e7f5vp3L",
+        "attorneyId": "CHBgG1jdnRMPTt7v5drhMQV2sAU2",
+        "applicantId": "3zJYpyzSOYHjrg2wKTf1",
     }
     summarize = Summarize()
     asyncio.run(summarize.handle_request(request_json))

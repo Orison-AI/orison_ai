@@ -37,7 +37,7 @@ const FileUploader = ({ }) => {
   const [tags, setTags] = useState(["default"]);
   const [selectedTag, setSelectedTag] = useState("default");
   const [fileToOverwrite, setFileToOverwrite] = useState(null);
-  const [newTagName, setNewTagName] = useState('');
+  // const [newTagName, setNewTagName] = useState('');
 
   const {
     isOpen: isOverwriteModalOpen,
@@ -83,7 +83,11 @@ const FileUploader = ({ }) => {
       let templateFileName;
       switch (selectedApplicant.visaCategory) {
         case "EB1":
+          templateFileName = "eb1_a_questionnaire";
+          break;
         case "O1":
+          templateFileName = "eb1_a_questionnaire";
+          break;
         case "EB2":
           templateFileName = "eb1_a_questionnaire";
           break;
@@ -100,6 +104,7 @@ const FileUploader = ({ }) => {
         if (templateDocSnap.exists()) {
           const templateData = templateDocSnap.data();
           templateTags = templateData.tags || []; // Get tags from template
+          setTags(templateTags);
         } else {
           console.warn("Template document does not exist.");
         }
@@ -111,22 +116,19 @@ const FileUploader = ({ }) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
 
-          let applicantTags = data.customTags;
-
-          // Initialize customTags with templateTags if not present
-          if (!applicantTags || applicantTags.length === 0) {
-            applicantTags = templateTags.length > 0 ? templateTags : ["default"];
-            await updateDoc(docRef, { customTags: applicantTags });
-            console.log("Initialized customTags with templateTags.");
-          }
+          // let applicantTags = data.customTags;
+          // // Initialize customTags with templateTags if not present
+          // if (!applicantTags || applicantTags.length === 0) {
+          //   applicantTags = templateTags.length > 0 ? templateTags : ["default"];
+          //   await updateDoc(docRef, { customTags: applicantTags });
+          //   console.log("Initialized customTags with templateTags.");
+          // }
 
           // Update state
           setVectorizedFiles(data.vectorized_files || []);
-          setTags(applicantTags);
+          // setTags(applicantTags);
         } else {
           console.warn("Applicant document does not exist.");
-          const defaultTags = templateTags.length > 0 ? templateTags : ["default"];
-          setTags(defaultTags); // Use template tags or default to "default"
         }
       } catch (error) {
         console.error("Error fetching applicant data or tags:", error);
@@ -649,7 +651,7 @@ const FileUploader = ({ }) => {
         </HStack>
 
         {/* Input Box for Tag Name */}
-        <Box minWidth="200px">
+        {/* <Box minWidth="200px">
           <input
             type="text"
             maxLength="30"
@@ -658,10 +660,10 @@ const FileUploader = ({ }) => {
             onChange={(e) => setNewTagName(e.target.value)}
             style={{ padding: "6px", fontSize: "16px", borderRadius: "5px", width: "100%" }}
           />
-        </Box>
+        </Box> */}
 
         {/* Add Button */}
-        <Button
+        {/* <Button
           colorScheme="teal"
           onClick={async () => {
             if (newTagName && !tags.includes(newTagName)) {
@@ -685,10 +687,10 @@ const FileUploader = ({ }) => {
           }}
         >
           Add
-        </Button>
+        </Button> */}
 
         {/* Remove Button */}
-        <Button
+        {/* <Button
           colorScheme="red"
           onClick={async () => {
             if (
@@ -735,7 +737,7 @@ const FileUploader = ({ }) => {
           isDisabled={selectedTag === "default"} // Disable deletion for "default" tag
         >
           Del
-        </Button>
+        </Button> */}
       </HStack>
 
       {isProcessing && (
@@ -761,9 +763,9 @@ const FileUploader = ({ }) => {
           <AlertIcon />
           <AlertDescription>
             - Use tags to help AI find relevant information. Match documents to the right tags. Not all tags may apply. <br />
-            - Add/Del tags, but update the questionnaire with new tags. AI will not use your documents otherwise. <br />
+            {/* - Add/Del tags, but update the questionnaire with new tags. AI will not use your documents otherwise. <br /> */}
             - Vectorize files after upload for AI search. Avoid uploading large files (>1000 pages or 50 MB). <br />
-            - Vectorization may take an estimated 15 seconds per 100 pages. You may switch windows but donot close this window. <br />
+            - Vectorization may take an estimated 1 second per 10 pages. You may switch windows but donot close this window. <br />
             - Supported extensions: .txt, .json, .md, .html, .csv, .pdf, .docx, .doc, .docs, .pptx, .xls, .xlsx, .xml <br />
           </AlertDescription>
         </Alert>

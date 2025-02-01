@@ -106,6 +106,12 @@ gcloud functions deploy gateway_function --runtime python311 --memory 1024 --tri
 https://firebase.google.com/docs/cli
 ```
 Make sure node is installed to version 22
+- Commands for running dev environments
+```
+npm start # application
+npm run dev # website
+npm run build # Building production grade application and website
+```
 - Deployment commands:
 ```
 npm run build

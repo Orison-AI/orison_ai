@@ -192,19 +192,54 @@ const DocAssist = ({ }) => {
 
     // Fetch customTags from Firestore
     const fetchTags = useCallback(async () => {
+        // if (user && selectedApplicant) {
+        //     const docRef = doc(db, "applicants", selectedApplicant.id);
+        //     const docSnap = await getDoc(docRef);
+        //     if (docSnap.exists()) {
+        //         const customTags = docSnap.data().customTags || []; // Fetch customTags
+        //         // Map the customTags to the required format
+        //         const mappedTags = customTags.map(tag => ({
+        //             label: tag,
+        //             value: tag.toLowerCase() // Lowercase for value
+        //         }));
+        //         setTags(mappedTags);
+        //     } else {
+        //         console.error("No document found for the selected applicant.");
+        //     }
+        // }
+
         if (user && selectedApplicant) {
-            const docRef = doc(db, "applicants", selectedApplicant.id);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const customTags = docSnap.data().customTags || []; // Fetch customTags
-                // Map the customTags to the required format
-                const mappedTags = customTags.map(tag => ({
+            // Use switch-case to assign file names based on visaCategory
+            let templateFileName;
+            switch (selectedApplicant.visaCategory) {
+                case "EB1":
+                    templateFileName = "eb1_a_questionnaire";
+                    break;
+                case "O1":
+                    templateFileName = "eb1_a_questionnaire";
+                    break;
+                case "EB2":
+                    templateFileName = "eb1_a_questionnaire";
+                    break;
+                default:
+                    templateFileName = "eb1_a_questionnaire";
+            }
+
+            const templateDocRef = doc(db, "templates", templateFileName);
+            const templateDocSnap = await getDoc(templateDocRef);
+
+            let templateTags = [];
+            if (templateDocSnap.exists()) {
+                const templateData = templateDocSnap.data();
+                templateTags = templateData.tags || []; // Get tags from template
+                const mappedTags = templateTags.map(tag => ({
                     label: tag,
                     value: tag.toLowerCase() // Lowercase for value
                 }));
                 setTags(mappedTags);
+                setTags(mappedTags);
             } else {
-                console.error("No document found for the selected applicant.");
+                console.warn("Template document does not exist.");
             }
         }
     }, [user, selectedApplicant]);

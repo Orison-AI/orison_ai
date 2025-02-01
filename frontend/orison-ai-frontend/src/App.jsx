@@ -75,16 +75,16 @@ const AppContent = () => {
             setCurrentView={setCurrentView}
           />
         );
-      case Views.QUESTIONAIRE:
-        return <QuestionaireEditor selectedApplicant={selectedApplicant} />;
+      // case Views.QUESTIONAIRE:
+      //   return <QuestionaireEditor selectedApplicant={selectedApplicant} />;
       case Views.APPLICANT_DOCUMENTS:
         return <ApplicantDocuments selectedApplicant={selectedApplicant} />;
       case Views.APPLICANT_SUMMARIZATION:
         return <ApplicantSummarization selectedApplicant={selectedApplicant} />;
       case Views.DOCASSIST:
         return <DocAssist selectedApplicant={selectedApplicant} />;
-      case Views.EVIDENCE:
-        return <Evidence selectedApplicant={selectedApplicant} />;
+      // case Views.EVIDENCE:
+      //   return <Evidence selectedApplicant={selectedApplicant} />;
       default:
         return <Text>Invalid View</Text>;
     }
