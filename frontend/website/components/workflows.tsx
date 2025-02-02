@@ -19,11 +19,11 @@ export default function Workflows() {
               </span>
             </div>
             <h2 className="animate-[gradient_6s_linear_infinite] bg-[linear-gradient(to_right,theme(colors.gray.200),theme(colors.indigo.200),theme(colors.gray.50),theme(colors.indigo.300),theme(colors.gray.200))] bg-[length:200%_auto] bg-clip-text pb-4 font-nacelle text-3xl font-semibold text-transparent md:text-4xl">
-              Discover ways AI can help with case story and strength
+              Two main problems Orison can help solve
             </h2>
             <p className="text-lg text-indigo-200/65">
-              Crafting a compelling narrative for visa officers demands translating technicalities into impactful stories <br />
-              Collecting analytics from google scholar, wage tools, journal ratings, and other platforms is mundane, repetitive, and labor-intensive <br />
+              Collect analytics from google scholar, wage tools, journal ratings, and platforms to build candidate case <br />
+              Generate the network of scholars for the candidate to determine the case strength in the field <br />
             </p>
 
             <br></br>
@@ -33,9 +33,8 @@ export default function Workflows() {
               Why Orison?
             </h2>
             <p className="text-lg text-indigo-200/65">
-              Your search for accurate AI ends here. Get immediate value with Orison which increases as we grow together <br />
-              AI output is only as good as the data it works with. Reduce the time to insights from hard-to-process disparate data sources <br />
-              Orison isn’t here to advocate—it’s here to assist. Automaically collect and use relevant and high-quality inputs to AI <br />
+              Orison ensures completeness by including important details from heaps of candidate research data <br />
+              Underlying LLMs used by Orison do not share your data and personal information <br />
             </p>
 
             <br></br>
@@ -45,9 +44,8 @@ export default function Workflows() {
               Why Now?
             </h2>
             <p className="text-lg text-indigo-200/65">
-              Surge in immigration demand and Request For Evidene (RFEs), lead to growing workloads and the need for efficient case preparation <br />
-              Decades of software security and recent LLM breakthroughs enable secure handling of complex legal narratives <br />
-              Modern cloud technologies enable seamless data management and remote access, ensuring you can work efficiently from anywhere <br />
+              Surge in immigration demand and Request For Evidene (RFEs), lead to growing workloads and the need for improved story <br />
+              Stable web-scraping, scholar data sources, and other APIs combined with LLMs produce compelling stories- Quality IN, Quality Out <br />
             </p>
           </div>
           {/* Spotlight items */}
@@ -93,8 +91,8 @@ export default function Workflows() {
                     </span>
                   </div>
                   <p className="text-indigo-200/65">
-                    Fetching key metrics like citations, journal ratings, publications, wages, industry, and more for the applicant and
-                    people in their network. High quality inputs to produce compelling content for cover letters.
+                    Fetching key metrics like citations, journal ratings, publications, wages, industry, and more for the candidate and
+                    people in their network. Network graph provides assessment of eligibility.
                   </p>
                 </div>
               </div>
@@ -140,8 +138,8 @@ export default function Workflows() {
                     </span>
                   </div>
                   <p className="text-indigo-200/65">
-                    Generate compelling story from your papers and supporting documents
-                    for the cover letters. Get content for questionnaires and find out how you meet evidence criteria.
+                    Generate compelling story from candidate papers and supporting documents
+                    for the cover letters. Get content for meeting the evidence criteria.
                   </p>
                 </div>
               </div>
@@ -187,8 +185,7 @@ export default function Workflows() {
                     </span>
                   </div>
                   <p className="text-indigo-200/65">
-                    LLM chatbot to Q&A with your documents instantly. Navigate all your information with ease.
-                    Generate quality content additions per your style.
+                    LLM chatbot to Q&A with candidate documents instantly. Navigate all the candidate information with ease.
                   </p>
                 </div>
               </div>
@@ -206,6 +203,6 @@ export default function Workflows() {
           />
         </div>
       </div>
-    </section>
+    </section >
   );
 }

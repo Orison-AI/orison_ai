@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="text-center py-4">
       <p style={{ fontSize: '24px', color: '#D1D5DB' }}>
         Get your free demo and start your journey with Orison AI today! <br />
-        Contact us: sales@orison.ai
+        Contact us: contact@orison.ai
       </p>
     </footer>
   );

@@ -41,12 +41,12 @@ const Auth = () => {
           <Text fontSize="22px">
             Don't have an account? Contact us on{" "}
             <Text as="span" fontSize="24px" fontWeight="bold">
-              sales@orison.ai
+              contact@orison.ai
             </Text>{" "}
             for a free demo
           </Text>
           {/* <Link variant="link" mt="22px" onClick={() => setSignUp(!isSignUp)}>
-            {isSignUp ? "Already have an account? Login." : "Don't have an account? Create one by contacting us on sales@orison.ai"}
+            {isSignUp ? "Already have an account? Login." : "Don't have an account? Create one by contacting us on contact@orison.ai"}
           </Link> */}
         </VStack>
       </Center>
