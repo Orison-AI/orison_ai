@@ -7,8 +7,11 @@ export default function Header() {
   const handleLoginClick = async () => {
     try {
       await handleButtonClick("login");
-      // window.location.href = "https://www.app.orison.ai";
-      window.open("https://www.app.orison.ai", "_blank");
+      if (window.innerWidth < 768) {
+        window.open("https://www.app.orison.ai", "_self"); // Force same tab on mobile
+      } else {
+        window.open("https://www.app.orison.ai", "_blank");
+      }
     } catch (error) {
       console.error("Failed to log button click for login:", error);
       window.open("https://www.app.orison.ai", "_blank");
