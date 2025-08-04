@@ -26,7 +26,7 @@ const FileTable = ({
       borderColor="gray.600"
       borderRadius="10px"
     >
-      <Table variant="simple" tableLayout="fixed" width="100%">
+              <Table variant="simple" width="100%">
         <Thead>
           <Tr>
             <Th width="40%">File Name</Th>

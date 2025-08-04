@@ -172,7 +172,11 @@ const DocAssist = ({ }) => {
         setIsStreaming(true);
 
         try {
-            await docassist(user.uid, selectedApplicant.id, inputMessage);
+            // Extract tag and filename values from the selected options
+            const tagValues = selectedTags.map(tag => tag.value);
+            const filenameValues = selectedFiles.map(file => file.value);
+            
+            await docassist(user.uid, selectedApplicant.id, inputMessage, tagValues, filenameValues);
 
             // Fetch the full updated chat history, which includes the latest question and answer
             await fetchMemory();

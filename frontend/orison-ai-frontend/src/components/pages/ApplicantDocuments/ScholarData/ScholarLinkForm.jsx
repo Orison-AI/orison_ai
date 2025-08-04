@@ -13,7 +13,8 @@ import {
 
 // Chakra UI
 import {
-  Box, Button, FormControl, FormHelperText,
+  Alert, AlertDescription, AlertIcon, AlertTitle,
+  Box, Button, FormControl, FormHelperText, FormLabel,
   HStack, Input, InputGroup, InputRightElement,
   Spinner, Text, useDisclosure, useToast,
 } from '@chakra-ui/react';
@@ -30,6 +31,8 @@ const ScholarLinkForm = ({ }) => {
   const [scholarLink, setScholarLink] = useState('');
   const [scholarDataStatus, setScholarDataStatus] = useState('');
   const [scholarData, setScholarData] = useState(null);
+  const [maxDepth, setMaxDepth] = useState('3');
+  const [maxEntries, setMaxEntries] = useState('20');
   const { isOpen: isScholarDataModalOpen, onOpen: onScholarDataModalOpen, onClose: onScholarDataModalClose } = useDisclosure();
   const toast = useToast();
   const { selectedApplicant } = useApplicantContext();
@@ -37,27 +40,44 @@ const ScholarLinkForm = ({ }) => {
   const fetchScholarData = useCallback(async () => {
     if (user && selectedApplicant) {
       setScholarDataStatus('loading');
-      const scholarQuery = query(
-        collection(doc(collection(db, "google_scholar"), user.uid), selectedApplicant.id),
-        orderBy("date_created", "desc"),
-        limit(1)
-      );
-      const scholarNetworkQuery = query(
-        collection(doc(collection(db, "google_scholar_network"), user.uid), selectedApplicant.id),
-        orderBy("date_created", "desc"),
-        limit(1)
-      );
-      const querySnapshot = await getDocs(scholarQuery);
-      const networkSnapshot = await getDocs(scholarNetworkQuery);
-      if (querySnapshot.empty || networkSnapshot.empty) {
-        setScholarData(null);
-        setScholarDataStatus('not_found');
-      } else {
-        const data = querySnapshot.docs[0].data();
-        const networkData = networkSnapshot.docs[0].data();
-        const mergedData = { ...data, ...networkData };
+      try {
+        const scholarQuery = query(
+          collection(doc(collection(db, "google_scholar"), user.uid), selectedApplicant.id),
+          orderBy("date_created", "desc"),
+          limit(1)
+        );
+        const scholarNetworkQuery = query(
+          collection(doc(collection(db, "google_scholar_network"), user.uid), selectedApplicant.id),
+          orderBy("date_created", "desc"),
+          limit(1)
+        );
+        
+        const [querySnapshot, networkSnapshot] = await Promise.all([
+          getDocs(scholarQuery),
+          getDocs(scholarNetworkQuery)
+        ]);
+        
+        if (querySnapshot.empty) {
+          setScholarData(null);
+          setScholarDataStatus('not_found');
+          return;
+        }
+        
+        const scholarData = querySnapshot.docs[0].data();
+        const networkData = networkSnapshot.empty ? null : networkSnapshot.docs[0].data();
+        
+        // Merge data with proper fallbacks
+        const mergedData = {
+          ...scholarData,
+          network: networkData?.network || [],
+        };
+        
         setScholarData(mergedData);
         setScholarDataStatus('found');
+      } catch (error) {
+        console.error('Error fetching scholar data:', error);
+        setScholarData(null);
+        setScholarDataStatus('not_found');
       }
     }
   }, [user, selectedApplicant]);
@@ -65,13 +85,17 @@ const ScholarLinkForm = ({ }) => {
   useEffect(() => {
     const fetchScholarLink = async () => {
       if (selectedApplicant) {
-        // Check applicants collection for scholar link
+        // Check applicants collection for scholar link and settings
         const docRef = doc(db, "applicants", selectedApplicant.id);
         // Get the scholar link from the database
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
+          const data = docSnap.data();
           // Use scholar link from the database
-          setScholarLink(docSnap.data().scholarLink || '');
+          setScholarLink(data.scholarLink || '');
+                      // Load saved settings if they exist
+            if (data.scholarMaxDepth) setMaxDepth(String(data.scholarMaxDepth));
+            if (data.scholarMaxEntries) setMaxEntries(String(data.scholarMaxEntries));
         }
       }
     };
@@ -84,30 +108,77 @@ const ScholarLinkForm = ({ }) => {
     event.preventDefault();
     if (user && selectedApplicant) {
       try {
-        toast({
-          title: 'Searching for Google Scholar Data',
-          description: 'Please wait for processing',
-          status: 'loading',
-          duration: 5000,
-          isClosable: true,
-        });
-        setScholarDataStatus('loading');
-        await Promise.all([
-          processScholarLink(user.uid, selectedApplicant.id, scholarLink),
-          processScholarNetwork(user.uid, selectedApplicant.id, scholarLink)
-        ]);
-
-        toast({
-          title: 'Google Scholar Data Found',
-          description: `Link: ${scholarLink}`,
-          status: 'success',
-          duration: 5000,
-          isClosable: true,
-        });
+        // Save scholar link and settings first
         await setDoc(doc(db, "applicants", selectedApplicant.id), {
           scholarLink,
+          scholarMaxDepth: parseInt(maxDepth) || 3,
+          scholarMaxEntries: parseInt(maxEntries) || 20,
         }, { merge: true });
-        await fetchScholarData();
+
+        // Show initial toast
+        const depth = parseInt(maxDepth) || 3;
+        const entries = parseInt(maxEntries) || 20;
+        const estimatedTime = Math.ceil(depth * entries / 10) * 2;
+        toast({
+          title: 'Starting Google Scholar Data Processing',
+          description: `Processing scholar profile first, then building network (depth: ${depth}, max: ${entries}). This may take ${estimatedTime}-${estimatedTime * 2} minutes.`,
+          status: 'info',
+          duration: 10000,
+          isClosable: true,
+        });
+
+        setScholarDataStatus('loading');
+
+        // Start operations sequentially to avoid conflicts
+        // First process the scholar link
+        processScholarLink(user.uid, selectedApplicant.id, scholarLink)
+          .then(() => {
+            console.log('Scholar link processing completed, waiting 5 seconds before starting network processing');
+            // Wait 5 seconds to ensure no API conflicts, then process the network
+            return new Promise(resolve => setTimeout(resolve, 5000))
+              .then(() => processScholarNetwork(user.uid, selectedApplicant.id, scholarLink, parseInt(maxDepth) || 3, parseInt(maxEntries) || 20));
+          })
+          .catch(error => {
+            console.error('Scholar processing error:', error);
+          });
+
+        // Start polling for results
+        const pollInterval = setInterval(async () => {
+          try {
+            await fetchScholarData();
+            
+            // Check if we have data
+            if (scholarData && Object.keys(scholarData).length > 0) {
+              clearInterval(pollInterval);
+              setScholarDataStatus('found');
+              toast({
+                title: 'Google Scholar Data Ready!',
+                description: 'Data has been processed and is now available.',
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+              });
+            }
+          } catch (error) {
+            console.error('Polling error:', error);
+          }
+        }, 30000); // Check every 30 seconds
+
+        // Stop polling after 60 minutes (120 checks)
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          if (scholarDataStatus === 'loading') {
+            setScholarDataStatus('not_found');
+            toast({
+              title: 'Processing Timeout',
+              description: 'Google Scholar processing is taking longer than expected. Please check back later.',
+              status: 'warning',
+              duration: 10000,
+              isClosable: true,
+            });
+          }
+        }, 60 * 60 * 1000); // 60 minutes
+
       } catch (error) {
         setScholarDataStatus('not_found');
         toast({
@@ -157,9 +228,62 @@ const ScholarLinkForm = ({ }) => {
             <Button onClick={onScholarDataModalOpen} ml="4px" isDisabled={scholarDataStatus !== 'found'}>
               View
             </Button>
+            <Button 
+              onClick={fetchScholarData} 
+              ml="4px" 
+              variant="outline"
+              isLoading={scholarDataStatus === 'loading'}
+            >
+              Refresh
+            </Button>
           </HStack>
         </form>
         <FormHelperText>Example: https://scholar.google.com/citations?user=XXXXX</FormHelperText>
+        
+        {/* Simple Network Configuration */}
+        <HStack mt={4} spacing={4}>
+          <FormControl>
+            <FormLabel fontSize="sm">Max Depth</FormLabel>
+            <Input
+              type="number"
+              value={maxDepth}
+              onChange={(e) => setMaxDepth(e.target.value)}
+              min={1}
+              max={5}
+              size="sm"
+              width="100px"
+            />
+            <FormHelperText fontSize="xs">Levels to explore (1-5)</FormHelperText>
+          </FormControl>
+
+          <FormControl>
+            <FormLabel fontSize="sm">Max Entries</FormLabel>
+            <Input
+              type="number"
+              value={maxEntries}
+              onChange={(e) => setMaxEntries(e.target.value)}
+              min={5}
+              max={100}
+              size="sm"
+              width="100px"
+            />
+            <FormHelperText fontSize="xs">Max scholars (5-100)</FormHelperText>
+          </FormControl>
+        </HStack>
+        {scholarDataStatus === 'loading' && (
+          <Alert status="info" mt={2}>
+            <AlertIcon />
+            <Box>
+              <AlertTitle>Processing Google Scholar Data</AlertTitle>
+              <AlertDescription>
+                Step 1: Processing scholar profile (5-15 minutes)<br/>
+                Step 2: Building co-author network (depth: {parseInt(maxDepth) || 3}, max: {parseInt(maxEntries) || 20})<br/>
+                Estimated time: {Math.ceil((parseInt(maxDepth) || 3) * (parseInt(maxEntries) || 20) / 10) * 2}-{Math.ceil((parseInt(maxDepth) || 3) * (parseInt(maxEntries) || 20) / 10) * 4} minutes<br/>
+                You can close this window and check back later using the Refresh button.
+              </AlertDescription>
+            </Box>
+          </Alert>
+        )}
       </FormControl>
       <ScholarDataModal isOpen={isScholarDataModalOpen} onClose={onScholarDataModalClose} data={scholarData} />
     </Box>

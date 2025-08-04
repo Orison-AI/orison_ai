@@ -167,7 +167,7 @@ const Evidence = () => {
                             width="60%"
                             minWidth="600px"
                         >
-                            <Text color="whiteAlpha.900">Loading evidence letter data...</Text>
+                            <Text color="whiteAlpha.900">Loading evidence letter data..</Text>
                         </Box>
                     )}
                     {evidenceDataStatus === "not_found" && (
