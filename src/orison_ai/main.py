@@ -205,7 +205,13 @@ async def router(request_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
                 tag=payload["tag"],
             )
             logger.info("File vectors deletion completed successfully")
-            return {"status": 200, "message": result}
+            if result:
+                return {"status": 200, "message": "File vectors deleted successfully"}
+            else:
+                return {
+                    "status": 404,
+                    "message": "File vectors not found or deletion failed",
+                }
 
         elif request_type == "summarize":
             logger.info("Processing summarize request")

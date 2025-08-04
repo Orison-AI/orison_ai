@@ -620,6 +620,7 @@ const FileUploader = ({ }) => {
         const vectorizedFiles = docSnap.exists() ? docSnap.data().vectorized_files || [] : [];
 
         for (const fileName of vectorizedFiles) {
+          // Delete file vectors from backend
           await deleteFileVectors(user.uid, selectedApplicant.id, selectedTag, fileName);
 
           // Update Firestore to remove the file from `vectorized_files`

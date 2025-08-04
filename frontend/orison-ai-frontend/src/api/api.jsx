@@ -134,7 +134,12 @@ export const deleteFileVectors = async (attorneyId, applicantId, tag, fileId) =>
     throw new Error('Failed to delete file vectors');
   }
 
-  return response.data;
+  // Check if the operation was successful
+  if (response.data.message && response.data.message.includes('successfully')) {
+    return response.data;
+  } else {
+    throw new Error(response.data.message || 'Failed to delete file vectors');
+  }
 };
 
 export const summarize = async (attorneyId, applicantId) => {
