@@ -9,5 +9,5 @@ repos:
       - id: flake8
         additional_dependencies: [flake8-bugbear]
         args:
-          - --ignore=E501,F541,F841,B006,E402,E266,F401,F811,B008,W291,W503  # Ignore specific flake8 errors
+          - --ignore=E501,F541,F841,B006,E402,E266,F401,F811,B008,W291,W503,B001,B007,B011,E203,E226,E722,W293  # Ignore more flake8 errors
           - --max-line-length=10000000

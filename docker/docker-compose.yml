@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # orison-frontend:
   #   image: orison-frontend
@@ -24,3 +22,4 @@ services:
       - "8888:8888"
       - "5004:5004"
       - "5005:5005"
+      - "8080:8080"
