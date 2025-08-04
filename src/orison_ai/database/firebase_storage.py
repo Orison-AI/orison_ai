@@ -22,7 +22,7 @@ from firebase_admin import storage
 
 # Internal
 
-from orison_ai.database.firebase_config import get_firebase_admin_app
+from database.firebase_config import get_firebase_admin_app
 
 logger = logging.getLogger(__name__)
 

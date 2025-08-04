@@ -6,6 +6,7 @@ functions-framework==3.9.2
 requests==2.32.4
 firebase_admin==7.1.0
 google-cloud-firestore==2.21.0
+google-cloud-secret-manager==2.24.0
 mongoengine==0.29.1
 pymongo==4.13.2
 langchain==0.3.27

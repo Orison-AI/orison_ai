@@ -40,16 +40,16 @@ from langgraph.graph import StateGraph, END
 
 # Internal
 
-from orison_ai.workflows.base import BaseWorkflow, WorkflowState
-from orison_ai.workflows.models import Prompt
-from orison_ai.database.firestore_clients import GoogleScholarClient, ScreeningClient
-from orison_ai.database.firebase_config import FireStoreDB
-from orison_ai.database.schema import ScreeningBuilder
-from orison_ai.core.environment import get_env
-from orison_ai.core.config import VectorConfig, LLMConfig, AppConfig
-from orison_ai.database.secrets import OrisonSecrets
-from orison_ai.core.client import LLMClient
-from orison_ai.storage.vector_store import VectorStore
+from workflows.base import BaseWorkflow, WorkflowState
+from workflows.models import Prompt
+from database.firestore_clients import GoogleScholarClient, ScreeningClient
+from database.firebase_config import FireStoreDB
+from database.schema import ScreeningBuilder
+from core.environment import get_env
+from core.config import VectorConfig, LLMConfig, AppConfig
+from database.secrets import OrisonSecrets
+from core.client import LLMClient
+from storage.vector_store import VectorStore
 
 logging.basicConfig(
     level=logging.INFO,
@@ -480,7 +480,7 @@ Answer the question using the provided context."""
 
             # Add each prompt as a QandA object to the summary
             for prompt in prompts:
-                from orison_ai.database.schema import QandA
+                from database.schema import QandA
 
                 qanda = QandA(
                     question=prompt.question,

@@ -37,7 +37,7 @@ class OrisonSecrets:
 
         # Internal
 
-        from orison_ai.core.environment import get_env
+        from core.environment import get_env
 
         env = get_env()
         return cls(

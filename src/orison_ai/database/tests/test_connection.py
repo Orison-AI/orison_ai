@@ -23,10 +23,10 @@ from datetime import datetime, timezone
 
 # Internal
 
-from orison_ai.database.firebase_config import FireStoreDB
-from orison_ai.database.secrets import OrisonSecrets
-from orison_ai.database.firebase_storage import FirebaseStorage
-from orison_ai.core.environment import get_env
+from database.firebase_config import FireStoreDB
+from database.secrets import OrisonSecrets
+from database.firebase_storage import FirebaseStorage
+from core.environment import get_env
 
 logger = logging.getLogger(__name__)
 

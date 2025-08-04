@@ -26,11 +26,11 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 # Internal
 
-from orison_ai.core.environment import get_env
-from orison_ai.core.config import VectorConfig, LLMConfig, AppConfig
-from orison_ai.database.secrets import OrisonSecrets
-from orison_ai.core.client import LLMClient
-from orison_ai.storage.vector_store import VectorStore
+from core.environment import get_env
+from core.config import VectorConfig, LLMConfig, AppConfig
+from database.secrets import OrisonSecrets
+from core.client import LLMClient
+from storage.vector_store import VectorStore
 
 logger = logging.getLogger(__name__)
 

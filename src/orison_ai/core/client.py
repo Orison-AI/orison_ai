@@ -27,8 +27,8 @@ from pydantic import SecretStr
 
 # Internal
 
-from orison_ai.core.config import LLMConfig, AppConfig
-from orison_ai.database.secrets import OrisonSecrets
+from core.config import LLMConfig, AppConfig
+from database.secrets import OrisonSecrets
 
 
 class LLMClient:

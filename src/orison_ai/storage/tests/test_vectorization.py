@@ -23,12 +23,12 @@ import os
 
 # Internal
 
-from orison_ai.storage.document_processor import DocumentProcessor
-from orison_ai.storage.vector_store import VectorStore
-from orison_ai.core.config import VectorConfig, LLMConfig, AppConfig
-from orison_ai.core.environment import get_env
-from orison_ai.database.secrets import OrisonSecrets
-from orison_ai.core.client import LLMClient
+from storage.document_processor import DocumentProcessor
+from storage.vector_store import VectorStore
+from core.config import VectorConfig, LLMConfig, AppConfig
+from core.environment import get_env
+from database.secrets import OrisonSecrets
+from core.client import LLMClient
 
 logger = logging.getLogger(__name__)
 

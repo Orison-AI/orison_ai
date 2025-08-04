@@ -19,13 +19,13 @@ import logging
 from qdrant_client.http import models
 
 # Internal
-from orison_ai.storage.vector_store import VectorStore
-from orison_ai.storage.document_processor import DocumentProcessor
-from orison_ai.core.config import VectorConfig
-from orison_ai.core.client import LLMClient
-from orison_ai.core.environment import get_env
-from orison_ai.database.secrets import OrisonSecrets
-from orison_ai.core.config import LLMConfig, AppConfig
+from storage.vector_store import VectorStore
+from storage.document_processor import DocumentProcessor
+from core.config import VectorConfig
+from core.client import LLMClient
+from core.environment import get_env
+from database.secrets import OrisonSecrets
+from core.config import LLMConfig, AppConfig
 
 
 class VectorizeFiles:

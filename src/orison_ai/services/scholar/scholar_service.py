@@ -17,22 +17,23 @@
 # External
 
 import logging
+import random
 from dataclasses import dataclass
 from typing import Dict, Any, List
 
 # Internal
 
-from orison_ai.core.environment import get_env
-from orison_ai.database.schema import (
+from core.environment import get_env
+from database.schema import (
     GoogleScholarDB,
     Author,
     Publication,
     ScholarSummary,
     GoogleScholarNetworkDB,
 )
-from orison_ai.services.scholar.config import ScholarServiceConfig
-from orison_ai.services.scholar.data_fetcher import ScholarDataFetcher
-from orison_ai.services.scholar.utils import extract_scholar_id, build_scholar_url
+from services.scholar.config import ScholarServiceConfig
+from services.scholar.data_fetcher import ScholarDataFetcher
+from services.scholar.utils import extract_scholar_id, build_scholar_url
 
 logger = logging.getLogger(__name__)
 
@@ -145,7 +146,7 @@ class ScholarService:
         max_depth: int = None,
         max_size: int = None,
     ) -> List[ScholarSummary]:
-        """Build scholar network"""
+        """Build scholar network using breadth-first search"""
         # Initialize components if needed
         if self.data_fetcher is None:
             self._initialize()
@@ -163,16 +164,26 @@ class ScholarService:
 
         while queue and len(network) < max_size:
             current_batch = []
+            current_depth = None
 
-            # Process in batches to utilize parallelization
-            batch_size = min(5, len(queue))  # Process up to 5 at once
-            for _ in range(batch_size):
-                if not queue:
+            # Process all scholars at the current depth level
+            while queue and len(network) < max_size:
+                scholar_id, depth = queue[0]  # Peek at first item
+
+                if current_depth is None:
+                    current_depth = depth
+                elif depth > current_depth:
+                    # We've moved to the next depth level, break to process current batch
                     break
-                scholar_id, depth = queue.pop(0)
 
-                if depth < max_depth:
-                    current_batch.append(scholar_id)
+                if depth >= max_depth:
+                    # Remove and skip scholars beyond max_depth
+                    queue.pop(0)
+                    continue
+
+                # Remove from queue and add to current batch
+                queue.pop(0)
+                current_batch.append(scholar_id)
 
             if not current_batch:
                 break
@@ -202,19 +213,36 @@ class ScholarService:
                     current_batch, name_resolver
                 )
 
+            # Process current batch and add coauthors to queue for next depth
             for scholar_id, coauthors in batch_results.items():
-                # Add to network
+                # Add to network if we haven't exceeded max_size
+                if len(network) >= max_size:
+                    break
+
                 network.append(
                     ScholarSummary(
                         scholar_id=scholar_id, name=coauthors.get("name", "Unknown")
                     )
                 )
 
-                # Add coauthors to queue for next depth level
-                if len(network) < max_size:
-                    for coauthor in coauthors.get("coauthors", [])[
+                # Only add coauthors to queue if we have room for more scholars
+                # and we haven't reached max_depth
+                if current_depth + 1 < max_depth and len(network) < max_size:
+                    # Get all coauthors and randomize them
+                    all_coauthors = coauthors.get("coauthors", [])[
                         : self.config.max_coauthors
-                    ]:
+                    ]
+                    random.shuffle(all_coauthors)
+
+                    # Calculate how many more scholars we can add
+                    remaining_slots = max_size - len(network)
+                    coauthors_added = 0
+
+                    for coauthor in all_coauthors:
+                        # Stop adding to queue if we've reached the limit
+                        if coauthors_added > remaining_slots:
+                            break
+
                         coauthor_id = coauthor.get("scholar_id")
                         coauthor_name = coauthor.get("name", "")
                         if (
@@ -224,34 +252,10 @@ class ScholarService:
                         ):
                             # Store the co-author name for future use
                             coauthor_names[coauthor_id] = coauthor_name
-
-                            # Fetch coauthor data using their name
-                            coauthor_data = await self.data_fetcher.fetch_coauthor_data(
-                                coauthor_name, coauthor_id
-                            )
-
-                            # Add coauthor to network
-                            network.append(
-                                ScholarSummary(
-                                    scholar_id=coauthor_id,
-                                    name=coauthor_data.get("name", coauthor_name),
-                                )
-                            )
-
-                            # Add their coauthors to queue for next depth
-                            for sub_coauthor in coauthor_data.get("coauthors", [])[:5]:
-                                sub_coauthor_id = sub_coauthor.get("scholar_id")
-                                sub_coauthor_name = sub_coauthor.get("name", "")
-                                if (
-                                    sub_coauthor_id
-                                    and sub_coauthor_id not in processed
-                                    and sub_coauthor_name != "Unknown"
-                                ):
-                                    queue.append((sub_coauthor_id, depth + 1))
-                                    coauthor_names[sub_coauthor_id] = sub_coauthor_name
-                                    processed.add(sub_coauthor_id)
-
+                            # Add to queue for next depth level
+                            queue.append((coauthor_id, current_depth + 1))
                             processed.add(coauthor_id)
+                            coauthors_added += 1
 
         logger.info(f"Built network of {len(network)} scholars")
         return network[:max_size]  # Ensure we don't exceed max_size

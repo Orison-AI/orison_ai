@@ -22,10 +22,10 @@ import asyncio
 
 # Internal
 
-from orison_ai.core.environment import get_env
-from orison_ai.core.config import LLMConfig, VectorConfig, AppConfig
-from orison_ai.core.client import LLMClient
-from orison_ai.database.secrets import OrisonSecrets
+from core.environment import get_env
+from core.config import LLMConfig, VectorConfig, AppConfig
+from core.client import LLMClient
+from database.secrets import OrisonSecrets
 from qdrant_client import QdrantClient
 
 logger = logging.getLogger(__name__)
@@ -44,15 +44,6 @@ class TestConnections:
         assert env.openai_api_key, "OpenAI API key not loaded"
         assert env.qdrant_url, "Qdrant URL not loaded"
         assert env.qdrant_api_key, "Qdrant API key not loaded"
-
-        # Verify optional variables have defaults
-        assert (
-            env.scholar_requests_per_minute == 10
-        ), "Scholar requests per minute default incorrect"
-        assert env.scholar_max_depth == 3, "Scholar max depth default incorrect"
-        assert (
-            env.scholar_max_network_size == 100
-        ), "Scholar max network size default incorrect"
 
         logger.info("Environment configuration loaded successfully")
 

@@ -18,7 +18,11 @@
 
 import os
 from dataclasses import dataclass
-from typing import Dict, Any
+from typing import Dict
+
+# Internal
+
+from core.environment import get_env
 
 
 @dataclass
@@ -36,8 +40,8 @@ class ScholarServiceConfig:
     max_coauthors: int = 10
 
     # Network Configuration
-    default_max_depth: int = 1
-    default_max_network_size: int = 10
+    default_max_depth: int = 3
+    default_max_network_size: int = 20
     batch_size: int = 3
     rate_limit_delay: float = 0.5
 
@@ -52,14 +56,12 @@ class ScholarServiceConfig:
     @classmethod
     def from_env(cls) -> "ScholarServiceConfig":
         """Create config from environment variables"""
-        api_key = os.getenv("SERPAPI_KEY")
-        if not api_key:
-            raise ValueError("SERPAPI_KEY environment variable is required")
+        env = get_env()
 
         return cls(
-            api_key=api_key,
-            default_max_depth=int(os.getenv("SCHOLAR_MAX_DEPTH", "1")),
-            default_max_network_size=int(os.getenv("SCHOLAR_MAX_NETWORK_SIZE", "50")),
+            api_key=env.serpapi_key,
+            default_max_depth=env.scholar_max_depth,
+            default_max_network_size=env.scholar_max_network_size,
             timeout=int(os.getenv("SCHOLAR_TIMEOUT", "10")),
             default_num_results=int(os.getenv("SCHOLAR_NUM_RESULTS", "20")),
         )

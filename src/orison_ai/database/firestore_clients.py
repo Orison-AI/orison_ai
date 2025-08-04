@@ -17,7 +17,7 @@
 import logging
 from datetime import datetime, timezone
 from langchain.memory import ConversationBufferWindowMemory
-from orison_ai.database.schema import (
+from database.schema import (
     GoogleScholarDB,
     GoogleScholarNetworkDB,
     StoryBuilder,
@@ -26,7 +26,7 @@ from orison_ai.database.schema import (
     ChatMemoryDB,
     EvidenceBuilder,
 )
-from orison_ai.database.firebase_config import FirestoreClient
+from database.firebase_config import FirestoreClient
 
 
 class StoryClient(FirestoreClient):

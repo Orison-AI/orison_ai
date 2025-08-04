@@ -19,10 +19,10 @@ import logging
 import time
 import asyncio
 
-from orison_ai.core.client import LLMClient
-from orison_ai.core.config import LLMConfig, AppConfig
-from orison_ai.core.environment import get_env
-from orison_ai.database.secrets import OrisonSecrets
+from core.client import LLMClient
+from core.config import LLMConfig, AppConfig
+from core.environment import get_env
+from database.secrets import OrisonSecrets
 
 logger = logging.getLogger(__name__)
 

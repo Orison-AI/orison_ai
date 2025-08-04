@@ -30,8 +30,8 @@ from langchain.retrievers.multi_query import MultiQueryRetriever
 
 # Internal
 
-from orison_ai.core.client import LLMClient
-from orison_ai.core.config import VectorConfig
+from core.client import LLMClient
+from core.config import VectorConfig
 
 
 @dataclass

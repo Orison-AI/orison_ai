@@ -21,8 +21,8 @@ from qdrant_client import QdrantClient
 
 # Internal
 
-from orison_ai.core.config import VectorConfig
-from orison_ai.core.environment import get_env
+from core.config import VectorConfig
+from core.environment import get_env
 
 logger = logging.getLogger(__name__)
 

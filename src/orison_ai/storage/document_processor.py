@@ -36,13 +36,12 @@ from langchain_community.document_loaders.word_document import (
 from langchain_community.document_loaders.xml import UnstructuredXMLLoader
 from langchain_community.document_loaders.excel import UnstructuredExcelLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_experimental.text_splitter import SemanticChunker
 
 # Internal
 
-from orison_ai.core.config import VectorConfig
-from orison_ai.core.client import LLMClient
-from orison_ai.database.firebase_storage import FirebaseStorage
+from core.config import VectorConfig
+from core.client import LLMClient
+from database.firebase_storage import FirebaseStorage
 
 
 class DocumentProcessor:

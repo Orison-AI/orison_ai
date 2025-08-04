@@ -26,7 +26,7 @@ from datetime import datetime, timezone
 
 # Internal
 
-from orison_ai.database.firebase_storage import FirebaseStorage
+from database.firebase_storage import FirebaseStorage
 
 logger = logging.getLogger(__name__)
 

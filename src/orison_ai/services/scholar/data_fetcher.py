@@ -23,8 +23,8 @@ from typing import Dict, Any, List
 
 # Internal
 
-from orison_ai.services.scholar.config import ScholarServiceConfig
-from orison_ai.services.scholar.utils import (
+from services.scholar.config import ScholarServiceConfig
+from services.scholar.utils import (
     parse_serpapi_response,
     find_author_by_id,
     extract_publication_data,

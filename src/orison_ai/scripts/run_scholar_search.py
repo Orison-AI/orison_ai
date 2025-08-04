@@ -26,11 +26,11 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 # Internal
 
-from orison_ai.core.environment import get_env
-from orison_ai.services.scholar.scholar_service import ScholarService
-from orison_ai.services.scholar.config import ScholarServiceConfig
-from orison_ai.database.firebase_config import FirestoreClient
-from orison_ai.database.firestore_clients import (
+from core.environment import get_env
+from services.scholar.scholar_service import ScholarService
+from services.scholar.config import ScholarServiceConfig
+from database.firebase_config import FirestoreClient
+from database.firestore_clients import (
     GoogleScholarClient,
     GoogleScholarNetworkClient,
 )
@@ -85,8 +85,8 @@ async def search_and_save_scholar_data():
         network_db = await scholar_service.build_network_database(
             root_scholar_id=TEST_SCHOLAR_ID,
             author_name=author_name,
-            max_depth=5,
-            max_size=10,
+            max_depth=3,
+            max_size=20,
         )
 
         if not network_db:

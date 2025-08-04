@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 
 # Internal
 
-from orison_ai.database.schema import (
+from database.schema import (
     GoogleScholarDB,
     GoogleScholarNetworkDB,
     StoryBuilder,
@@ -36,7 +36,7 @@ from orison_ai.database.schema import (
     QandA,
     MemoryEntry,
 )
-from orison_ai.database.firestore_clients import (
+from database.firestore_clients import (
     GoogleScholarClient,
     GoogleScholarNetworkClient,
     StoryClient,
