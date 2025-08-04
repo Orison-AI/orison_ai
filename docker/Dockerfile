@@ -15,7 +15,7 @@ RUN echo 'Etc/UTC' > /etc/timezone && \
 # Copy the rest of the application code into the container
 COPY . .
 # Copy requirements.txt into the container
-COPY ./src/orison_ai/gateway_function/requirements.txt .
+COPY ./src/orison_ai/requirements.txt .
 COPY ./docker/packages-apt.txt .
 COPY ./docker/python_addons.txt .
 

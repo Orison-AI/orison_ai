@@ -121,7 +121,7 @@ const ScholarLinkForm = ({ }) => {
         const estimatedTime = Math.ceil(depth * entries / 10) * 2;
         toast({
           title: 'Starting Google Scholar Data Processing',
-          description: `Processing scholar profile first, then building network (depth: ${depth}, max: ${entries}). This may take ${estimatedTime}-${estimatedTime * 2} minutes.`,
+          description: `Processing scholar profile and network (depth: ${depth}, max: ${entries}) with 0.25-second gap. This may take ${estimatedTime}-${estimatedTime * 2} minutes.`,
           status: 'info',
           duration: 10000,
           isClosable: true,
@@ -129,35 +129,65 @@ const ScholarLinkForm = ({ }) => {
 
         setScholarDataStatus('loading');
 
-        // Start operations sequentially to avoid conflicts
-        // First process the scholar link
+        // Start both operations with a small delay between them
+        // First process the scholar link immediately
         processScholarLink(user.uid, selectedApplicant.id, scholarLink)
           .then(() => {
-            console.log('Scholar link processing completed, waiting 5 seconds before starting network processing');
-            // Wait 5 seconds to ensure no API conflicts, then process the network
-            return new Promise(resolve => setTimeout(resolve, 5000))
-              .then(() => processScholarNetwork(user.uid, selectedApplicant.id, scholarLink, parseInt(maxDepth) || 3, parseInt(maxEntries) || 20));
+            console.log('Scholar link processing started');
           })
           .catch(error => {
-            console.error('Scholar processing error:', error);
+            console.error('Scholar link processing error:', error);
           });
 
+        // Then process the network after a 0.25-second delay
+        setTimeout(() => {
+          console.log('Starting network processing...');
+          processScholarNetwork(user.uid, selectedApplicant.id, scholarLink, parseInt(maxDepth) || 3, parseInt(maxEntries) || 20)
+            .then(() => {
+              console.log('Network processing started');
+            })
+            .catch(error => {
+              console.error('Network processing error:', error);
+            });
+        }, 250);
+
+        // Track completion status
+        let scholarCompleted = false;
+        let networkCompleted = false;
+        
         // Start polling for results
         const pollInterval = setInterval(async () => {
           try {
             await fetchScholarData();
             
-            // Check if we have data
-            if (scholarData && Object.keys(scholarData).length > 0) {
-              clearInterval(pollInterval);
-              setScholarDataStatus('found');
+            // Check if we have scholar data
+            if (scholarData && Object.keys(scholarData).length > 0 && !scholarCompleted) {
+              scholarCompleted = true;
               toast({
-                title: 'Google Scholar Data Ready!',
-                description: 'Data has been processed and is now available.',
+                title: 'Scholar Profile Complete!',
+                description: 'Scholar profile data has been processed and is available.',
                 status: 'success',
                 duration: 5000,
                 isClosable: true,
               });
+            }
+            
+            // Check if we have network data
+            if (scholarData && scholarData.network && scholarData.network.length > 0 && !networkCompleted) {
+              networkCompleted = true;
+              toast({
+                title: 'Network Analysis Complete!',
+                description: 'Co-author network data has been processed and is available.',
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+              });
+            }
+            
+            // If both are complete, stop polling
+            if (scholarCompleted && networkCompleted) {
+              clearInterval(pollInterval);
+              setScholarDataStatus('found');
             }
           } catch (error) {
             console.error('Polling error:', error);
@@ -276,10 +306,9 @@ const ScholarLinkForm = ({ }) => {
             <Box>
               <AlertTitle>Processing Google Scholar Data</AlertTitle>
               <AlertDescription>
-                Step 1: Processing scholar profile (5-15 minutes)<br/>
-                Step 2: Building co-author network (depth: {parseInt(maxDepth) || 3}, max: {parseInt(maxEntries) || 20})<br/>
+                Processing scholar profile and network (depth: {parseInt(maxDepth) || 3}, max: {parseInt(maxEntries) || 20}) with 0.25-second gap<br/>
                 Estimated time: {Math.ceil((parseInt(maxDepth) || 3) * (parseInt(maxEntries) || 20) / 10) * 2}-{Math.ceil((parseInt(maxDepth) || 3) * (parseInt(maxEntries) || 20) / 10) * 4} minutes<br/>
-                You can close this window and check back later using the Refresh button.
+                Both operations start independently with 0.25-second gap. You can close this window and check back later using the Refresh button.
               </AlertDescription>
             </Box>
           </Alert>
