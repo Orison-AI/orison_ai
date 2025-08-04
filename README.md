@@ -13,6 +13,8 @@ Orison AI is a sophisticated AI-powered document assistance system that provides
 - **LLM Integration**: OpenAI GPT with streaming responses for real-time interaction
 - **Document Processing**: Advanced PDF parsing and text extraction capabilities
 - **Scholar Network**: Google Scholar integration for academic research and networking
+- **Secret Management**: Google Secret Manager integration for secure configuration
+- **Firebase Integration**: Comprehensive Firestore and Firebase Storage support
 
 ### Repository Structure
 ```
@@ -24,7 +26,7 @@ src/orison_ai/
 │   └── models.py                # Data models and schemas
 ├── 📦 core/                     # Core functionality
 │   ├── client.py               # LLM client with streaming
-│   ├── environment.py          # Centralized configuration
+│   ├── environment.py          # Centralized configuration with Secret Manager
 │   ├── config.py               # Application configuration
 │   └── tests/                  # Unit tests
 ├── 📦 storage/                  # Vector operations and document processing
@@ -32,9 +34,16 @@ src/orison_ai/
 │   ├── document_processor.py   # PDF processing and text extraction
 │   ├── vectorize_files.py      # File vectorization service
 │   └── utils.py                # Storage utilities
+├── 📦 database/                 # Database operations and Firebase integration
+│   ├── firebase_config.py      # Firebase configuration and Secret Manager
+│   ├── firestore_clients.py    # Firestore client operations
+│   ├── firebase_storage.py     # Firebase Storage operations
+│   ├── schema.py               # Database schemas and models
+│   └── secrets.py              # Secret management utilities
 ├── 📦 services/                 # Business logic services
-├── 📦 database/                 # Database operations
-└── 📦 scripts/                  # Utility scripts
+│   └── scholar/                # Scholar network services
+├── 📦 scripts/                  # Utility scripts
+└── 📦 templates/                # Template files
 ```
 
 ## 🎯 Key Features
@@ -64,6 +73,12 @@ src/orison_ai/
 - **Scalable Architecture**: Designed for production-scale workloads
 - **Real-time Processing**: Streaming responses for better user experience
 
+### 5. Secure Configuration Management
+- **Google Secret Manager**: Secure storage of sensitive configuration
+- **Environment Fallback**: Graceful fallback to environment variables
+- **Centralized Configuration**: Single source of truth for all settings
+- **Liberal Validation**: Flexible configuration loading with warnings
+
 ## 🚀 Performance & Optimization
 
 ### Document Processing
@@ -77,6 +92,12 @@ src/orison_ai/
 - **After**: Build 1000-person networks at depth=5 efficiently
 - **Rate Limiting**: Smart 10 req/min with parallel batch processing
 - **Caching**: Intelligent in-memory cache reduces API calls by 80%+
+
+### Configuration Management
+- **Secret Manager Integration**: Secure, centralized secret management
+- **Environment Hierarchy**: Secret Manager → Environment Variables → Defaults
+- **Graceful Degradation**: System continues to work with missing configuration
+- **Comprehensive Logging**: Detailed logging for configuration loading
 
 ## Navigating the repo
 - Structure of the repository is based on integratability with google cloud platform
@@ -102,8 +123,10 @@ pre-commit run --all-files
 ```
 
 ### Environment Configuration
+
+#### Required Environment Variables
 ```bash
-# Required environment variables
+# Core services
 export OPENAI_API_KEY="sk-..."
 export QDRANT_URL="https://..."
 export QDRANT_API_KEY="..."
@@ -112,8 +135,28 @@ export FIREBASE_CREDENTIALS_JSON='{"type": "service_account", ...}'
 # Optional Scholar configuration
 export SCHOLAR_REQUESTS_PER_MINUTE=10    # Default: 10
 export SCHOLAR_MAX_DEPTH=3               # Default: 3
-export SCHOLAR_MAX_NETWORK_SIZE=100      # Default: 100
+export SCHOLAR_MAX_NETWORK_SIZE=20       # Default: 20
+
+# Optional LangSmith configuration
+export LANGCHAIN_API_KEY="..."           # For LangSmith tracing
+export LANGSMITH_ENDPOINT="..."          # Custom LangSmith endpoint
+
+# Optional SerpAPI configuration
+export SERPAPI_KEY="..."                 # For web search capabilities
 ```
+
+#### Google Secret Manager Integration
+The system automatically integrates with Google Secret Manager for secure configuration management:
+
+1. **Automatic Fallback**: If environment variables are not set, the system will attempt to fetch secrets from Google Secret Manager
+2. **Project Configuration**: Uses the project prefix `projects/685108028813/secrets/`
+3. **Graceful Degradation**: System continues to work with missing configuration, logging warnings
+4. **Liberal Validation**: Flexible configuration loading that doesn't fail on missing optional values
+
+#### Configuration Loading Hierarchy
+1. **Environment Variables**: First priority for configuration values
+2. **Google Secret Manager**: Fallback for missing environment variables
+3. **Default Values**: Final fallback for optional configuration
 
 ## 🧪 Testing & Development
 
@@ -172,6 +215,18 @@ result = await workflow.execute_with_prompt(
 print(result["response"])
 ```
 
+### Testing Configuration Loading
+```python
+from src.orison_ai.core.environment import get_env
+
+# Get the global environment configuration
+env = get_env()
+
+# Access configuration values
+print(f"OpenAI API Key configured: {env.openai_api_key is not None}")
+print(f"Scholar rate limit: {env.scholar_requests_per_minute} req/min")
+```
+
 ## ☁️ Google Cloud Configuration
 - Make sure gcloud is installed and configured on HOST Machine
 Install the following packages:
@@ -204,12 +259,23 @@ gcloud auth activate-service-account --key-file=/path_to_key_downloaded_from_ser
 gcloud auth list
 ```
 
+### Google Secret Manager Setup
+For production deployments, configure secrets in Google Secret Manager:
+
+```bash
+# Create secrets in Secret Manager
+echo "your-openai-api-key" | gcloud secrets create OPENAI_API_KEY --data-file=-
+echo "your-qdrant-url" | gcloud secrets create QDRANT_URL --data-file=-
+echo "your-qdrant-api-key" | gcloud secrets create QDRANT_API_KEY --data-file=-
+echo '{"type": "service_account", ...}' | gcloud secrets create FIREBASE_CREDENTIALS --data-file=-
+```
+
 ## 🚀 Deployment
 
 ### Gcloud Deployment
 - Be in the directory containing gateway_function directory or change source accordingly
 ```
-gcloud functions deploy gateway_function --runtime python311 --memory 1024 --trigger-http --allow-unauthenticated --entry-point gateway_function --source=gateway_function --no-gen2 --max-instances 100 --timeout 540
+gcloud functions deploy gateway_function --runtime python311 --memory 1024 --trigger-http --allow-unauthenticated --entry-point=gateway_function --source=orison_ai --no-gen2 --max-instances 100 --timeout 540
 ```
 
 ### Firebase CLI for frontend deployment
@@ -259,6 +325,22 @@ firebase deploy --project orison-ai-visa-apply --only hosting:orison-ai-landing 
 }
 ```
 
+## 🔧 Dependencies
+
+### Core Dependencies
+- **FastAPI**: Modern web framework for API development
+- **OpenAI**: Latest OpenAI API client for LLM integration
+- **LangChain**: Framework for LLM application development
+- **LangGraph**: Workflow orchestration and state management
+- **Qdrant**: Vector database for semantic search
+- **Firebase Admin**: Firebase integration for authentication and storage
+- **Google Cloud**: Secret Manager and Firestore integration
+
+### Development Dependencies
+- **Pytest**: Testing framework with async support
+- **Functions Framework**: Google Cloud Functions development
+- **Uvicorn**: ASGI server for FastAPI applications
+
 ## 🎯 Production Status
 
 The Orison AI system is **production-ready** with:
@@ -270,5 +352,8 @@ The Orison AI system is **production-ready** with:
 - ✅ **Source Attribution**: Proper citation of document sources
 - ✅ **Google Cloud Integration**: Fully integrated with GCP services
 - ✅ **Frontend Integration**: React-based UI with Firebase hosting
+- ✅ **Secure Configuration**: Google Secret Manager integration
+- ✅ **Graceful Degradation**: System continues to work with missing configuration
+- ✅ **Comprehensive Logging**: Detailed logging for debugging and monitoring
 
 **Ready for deployment! 🚀**
