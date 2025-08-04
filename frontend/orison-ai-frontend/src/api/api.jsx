@@ -68,11 +68,12 @@ const gatewayCall = async (orRequestType, orRequestPayload, timeout = 5 * 60 * 1
 };
 
 export const processScholarLink = async (attorneyId, applicantId, scholarLink) => {
+  // Use longer timeout for Google Scholar operations (15 minutes)
   const response = await gatewayCall('process-scholar-link', {
     attorneyId,
     applicantId,
     scholarLink,
-  });
+  }, 15 * 60 * 1000); // 15 minutes
 
   console.log(`INFO: processScholarLink: response=${JSON.stringify(response)}`);
 
@@ -84,13 +85,14 @@ export const processScholarLink = async (attorneyId, applicantId, scholarLink) =
 };
 
 export const processScholarNetwork = async (attorneyId, applicantId, scholarLink, maxDepth = 3, maxSize = 100) => {
+  // Use much longer timeout for network building (30 minutes)
   const response = await gatewayCall('process-scholar-network', {
     attorneyId,
     applicantId,
     scholarLink,
     max_depth: maxDepth,
     max_size: maxSize,
-  });
+  }, 30 * 60 * 1000); // 30 minutes
 
   console.log(`INFO: processScholarNetwork: response=${JSON.stringify(response)}`);
 

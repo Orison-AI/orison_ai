@@ -32,7 +32,7 @@ class ScholarServiceConfig:
     # API Configuration
     api_key: str
     base_url: str = "https://serpapi.com/search"
-    timeout: int = 10
+    timeout: int = 30  # Increased from 10 to 30 seconds
 
     # Search Configuration
     default_num_results: int = 100
@@ -60,7 +60,7 @@ class ScholarServiceConfig:
             api_key=env.serpapi_key,
             default_max_depth=env.scholar_max_depth,
             default_max_network_size=env.scholar_max_network_size,
-            timeout=int(os.getenv("SCHOLAR_TIMEOUT", "10")),
+            timeout=int(os.getenv("SCHOLAR_TIMEOUT", "30")),
             default_num_results=int(os.getenv("SCHOLAR_NUM_RESULTS", "100")),
         )
 

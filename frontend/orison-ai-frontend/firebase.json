@@ -12,5 +12,9 @@
         "destination": "/index.html"
       }
     ]
+  },
+  "functions": {
+    "timeoutSeconds": 540,
+    "memory": "2GB"
   }
 }
