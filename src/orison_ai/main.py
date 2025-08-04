@@ -213,7 +213,11 @@ async def router(request_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
                 attorney_id=payload["attorneyId"], applicant_id=payload["applicantId"]
             )
             logger.info("Summarization completed successfully")
-            return {"status": 200, "message": result}
+            # Return simple confirmation - UI will retrieve data from Firestore
+            return {
+                "status": 200,
+                "message": "Summarization completed successfully. Data available in Firestore.",
+            }
 
         elif request_type == "docassist":
             logger.info("Processing docassist request")
@@ -225,7 +229,11 @@ async def router(request_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
                 filename=payload["filename"],
             )
             logger.info("Docassist processing completed successfully")
-            return {"status": 200, "message": result}
+            # Return simple confirmation - UI will retrieve data from Firestore
+            return {
+                "status": 200,
+                "message": "Docassist processing completed successfully. Data available in Firestore.",
+            }
 
         else:
             logger.error(f"Unknown request type: {request_type}")

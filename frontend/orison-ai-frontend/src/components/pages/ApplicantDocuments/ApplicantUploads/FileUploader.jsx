@@ -105,6 +105,12 @@ const FileUploader = ({ }) => {
           const templateData = templateDocSnap.data();
           templateTags = templateData.tags || []; // Get tags from template
           setTags(templateTags);
+          
+          // Set selectedTag to the first available tag from template, or "default" if none available
+          if (templateTags.length > 0 && selectedTag === "default") {
+            console.log(`Auto-selecting tag from template: ${templateTags[0]} (available tags: ${templateTags.join(', ')})`);
+            setSelectedTag(templateTags[0]);
+          }
         } else {
           console.warn("Template document does not exist.");
         }
@@ -144,31 +150,55 @@ const FileUploader = ({ }) => {
       console.log('Selected Tag:', selectedTag);
 
       const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/`;
+      console.log('Fetching documents from path:', filePath);
       const storage = getStorage();
       const listRef = ref(storage, filePath);
 
       try {
         const res = await listAll(listRef);
+        console.log('Found items in storage:', res.items.length);
+        res.items.forEach(item => console.log('File:', item.name));
+        
         const vectorizedSnap = await getDoc(doc(db, "applicants", selectedApplicant.id));
         const currentVectorized = vectorizedSnap.exists() ? vectorizedSnap.data().vectorized_files || [] : [];
+        console.log('Vectorized files from Firestore:', currentVectorized);
 
         const docs = res.items.map(itemRef => ({
           fileName: itemRef.name,
           vectorized: currentVectorized.includes(itemRef.name),
         }));
+        console.log('Setting documents from storage:', docs);
         setDocuments(docs);
-      } catch (error) {
-        console.error("Error fetching documents:", error);
-      }
+              } catch (error) {
+          console.error("Error fetching documents:", error);
+        }
+        
+        // Always check subfolders to see what's actually there
+        try {
+          console.log('Checking all subfolders to see what files exist...');
+          const basePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/`;
+          const baseRef = ref(storage, basePath);
+          const baseRes = await listAll(baseRef);
+          console.log('Base path items:', baseRes.items);
+          console.log('Base path prefixes:', baseRes.prefixes);
+          
+          // Check if there are any files in subfolders
+          for (const prefix of baseRes.prefixes) {
+            const subRes = await listAll(prefix);
+            console.log(`Files in ${prefix.fullPath}:`, subRes.items.map(item => item.name));
+          }
+        } catch (subError) {
+          console.error("Error checking subfolders:", subError);
+        }
     } else {
       console.error("User, selectedApplicant, or selectedTag is undefined.");
     }
   }, [user, selectedApplicant, selectedTag]);
 
+  // First useEffect: Load tags and set selectedTag
   useEffect(() => {
     const fetchData = async () => {
       await fetchApplicantData();
-      await fetchDocuments();
     };
 
     // Ensure selectedTag remains stable
@@ -178,7 +208,16 @@ const FileUploader = ({ }) => {
     }
 
     fetchData();
-  }, [selectedTag, user, selectedApplicant, fetchApplicantData, fetchDocuments]);
+  }, [user, selectedApplicant, fetchApplicantData]);
+
+  // Second useEffect: Fetch documents after selectedTag is properly set
+  useEffect(() => {
+    console.log('selectedTag changed to:', selectedTag);
+    if (selectedTag && selectedTag !== "default") {
+      console.log('Fetching documents for tag:', selectedTag);
+      fetchDocuments();
+    }
+  }, [selectedTag, fetchDocuments]);
 
 
   useEffect(() => {
@@ -189,9 +228,11 @@ const FileUploader = ({ }) => {
 
   const onDrop = async (acceptedFiles) => {
     const storage = getStorage();
+    console.log('Uploading files with selectedTag:', selectedTag);
 
     for (const file of acceptedFiles) {
       const filePath = `documents/attorneys/${user.uid}/applicants/${selectedApplicant.id}/${selectedTag}/${file.name}`;
+      console.log('Uploading file to path:', filePath);
       const storageRef = ref(storage, filePath);
 
       let contentType = file.type;
@@ -361,7 +402,18 @@ const FileUploader = ({ }) => {
       setDeletingFileName(fileToDelete);
       onDeleteInProgressModalOpen();
 
+      // Delete file from storage
       await deleteObject(storageRef);
+      console.log('File deleted from storage successfully');
+
+      // Try to delete vectors, but don't fail the whole operation if this fails
+      try {
+        await deleteFileVectors(user.uid, selectedApplicant.id, selectedTag, fileToDelete);
+        console.log('File vectors deleted successfully');
+      } catch (vectorError) {
+        console.warn('Failed to delete file vectors, but file was deleted:', vectorError.message);
+        // Don't show error toast for vector deletion failure
+      }
 
       toast({
         title: 'File Deleted',
@@ -370,10 +422,15 @@ const FileUploader = ({ }) => {
         duration: 5000,
         isClosable: true,
       });
-      fetchDocuments();
+      
+      // Try to refresh documents, but don't fail if this errors
+      try {
+        await fetchDocuments();
+      } catch (fetchError) {
+        console.warn('Failed to refresh documents after delete:', fetchError.message);
+      }
+      
       onDeleteModalClose();
-
-      await deleteFileVectors(user.uid, selectedApplicant.id, selectedTag, fileToDelete);
       setFileToDelete(null);
       onDeleteInProgressModalClose();
     } catch (error) {
@@ -392,6 +449,11 @@ const FileUploader = ({ }) => {
   const vectorizeFile = useCallback(async (fileName) => {
     if (user && selectedApplicant) {
       try {
+        console.log('Vectorizing file:', fileName);
+        console.log('User ID:', user.uid);
+        console.log('Applicant ID:', selectedApplicant.id);
+        console.log('Selected Tag:', selectedTag);
+        
         setIsProcessing(true); // Block the UI during vectorization
 
         const docRef = doc(db, "applicants", selectedApplicant.id);
@@ -427,6 +489,14 @@ const FileUploader = ({ }) => {
         });
       } catch (error) {
         console.error("Error vectorizing file:", error);
+        console.error("Error details:", {
+          message: error.message,
+          stack: error.stack,
+          fileName,
+          selectedTag,
+          user: user?.uid,
+          applicant: selectedApplicant?.id
+        });
         toast({
           title: "Error",
           description: `An error occurred while vectorizing ${fileName}.`,
@@ -764,7 +834,7 @@ const FileUploader = ({ }) => {
           <AlertDescription>
             - Use tags to help AI find relevant information. Match documents to the right tags. Not all tags may apply. <br />
             {/* - Add/Del tags, but update the questionnaire with new tags. AI will not use your documents otherwise. <br /> */}
-            - Vectorize files after upload for AI search. Avoid uploading large files (>1000 pages or 50 MB). <br />
+            - Vectorize files after upload for AI search. Avoid uploading large files (&gt;1000 pages or 50 MB). <br />
             - Vectorization may take an estimated 1 second per 10 pages. You may switch windows but donot close this window. <br />
             - Supported extensions: .txt, .json, .md, .html, .csv, .pdf, .docx, .doc, .docs, .pptx, .xls, .xlsx, .xml <br />
           </AlertDescription>
