@@ -12,10 +12,14 @@ const firebaseGatewayCall = async (orRequestType, orRequestPayload, timeout = 5 
   const gatewayFunction = httpsCallable(functions, 'gateway_function');
   
   try {
+    console.log(`INFO: firebaseGatewayCall: calling with ${orRequestType}`);
     const result = await gatewayFunction({
       or_request_type: orRequestType,
       or_request_payload: orRequestPayload,
     });
+    
+    console.log(`INFO: firebaseGatewayCall: raw result=${JSON.stringify(result)}`);
+    console.log(`INFO: firebaseGatewayCall: result.data=${JSON.stringify(result.data)}`);
     
     return result.data;
   } catch (error) {
@@ -113,32 +117,44 @@ export const vectorizeFiles = async (attorneyId, applicantId, tag, fileId) => {
 
   console.log(`INFO: vectorizeFiles: response=${JSON.stringify(response)}`);
 
-  if (!response.data) {
-    throw new Error('Failed to start file vectorization');
+  // Handle both Firebase Functions (wrapped) and local (direct) responses
+  const responseData = response.data || response;
+  
+  if (!responseData) {
+    throw new Error('Failed to start file vectorization - no response data');
   }
 
-  return response.data;
+  return responseData;
 };
 
 export const deleteFileVectors = async (attorneyId, applicantId, tag, fileId) => {
+  console.log(`INFO: deleteFileVectors called with: attorneyId=${attorneyId}, applicantId=${applicantId}, tag=${tag}, fileId=${fileId}`);
+  
   const response = await gatewayCall('delete-file-vectors', {
     attorneyId,
     applicantId,
-    tag,
+    tag: [tag], // Convert to array as expected by backend
     fileId,
   });
 
-  console.log(`INFO: deleteFileVectors: response=${JSON.stringify(response)}`);
+  console.log(`INFO: deleteFileVectors: full response=${JSON.stringify(response)}`);
+  console.log(`INFO: deleteFileVectors: response.data=${JSON.stringify(response.data)}`);
 
-  if (!response.data) {
-    throw new Error('Failed to delete file vectors');
+  // Handle both Firebase Functions (wrapped) and local (direct) responses
+  const responseData = response.data || response;
+  
+  if (!responseData) {
+    console.error('ERROR: deleteFileVectors: no response data found');
+    throw new Error('Failed to delete file vectors - no response data');
   }
 
   // Check if the operation was successful
-  if (response.data.message && response.data.message.includes('successfully')) {
-    return response.data;
+  if (responseData.message && responseData.message.includes('successfully')) {
+    console.log('INFO: deleteFileVectors: operation successful');
+    return responseData;
   } else {
-    throw new Error(response.data.message || 'Failed to delete file vectors');
+    console.error(`ERROR: deleteFileVectors: operation failed - message: ${responseData.message}`);
+    throw new Error(responseData.message || 'Failed to delete file vectors');
   }
 };
 

@@ -194,7 +194,13 @@ async def router(request_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
                 tag=payload["tag"],
             )
             logger.info("File vectorization completed successfully")
-            return {"status": 200, "message": result}
+            if result:
+                return {
+                    "status": 200,
+                    "message": "File vectorization completed successfully",
+                }
+            else:
+                return {"status": 500, "message": "File vectorization failed"}
 
         elif request_type == "delete-file-vectors":
             logger.info("Processing delete file vectors request")

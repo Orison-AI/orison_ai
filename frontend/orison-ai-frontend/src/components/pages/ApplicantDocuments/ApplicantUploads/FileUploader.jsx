@@ -617,15 +617,18 @@ const FileUploader = ({ }) => {
 
         const docRef = doc(db, 'applicants', selectedApplicant.id);
         const docSnap = await getDoc(docRef);
-        const vectorizedFiles = docSnap.exists() ? docSnap.data().vectorized_files || [] : [];
+        let vectorizedFiles = docSnap.exists() ? docSnap.data().vectorized_files || [] : [];
 
-        for (const fileName of vectorizedFiles) {
+        for (const fileName of vectorizedFiles.slice()) { // Use slice() to create a copy for iteration
           // Delete file vectors from backend
           await deleteFileVectors(user.uid, selectedApplicant.id, selectedTag, fileName);
 
-          // Update Firestore to remove the file from `vectorized_files`
+          // Remove the file from the local array
+          vectorizedFiles = vectorizedFiles.filter((file) => file !== fileName);
+
+          // Update Firestore with the updated array
           await updateDoc(docRef, {
-            vectorized_files: vectorizedFiles.filter((file) => file !== fileName),
+            vectorized_files: vectorizedFiles,
           });
 
           // Update the local state for each file as it is processed
