@@ -83,6 +83,20 @@ class Author(EmbeddedDocument):
     h_index = IntField()
     i10_index = IntField()
 
+    def to_json(self):
+        """Convert to JSON"""
+        return {
+            "profile_link": self.profile_link,
+            "name": self.name,
+            "scholar_id": self.scholar_id,
+            "affiliation": self.affiliation,
+            "email": self.email,
+            "interests": self.interests,
+            "cited_by": self.cited_by,
+            "h_index": self.h_index,
+            "i10_index": self.i10_index,
+        }
+
 
 class Publication(EmbeddedDocument):
     """Publication information - preserved from original"""
@@ -95,6 +109,19 @@ class Publication(EmbeddedDocument):
     forum_name = StringField()
     type_of_paper = StringField()
     peer_reviews = StringField()
+
+    def to_json(self):
+        """Convert to JSON"""
+        return {
+            "title": self.title,
+            "year": self.year,
+            "authors": self.authors,
+            "abstract": self.abstract,
+            "cited_by": self.cited_by,
+            "forum_name": self.forum_name,
+            "type_of_paper": self.type_of_paper,
+            "peer_reviews": self.peer_reviews,
+        }
 
 
 class ScholarSummary(EmbeddedDocument):
@@ -162,15 +189,23 @@ class GoogleScholarDB(BaseModel):
     def to_json(self):
         """Convert to JSON - preserved from original"""
         return {
-            "author": self.author,
-            "co_authors": self.co_authors,
+            "author": self.author.to_json() if self.author else None,
+            "co_authors": (
+                [coauthor.to_json() for coauthor in self.co_authors]
+                if self.co_authors
+                else []
+            ),
             "keywords": self.keywords,
             "cited_by": self.cited_by,
             "h_index": self.h_index,
             "cited_by_5y": self.cited_by_5y,
             "h_index_5y": self.h_index_5y,
             "cited_each_year": self.cited_each_year,
-            "publications": [pub.to_json() for pub in self.publications],
+            "publications": (
+                [pub.to_json() for pub in self.publications]
+                if self.publications
+                else []
+            ),
             "homepage": self.homepage,
             "other_details": self.other_details,
         }

@@ -147,7 +147,7 @@ async def router(request_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
             applicant_name = await get_applicant_name(payload["applicantId"])
             logger.info(f"Retrieved applicant name: {applicant_name}")
 
-            result = await scholar_service.get_scholar_info(
+            await scholar_service.get_scholar_info(
                 attorney_id=payload["attorneyId"],
                 applicant_id=payload["applicantId"],
                 scholar_link=payload["scholarLink"],
@@ -156,7 +156,7 @@ async def router(request_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
             logger.info("Scholar link processing completed successfully")
             return {
                 "status": 200,
-                "message": result.__dict__ if hasattr(result, "__dict__") else result,
+                "message": "Scholar data processed and stored successfully",
             }
 
         elif request_type == "process-scholar-network":
@@ -171,16 +171,18 @@ async def router(request_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
                 logger.error("Invalid scholar URL - could not extract scholar ID")
                 return {"status": 400, "message": "Invalid scholar URL"}
 
-            result = await scholar_service.build_network_database(
+            await scholar_service.build_network_database(
                 root_scholar_id=scholar_id,
                 author_name=applicant_name,
+                attorney_id=payload["attorneyId"],
+                applicant_id=payload["applicantId"],
                 max_depth=payload.get("max_depth", 3),
                 max_size=payload.get("max_size", 20),
             )
             logger.info("Scholar network processing completed successfully")
             return {
                 "status": 200,
-                "message": result.__dict__ if hasattr(result, "__dict__") else result,
+                "message": "Scholar network processed and stored successfully",
             }
 
         elif request_type == "vectorize-files":

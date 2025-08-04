@@ -108,7 +108,7 @@ def extract_coauthors_from_publication(
 
 
 def create_serpapi_params(
-    engine: str, query: str, api_key: str, num_results: int = 20
+    engine: str, query: str, api_key: str, num_results: int = 100
 ) -> Dict[str, Any]:
     """Create standardized SerpAPI parameters"""
     return {

@@ -37,27 +37,44 @@ const ScholarLinkForm = ({ }) => {
   const fetchScholarData = useCallback(async () => {
     if (user && selectedApplicant) {
       setScholarDataStatus('loading');
-      const scholarQuery = query(
-        collection(doc(collection(db, "google_scholar"), user.uid), selectedApplicant.id),
-        orderBy("date_created", "desc"),
-        limit(1)
-      );
-      const scholarNetworkQuery = query(
-        collection(doc(collection(db, "google_scholar_network"), user.uid), selectedApplicant.id),
-        orderBy("date_created", "desc"),
-        limit(1)
-      );
-      const querySnapshot = await getDocs(scholarQuery);
-      const networkSnapshot = await getDocs(scholarNetworkQuery);
-      if (querySnapshot.empty || networkSnapshot.empty) {
-        setScholarData(null);
-        setScholarDataStatus('not_found');
-      } else {
-        const data = querySnapshot.docs[0].data();
-        const networkData = networkSnapshot.docs[0].data();
-        const mergedData = { ...data, ...networkData };
+      try {
+        const scholarQuery = query(
+          collection(doc(collection(db, "google_scholar"), user.uid), selectedApplicant.id),
+          orderBy("date_created", "desc"),
+          limit(1)
+        );
+        const scholarNetworkQuery = query(
+          collection(doc(collection(db, "google_scholar_network"), user.uid), selectedApplicant.id),
+          orderBy("date_created", "desc"),
+          limit(1)
+        );
+        
+        const [querySnapshot, networkSnapshot] = await Promise.all([
+          getDocs(scholarQuery),
+          getDocs(scholarNetworkQuery)
+        ]);
+        
+        if (querySnapshot.empty) {
+          setScholarData(null);
+          setScholarDataStatus('not_found');
+          return;
+        }
+        
+        const scholarData = querySnapshot.docs[0].data();
+        const networkData = networkSnapshot.empty ? null : networkSnapshot.docs[0].data();
+        
+        // Merge data with proper fallbacks
+        const mergedData = {
+          ...scholarData,
+          network: networkData?.network || [],
+        };
+        
         setScholarData(mergedData);
         setScholarDataStatus('found');
+      } catch (error) {
+        console.error('Error fetching scholar data:', error);
+        setScholarData(null);
+        setScholarDataStatus('not_found');
       }
     }
   }, [user, selectedApplicant]);

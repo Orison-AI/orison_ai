@@ -51,6 +51,12 @@ class ScholarDataFetcher:
         start_time = time.time()
 
         try:
+            # Validate API key is loaded
+            if not self.config.api_key:
+                raise ValueError(
+                    "SERPAPI_KEY not loaded - check environment configuration"
+                )
+
             # Create search parameters
             params = create_serpapi_params(
                 engine="google_scholar",
@@ -59,27 +65,83 @@ class ScholarDataFetcher:
                 num_results=self.config.default_num_results,
             )
 
+            # Debug logging (mask API key)
+            api_key_debug = (
+                self.config.api_key[:8] + "..." + self.config.api_key[-4:]
+                if self.config.api_key
+                else "None"
+            )
+            logger.info(f"Making SerpAPI request with key: {api_key_debug}")
+            logger.info(f"Request URL: {self.config.base_url}")
+            logger.info(f"Query: {author_name}")
+
             # Make API call
             response = requests.get(
                 self.config.base_url, params=params, timeout=self.config.timeout
             )
+
+            # Log error responses for debugging
+            if response.status_code != 200:
+                logger.error(f"SerpAPI error response: {response.status_code}")
+                logger.error(f"Response text: {response.text}")
+                logger.error(f"Response headers: {dict(response.headers)}")
+
+                # Retry once for 401 errors (might be cold start issue)
+                if response.status_code == 401:
+                    logger.warning("Retrying 401 error (possible cold start issue)...")
+                    import time
+
+                    time.sleep(1)  # Brief delay
+                    response = requests.get(
+                        self.config.base_url, params=params, timeout=self.config.timeout
+                    )
+                    if response.status_code != 200:
+                        logger.error(f"Retry also failed: {response.status_code}")
+
             response.raise_for_status()
             data = response.json()
 
+            # Debug: Log response structure
+            logger.info(
+                f"SerpAPI response keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}"
+            )
+            if "error" in data:
+                logger.error(f"SerpAPI returned error: {data['error']}")
+            if "search_metadata" in data:
+                logger.info(
+                    f"Search status: {data['search_metadata'].get('status', 'Unknown')}"
+                )
+
             # Parse response
-            parsed_data = parse_serpapi_response(data)
-            authors = parsed_data["authors"]
-            organic_results = parsed_data["organic_results"]
+            try:
+                parsed_data = parse_serpapi_response(data)
+                authors = parsed_data["authors"]
+                organic_results = parsed_data["organic_results"]
+
+                logger.info(
+                    f"Parsed {len(authors)} authors and {len(organic_results)} organic results"
+                )
+            except Exception as parse_error:
+                logger.error(f"Failed to parse SerpAPI response: {parse_error}")
+                logger.error(f"Response data: {data}")
+                raise
 
             # Find target author
-            target_author = find_author_by_id(authors, scholar_id)
+            try:
+                target_author = find_author_by_id(authors, scholar_id)
+                logger.info(f"Target author found: {target_author is not None}")
+            except Exception as find_error:
+                logger.error(f"Failed to find author by ID: {find_error}")
+                logger.error(f"Authors data: {authors}")
+                raise
+
             if not target_author:
                 # Try a broader search with just the scholar ID
                 params = create_serpapi_params(
                     engine="google_scholar",
                     query=f"author:{scholar_id}",
                     api_key=self.config.api_key,
-                    num_results=20,
+                    num_results=self.config.default_num_results,
                 )
 
                 response = requests.get(
@@ -111,9 +173,17 @@ class ScholarDataFetcher:
                     )
 
             # Extract publications and coauthors
-            publications, coauthors = self._process_publications(
-                organic_results, scholar_id
-            )
+            try:
+                publications, coauthors = self._process_publications(
+                    organic_results, scholar_id
+                )
+                logger.info(
+                    f"Processed {len(publications)} publications and {len(coauthors)} coauthors"
+                )
+            except Exception as process_error:
+                logger.error(f"Failed to process publications: {process_error}")
+                logger.error(f"Organic results: {organic_results}")
+                raise
 
             result = {
                 "name": target_author.get("name"),
@@ -179,7 +249,7 @@ class ScholarDataFetcher:
                 engine="google_scholar",
                 query=coauthor_name,
                 api_key=self.config.api_key,
-                num_results=10,
+                num_results=self.config.default_num_results,
             )
 
             response = requests.get(

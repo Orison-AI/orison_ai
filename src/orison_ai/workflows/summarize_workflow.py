@@ -288,8 +288,8 @@ class SummarizeWorkflow(BaseWorkflow):
             if hasattr(scholar_info, "publications") and scholar_info.publications:
                 pub_context = "Publications:\n"
                 for i, pub in enumerate(
-                    scholar_info.publications[:10]
-                ):  # Limit to top 10
+                    scholar_info.publications[:20]
+                ):  # Limit to top 20 for context
                     pub_context += f"{i+1}. {pub.title}\n"
                     if hasattr(pub, "citations") and pub.citations:
                         pub_context += f"   Citations: {pub.citations}\n"

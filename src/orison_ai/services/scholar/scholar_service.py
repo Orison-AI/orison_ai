@@ -31,6 +31,7 @@ from database.schema import (
     ScholarSummary,
     GoogleScholarNetworkDB,
 )
+from database.firestore_clients import GoogleScholarClient, GoogleScholarNetworkClient
 from services.scholar.config import ScholarServiceConfig
 from services.scholar.data_fetcher import ScholarDataFetcher
 from services.scholar.utils import extract_scholar_id, build_scholar_url
@@ -47,6 +48,8 @@ class ScholarService:
         self.env = get_env()
         self.config = config or ScholarServiceConfig.from_env()
         self.data_fetcher = None
+        self.scholar_client = GoogleScholarClient()
+        self.network_client = GoogleScholarNetworkClient()
 
     def _initialize(self):
         """Initialize all components"""
@@ -80,9 +83,18 @@ class ScholarService:
         # Fetch author data
         author_data = await self.data_fetcher.fetch_author_data(scholar_id, author_name)
 
-        return self._build_scholar_db(
+        # Build the scholar database
+        scholar_db = self._build_scholar_db(
             attorney_id, applicant_id, scholar_link, author_data
         )
+
+        # Store in Firestore
+        await self.scholar_client.insert(attorney_id, applicant_id, scholar_db)
+        logger.info(
+            f"Scholar data stored in Firestore for {attorney_id}/{applicant_id}"
+        )
+
+        return scholar_db
 
     def _build_scholar_db(
         self,
@@ -130,13 +142,21 @@ class ScholarService:
                 name=author_data.get("name"),
                 affiliation=author_data.get("affiliation"),
                 email=author_data.get("email"),
-                interests=author_data.get("interests", []),
+                interests=author_data.get("interests"),
                 cited_by=author_data.get("citedby"),
                 h_index=author_data.get("h_index"),
                 i10_index=author_data.get("i10index"),
             ),
             co_authors=coauthors,
+            keywords=author_data.get("interests"),
+            cited_by=author_data.get("citedby"),
+            h_index=author_data.get("h_index"),
+            cited_by_5y=author_data.get("cited_by_5y"),
+            h_index_5y=author_data.get("h_index_5y"),
+            cited_each_year=author_data.get("cited_each_year"),
             publications=publications,
+            homepage=author_data.get("homepage"),
+            other_details=author_data.get("other_details"),
         )
 
     async def build_network(
@@ -264,6 +284,8 @@ class ScholarService:
         self,
         root_scholar_id: str,
         author_name: str,
+        attorney_id: str = None,
+        applicant_id: str = None,
         max_depth: int = None,
         max_size: int = None,
     ) -> GoogleScholarNetworkDB:
@@ -333,14 +355,21 @@ class ScholarService:
 
         # Build the network database
         network_db = GoogleScholarNetworkDB(
-            attorney_id="",  # Will be set by caller
-            applicant_id="",  # Will be set by caller
+            attorney_id=attorney_id or "",
+            applicant_id=applicant_id or "",
             network=detailed_network,
             root_scholar_id=root_scholar_id,
             root_scholar_name=author_name,
             network_size=len(detailed_network),
             max_depth=max_depth or self.config.default_max_depth,
         )
+
+        # Store in Firestore if attorney_id and applicant_id are provided
+        if attorney_id and applicant_id:
+            await self.network_client.insert(attorney_id, applicant_id, network_db)
+            logger.info(
+                f"Network data stored in Firestore for {attorney_id}/{applicant_id}"
+            )
 
         return network_db
 
@@ -368,11 +397,16 @@ async def gather_network(
 
 
 async def gather_network_database(
-    root_scholar_id: str, author_name: str, max_depth: int = None, max_size: int = None
+    root_scholar_id: str,
+    author_name: str,
+    attorney_id: str = None,
+    applicant_id: str = None,
+    max_depth: int = None,
+    max_size: int = None,
 ) -> GoogleScholarNetworkDB:
     """Build complete network database"""
     return await _service.build_network_database(
-        root_scholar_id, author_name, max_depth, max_size
+        root_scholar_id, author_name, attorney_id, applicant_id, max_depth, max_size
     )
 
 

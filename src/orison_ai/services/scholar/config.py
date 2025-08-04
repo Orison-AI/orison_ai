@@ -35,10 +35,8 @@ class ScholarServiceConfig:
     timeout: int = 10
 
     # Search Configuration
-    default_num_results: int = 20
-    max_publications: int = 20
+    default_num_results: int = 100
     max_coauthors: int = 10
-
     # Network Configuration
     default_max_depth: int = 3
     default_max_network_size: int = 20
@@ -63,7 +61,7 @@ class ScholarServiceConfig:
             default_max_depth=env.scholar_max_depth,
             default_max_network_size=env.scholar_max_network_size,
             timeout=int(os.getenv("SCHOLAR_TIMEOUT", "10")),
-            default_num_results=int(os.getenv("SCHOLAR_NUM_RESULTS", "20")),
+            default_num_results=int(os.getenv("SCHOLAR_NUM_RESULTS", "100")),
         )
 
     def get_author_name(self, scholar_id: str) -> str:
