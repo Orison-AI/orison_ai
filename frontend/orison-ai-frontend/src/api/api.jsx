@@ -166,11 +166,14 @@ export const summarize = async (attorneyId, applicantId) => {
 
   console.log(`INFO: summarize: response=${JSON.stringify(response)}`);
 
-  if (!response.data) {
-    throw new Error('Failed to start summarization');
+  // Handle both Firebase Functions (wrapped) and local (direct) responses
+  const responseData = response.data || response;
+  
+  if (!responseData) {
+    throw new Error('Failed to start summarization - no response data');
   }
 
-  return response.data;
+  return responseData;
 };
 
 export const evidence = async (attorneyId, applicantId) => {
@@ -181,11 +184,14 @@ export const evidence = async (attorneyId, applicantId) => {
 
   console.log(`INFO: evidence: response=${JSON.stringify(response)}`);
 
-  if (!response.data) {
-    throw new Error('Failed to start evidence');
+  // Handle both Firebase Functions (wrapped) and local (direct) responses
+  const responseData = response.data || response;
+  
+  if (!responseData) {
+    throw new Error('Failed to start evidence - no response data');
   }
 
-  return response.data;
+  return responseData;
 };
 
 export const docassist = async (attorneyId, applicantId, message, tag, filename) => {
@@ -199,9 +205,12 @@ export const docassist = async (attorneyId, applicantId, message, tag, filename)
 
   console.log(`INFO: docassist: response=${JSON.stringify(response)}`);
 
-  if (!response.data) {
-    throw new Error('Failed to start docassist');
+  // Handle both Firebase Functions (wrapped) and local (direct) responses
+  const responseData = response.data || response;
+  
+  if (!responseData) {
+    throw new Error('Failed to start docassist - no response data');
   }
 
-  return response.data;
+  return responseData;
 };
