@@ -45,6 +45,8 @@ class Environment:
     # LangSmith (optional)
     langchain_api_key: Optional[str] = None
     langsmith_endpoint: Optional[str] = None
+    langchain_project: Optional[str] = None
+    langchain_tracing: Optional[str] = None
 
     # SerpAPI (optional)
     serpapi_key: Optional[str] = None
@@ -119,9 +121,17 @@ class Environment:
             qdrant_url=qdrant_url_val,
             qdrant_api_key=qdrant_key,
             firebase_credentials_json=firebase_creds,
-            langchain_api_key=get_value("LANGCHAIN_API_KEY", skip_secret_manager=True),
+            langchain_api_key=get_value("LANGCHAIN_API_KEY"),
             langsmith_endpoint=get_value(
-                "LANGSMITH_ENDPOINT", skip_secret_manager=True
+                "LANGCHAIN_ENDPOINT",
+                default="https://api.smith.langchain.com",
+                skip_secret_manager=True,
+            ),
+            langchain_project=get_value(
+                "LANGCHAIN_PROJECT", default="orison-ai", skip_secret_manager=True
+            ),
+            langchain_tracing=get_value(
+                "LANGCHAIN_TRACING", default="true", skip_secret_manager=True
             ),
             serpapi_key=get_value("SERPAPI_KEY"),
             scholar_requests_per_minute=int(

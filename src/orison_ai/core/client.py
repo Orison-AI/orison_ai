@@ -16,6 +16,7 @@
 
 # External
 
+import os
 import logging
 import tiktoken
 from typing import AsyncIterator, Dict, List
@@ -24,6 +25,7 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.rate_limiters import InMemoryRateLimiter
 from pydantic import SecretStr
+import langsmith
 
 # Internal
 
@@ -49,6 +51,34 @@ class LLMClient:
         self.config = config
         self.app_config = app_config
         self.logger = logging.getLogger(__name__)
+
+        # Configure LangSmith if available
+        if app_config.api_key or app_config.endpoint:
+            try:
+                # Get environment for additional LangSmith config
+                from core.environment import get_env
+
+                env = get_env()
+
+                # Set environment variables for LangSmith
+                if app_config.api_key:
+                    os.environ["LANGCHAIN_API_KEY"] = app_config.api_key
+                if app_config.endpoint:
+                    os.environ["LANGCHAIN_ENDPOINT"] = app_config.endpoint
+                if app_config.project or env.langchain_project:
+                    os.environ["LANGCHAIN_PROJECT"] = (
+                        app_config.project or env.langchain_project or "orison-ai"
+                    )
+
+                self.logger.info("LangSmith tracing configured successfully")
+                self.logger.info(
+                    f"Project: {app_config.project or env.langchain_project or 'orison-ai'}"
+                )
+                self.logger.info(f"Endpoint: {app_config.endpoint or 'Default'}")
+            except Exception as e:
+                self.logger.warning(f"Failed to configure LangSmith: {e}")
+        else:
+            self.logger.info("LangSmith not configured - skipping tracing setup")
 
         # Rate limiter
         self._rate_limiter = InMemoryRateLimiter(

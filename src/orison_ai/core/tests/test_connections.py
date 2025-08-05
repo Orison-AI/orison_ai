@@ -152,22 +152,11 @@ class TestConnections:
         """Test app configuration factory methods"""
         logger.info("Testing app configuration factory methods")
 
-        # Test local development config
-        local_config = AppConfig.for_local_development("./test_traces.db")
-        assert local_config.project == "orison-ai-local", "Local project name incorrect"
-        assert local_config.use_local_tracing is True, "Local tracing not enabled"
-        assert (
-            local_config.local_sqlite_path == "./test_traces.db"
-        ), "SQLite path not set"
-
         # Test self-hosted config
         hosted_config = AppConfig.for_self_hosted_langsmith(
             "http://localhost:8000", "test_key"
         )
         assert hosted_config.project == "orison-ai", "Hosted project name incorrect"
-        assert (
-            hosted_config.use_local_tracing is False
-        ), "Local tracing should be disabled"
         assert hosted_config.endpoint == "http://localhost:8000", "Endpoint not set"
         assert hosted_config.api_key == "test_key", "API key not set"
 

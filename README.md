@@ -140,6 +140,8 @@ export SCHOLAR_MAX_NETWORK_SIZE=20       # Default: 20
 # Optional LangSmith configuration
 export LANGCHAIN_API_KEY="..."           # For LangSmith tracing
 export LANGSMITH_ENDPOINT="..."          # Custom LangSmith endpoint
+export LANGCHAIN_PROJECT="orison-ai"     # Project name for LangSmith
+export LANGCHAIN_TRACING="true"          # Enable LangSmith tracing
 
 # Optional SerpAPI configuration
 export SERPAPI_KEY="..."                 # For web search capabilities
@@ -157,6 +159,76 @@ The system automatically integrates with Google Secret Manager for secure config
 1. **Environment Variables**: First priority for configuration values
 2. **Google Secret Manager**: Fallback for missing environment variables
 3. **Default Values**: Final fallback for optional configuration
+
+## 🔍 LangSmith Integration
+
+Orison AI includes comprehensive LangSmith integration for LLM observability, tracing, and monitoring. All LLM operations are automatically traced and can be viewed in the LangSmith dashboard.
+
+### LangSmith Features
+- **Automatic Tracing**: All LLM calls are automatically traced and logged
+- **Project Organization**: Separate projects for different environments
+- **Performance Monitoring**: Track response times, token usage, and costs
+- **Error Tracking**: Monitor failed requests and debugging information
+- **Custom Endpoints**: Support for self-hosted LangSmith instances
+
+### Environment Variables
+```bash
+# Required for LangSmith tracing
+export LANGCHAIN_API_KEY="lsv2_..."              # Your LangSmith API key
+export LANGCHAIN_PROJECT="orison-ai"             # Project name in LangSmith
+
+# Optional LangSmith configuration
+export LANGSMITH_ENDPOINT="https://api.smith.langchain.com"  # Custom endpoint
+export LANGCHAIN_TRACING="true"                  # Enable tracing (default: true)
+```
+
+### Automatic Integration
+LangSmith is automatically configured when the `LLMClient` is initialized. The integration covers:
+
+- **Document Q&A Workflows**: All question-answer operations
+- **Document Summarization**: Complete summarization workflows
+- **Vector Embeddings**: Document embedding operations
+- **Scholar Network Analysis**: LLM operations in scholar services
+- **Script Operations**: All utility scripts using LLM operations
+
+### Testing LangSmith Integration
+```python
+# Test script to verify LangSmith integration
+from src.orison_ai.test_langsmith import test_langsmith_integration
+import asyncio
+
+# Run the test
+asyncio.run(test_langsmith_integration())
+```
+
+### LangSmith Dashboard
+Once configured, you can view all LLM operations in the LangSmith dashboard:
+1. **Traces**: View individual request traces with inputs, outputs, and metadata
+2. **Projects**: Organize traces by project (e.g., "orison-ai")
+3. **Analytics**: Monitor performance metrics and costs
+4. **Debugging**: Inspect failed requests and error details
+
+### Self-Hosted LangSmith
+For enterprise deployments, you can use a self-hosted LangSmith instance:
+
+```python
+from src.orison_ai.core.config import AppConfig
+
+# Configure for self-hosted LangSmith
+app_config = AppConfig.for_self_hosted_langsmith(
+    endpoint="https://your-langsmith-instance.com",
+    api_key="your-api-key"
+)
+```
+
+### Integration Points
+LangSmith tracing is automatically enabled for:
+- ✅ **Core LLM Client**: All OpenAI API calls
+- ✅ **Document Workflows**: DocAssist and Summarize workflows
+- ✅ **Vector Operations**: Embedding generation and storage
+- ✅ **Scholar Services**: LLM operations in scholar analysis
+- ✅ **Script Operations**: All utility scripts
+- ✅ **API Endpoints**: All FastAPI endpoints using LLM operations
 
 ## 🧪 Testing & Development
 
@@ -191,12 +263,12 @@ python send_curl_request --url https://us-central1-orison-ai-visa-apply.cloudfun
 - docker exec -ti orison /bin/bash
 Now, you can run the following command to start the gateway function within the container:
 ```
-cd src/orison_ai/gateway_function
-functions-framework --target gateway_function --port=3000 --debug
+cd src/orison_ai/orison_ai
+functions-framework --target gateway_function --port=5004 --debug
 OR
-functions-framework --source=path/gateway_function/main.py --target=gateway_function --port=3000 --debug
+functions-framework --source=path/orison_ai/main.py --target=gateway_function --port=5004 --debug
 ```
-- You can run the python curl program again by changing url to localhost:3000
+- You can run the python curl program again by changing url to localhost:5004
 
 ### Testing Document Q&A Workflow
 ```python
@@ -332,6 +404,7 @@ firebase deploy --project orison-ai-visa-apply --only hosting:orison-ai-landing 
 - **OpenAI**: Latest OpenAI API client for LLM integration
 - **LangChain**: Framework for LLM application development
 - **LangGraph**: Workflow orchestration and state management
+- **LangSmith**: LLM observability and tracing platform
 - **Qdrant**: Vector database for semantic search
 - **Firebase Admin**: Firebase integration for authentication and storage
 - **Google Cloud**: Secret Manager and Firestore integration
@@ -355,5 +428,6 @@ The Orison AI system is **production-ready** with:
 - ✅ **Secure Configuration**: Google Secret Manager integration
 - ✅ **Graceful Degradation**: System continues to work with missing configuration
 - ✅ **Comprehensive Logging**: Detailed logging for debugging and monitoring
+- ✅ **LangSmith Integration**: Complete LLM observability and tracing
 
 **Ready for deployment! 🚀**

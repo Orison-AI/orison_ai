@@ -14,22 +14,6 @@
 #  modify or move this copyright notice.
 # ==========================================================================
 
-# Disable LangSmith before any imports
-import os
-import warnings
-
-# Suppress LangSmith warnings
-warnings.filterwarnings("ignore", category=UserWarning, module="langsmith")
-warnings.filterwarnings("ignore", category=UserWarning, module="langchain")
-
-os.environ["LANGCHAIN_TRACING_V2"] = "false"
-os.environ["LANGCHAIN_ENDPOINT"] = ""
-os.environ["LANGCHAIN_API_KEY"] = ""
-os.environ["LANGCHAIN_PROJECT"] = ""
-os.environ["LANGCHAIN_TRACING"] = "false"
-os.environ["LANGCHAIN_SESSION"] = ""
-os.environ["LANGCHAIN_DISABLE_TRACING"] = "true"
-
 # External
 
 import asyncio
@@ -56,10 +40,6 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
-
-# Disable langsmith logging
-logging.getLogger("langsmith").setLevel(logging.ERROR)
-logging.getLogger("langchain").setLevel(logging.ERROR)
 
 
 class SummarizeWorkflow(BaseWorkflow):

@@ -57,55 +57,10 @@ class VectorConfig:
 class AppConfig:
     """Application configuration with local/remote observability options"""
 
-    project: str = "orison-ai"
+    project: str = os.getenv("LANGCHAIN_PROJECT")
     # Support for local LangSmith hosting
-    endpoint: Optional[str] = None  # None = auto-detect, or set custom endpoint
-    api_key: Optional[str] = None
-    # Local observability options
-    use_local_tracing: bool = False
-    local_sqlite_path: Optional[str] = None
-    local_web_port: int = 8000
-
-    def __post_init__(self):
-        if self.use_local_tracing:
-            self._setup_local_tracing()
-        else:
-            self._setup_remote_tracing()
-
-    def _setup_local_tracing(self):
-        """Configure local tracing options"""
-        # Option 1: Local SQLite tracing (lightweight)
-        if self.local_sqlite_path:
-            os.environ["LANGCHAIN_TRACING_V2"] = "false"
-            os.environ["LANGCHAIN_CALLBACKS"] = "langchain.callbacks.sqlite"
-            os.environ["LANGCHAIN_SQLITE_PATH"] = self.local_sqlite_path
-        else:
-            # Option 2: Use LangFuse (open-source alternative)
-            os.environ["LANGCHAIN_TRACING_V2"] = "false"
-            # Configure for local observation without external services
-            os.environ.pop("LANGCHAIN_API_KEY", None)
-            os.environ.pop("LANGCHAIN_ENDPOINT", None)
-
-    def _setup_remote_tracing(self):
-        """Configure remote LangSmith tracing"""
-        os.environ["LANGCHAIN_TRACING_V2"] = "true"
-        os.environ["LANGCHAIN_PROJECT"] = self.project
-
-        # Use custom endpoint if provided, otherwise default to LangSmith
-        endpoint = self.endpoint or "https://api.smith.langchain.com"
-        os.environ["LANGCHAIN_ENDPOINT"] = endpoint
-
-        if self.api_key:
-            os.environ["LANGCHAIN_API_KEY"] = self.api_key
-
-    @classmethod
-    def for_local_development(cls, sqlite_path: str = "./traces.db"):
-        """Factory method for local development setup"""
-        return cls(
-            project="orison-ai-local",
-            use_local_tracing=True,
-            local_sqlite_path=sqlite_path,
-        )
+    endpoint: Optional[str] = os.getenv("LANGCHAIN_ENDPOINT")
+    api_key: Optional[str] = os.getenv("LANGCHAIN_API_KEY")
 
     @classmethod
     def for_self_hosted_langsmith(cls, endpoint: str, api_key: Optional[str] = None):
@@ -114,5 +69,4 @@ class AppConfig:
             project="orison-ai",
             endpoint=endpoint,
             api_key=api_key,
-            use_local_tracing=False,
         )
