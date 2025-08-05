@@ -25,12 +25,12 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.rate_limiters import InMemoryRateLimiter
 from pydantic import SecretStr
-import langsmith
 
 # Internal
 
-from core.config import LLMConfig, AppConfig
+from core.config import LLMConfig
 from database.secrets import OrisonSecrets
+from core.environment import get_env
 
 
 class LLMClient:
@@ -45,49 +45,23 @@ class LLMClient:
     Break your response into paragraphs for better readability.\
     """
 
-    def __init__(
-        self, secrets: OrisonSecrets, config: LLMConfig, app_config: AppConfig
-    ):
+    def __init__(self, secrets: OrisonSecrets, config: LLMConfig):
         self.config = config
-        self.app_config = app_config
         self.logger = logging.getLogger(__name__)
 
-        # Configure LangSmith if available
+        # Log LangSmith configuration status
         try:
-            # Get environment for LangSmith config (includes Secret Manager)
-            from core.environment import get_env
-
             env = get_env()
 
-            # Check if LangSmith is configured via environment or Secret Manager
-            if env.langchain_api_key or app_config.api_key or app_config.endpoint:
-                # Set environment variables for LangSmith
-                if env.langchain_api_key:
-                    os.environ["LANGCHAIN_API_KEY"] = env.langchain_api_key
-                elif app_config.api_key:
-                    os.environ["LANGCHAIN_API_KEY"] = app_config.api_key
-
-                if env.langsmith_endpoint or app_config.endpoint:
-                    os.environ["LANGCHAIN_ENDPOINT"] = (
-                        env.langsmith_endpoint or app_config.endpoint
-                    )
-
-                if env.langchain_project or app_config.project:
-                    os.environ["LANGCHAIN_PROJECT"] = (
-                        env.langchain_project or app_config.project or "orison-ai"
-                    )
-
-                self.logger.info("LangSmith tracing configured successfully")
-                self.logger.info(
-                    f"Project: {env.langchain_project or app_config.project or 'orison-ai'}"
-                )
-                self.logger.info(
-                    f"Endpoint: {env.langsmith_endpoint or app_config.endpoint or 'Default'}"
-                )
+            if env.langchain_api_key:
+                self.logger.info("LangSmith configured via environment")
+                self.logger.info(f"LangSmith Project: {env.langchain_project}")
+                self.logger.info(f"LangSmith Tracing: {env.langchain_tracing}")
+                self.logger.info(f"LangSmith Tracing V2: {env.langchain_tracing_v2}")
             else:
                 self.logger.info("LangSmith not configured - skipping tracing setup")
         except Exception as e:
-            self.logger.warning(f"Failed to configure LangSmith: {e}")
+            self.logger.warning(f"Failed to check LangSmith configuration: {e}")
 
         # Rate limiter
         self._rate_limiter = InMemoryRateLimiter(

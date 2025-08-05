@@ -25,7 +25,7 @@ from core.config import VectorConfig
 from core.client import LLMClient
 from core.environment import get_env
 from database.secrets import OrisonSecrets
-from core.config import LLMConfig, AppConfig
+from core.config import LLMConfig
 
 
 class VectorizeFiles:
@@ -51,9 +51,7 @@ class VectorizeFiles:
             collection_name=target_collection,
         )
         llm_config = LLMConfig()
-        app_config = AppConfig()
-
-        self.llm_client = LLMClient(secrets, llm_config, app_config)
+        self.llm_client = LLMClient(secrets, llm_config)
 
         # Create config with proper collection name
         self.config = VectorConfig(
@@ -157,9 +155,7 @@ class DeleteFileVectors:
             collection_name=target_collection,
         )
         llm_config = LLMConfig()
-        app_config = AppConfig()
-
-        self.llm_client = LLMClient(secrets, llm_config, app_config)
+        self.llm_client = LLMClient(secrets, llm_config)
 
         # Create config with proper collection name
         self.config = VectorConfig(

@@ -22,7 +22,7 @@ import asyncio
 # Internal
 
 from core.environment import get_env
-from core.config import LLMConfig, AppConfig
+from core.config import LLMConfig
 from database.secrets import OrisonSecrets
 from core.client import LLMClient
 
@@ -37,7 +37,6 @@ class TestLangSmithIntegration:
         # Always test environment loading, regardless of configuration
         assert hasattr(env, "langchain_api_key")
         assert hasattr(env, "langchain_project")
-        assert hasattr(env, "langsmith_endpoint")
         assert hasattr(env, "langchain_tracing")
 
     @pytest.mark.asyncio
@@ -58,10 +57,8 @@ class TestLangSmithIntegration:
         )
 
         llm_config = LLMConfig()
-        app_config = AppConfig()
-
         # Initialize LLMClient - should configure LangSmith automatically
-        client = LLMClient(secrets, llm_config, app_config)
+        client = LLMClient(secrets, llm_config)
 
         # Verify client was created successfully
         assert client is not None
@@ -102,10 +99,8 @@ class TestLangSmithIntegration:
         )
 
         llm_config = LLMConfig()
-        app_config = AppConfig()
-
         # Initialize LLMClient
-        client = LLMClient(secrets, llm_config, app_config)
+        client = LLMClient(secrets, llm_config)
 
         # Test embedding generation with LangSmith tracing
         try:

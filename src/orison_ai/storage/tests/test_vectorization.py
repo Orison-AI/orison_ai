@@ -25,7 +25,7 @@ import os
 
 from storage.document_processor import DocumentProcessor
 from storage.vector_store import VectorStore
-from core.config import VectorConfig, LLMConfig, AppConfig
+from core.config import VectorConfig, LLMConfig
 from core.environment import get_env
 from database.secrets import OrisonSecrets
 from core.client import LLMClient
@@ -74,9 +74,7 @@ class TestVectorization:
                 collection_name=config.collection_name,
             )
             llm_config = LLMConfig()
-            app_config = AppConfig()
-
-            llm_client = LLMClient(secrets, llm_config, app_config)
+            llm_client = LLMClient(secrets, llm_config)
             document_processor = DocumentProcessor(config, llm_client)
             vector_store = VectorStore(config, llm_client)
 
@@ -233,9 +231,7 @@ class TestVectorization:
                 collection_name=config.collection_name,
             )
             llm_config = LLMConfig()
-            app_config = AppConfig()
-
-            llm_client = LLMClient(secrets, llm_config, app_config)
+            llm_client = LLMClient(secrets, llm_config)
             document_processor = DocumentProcessor(config, llm_client)
             vector_store = VectorStore(config, llm_client)
 

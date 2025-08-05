@@ -139,7 +139,6 @@ export SCHOLAR_MAX_NETWORK_SIZE=20       # Default: 20
 
 # Optional LangSmith configuration
 export LANGCHAIN_API_KEY="..."           # For LangSmith tracing
-export LANGSMITH_ENDPOINT="..."          # Custom LangSmith endpoint
 export LANGCHAIN_PROJECT="orison-ai"     # Project name for LangSmith
 export LANGCHAIN_TRACING="true"          # Enable LangSmith tracing
 
@@ -178,7 +177,6 @@ export LANGCHAIN_API_KEY="lsv2_..."              # Your LangSmith API key
 export LANGCHAIN_PROJECT="orison-ai"             # Project name in LangSmith
 
 # Optional LangSmith configuration
-export LANGSMITH_ENDPOINT="https://api.smith.langchain.com"  # Custom endpoint
 export LANGCHAIN_TRACING="true"                  # Enable tracing (default: true)
 ```
 
@@ -210,16 +208,6 @@ Once configured, you can view all LLM operations in the LangSmith dashboard:
 
 ### Self-Hosted LangSmith
 For enterprise deployments, you can use a self-hosted LangSmith instance:
-
-```python
-from src.orison_ai.core.config import AppConfig
-
-# Configure for self-hosted LangSmith
-app_config = AppConfig.for_self_hosted_langsmith(
-    endpoint="https://your-langsmith-instance.com",
-    api_key="your-api-key"
-)
-```
 
 ### Integration Points
 LangSmith tracing is automatically enabled for:

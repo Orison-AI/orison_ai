@@ -28,7 +28,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 # Internal
 
 from core.environment import get_env
-from core.config import VectorConfig, LLMConfig, AppConfig
+from core.config import VectorConfig, LLMConfig
 from database.secrets import OrisonSecrets
 from core.client import LLMClient
 from storage.vector_store import VectorStore
@@ -73,10 +73,8 @@ async def vectorize_pdfs():
     )
 
     llm_config = LLMConfig()
-    app_config = AppConfig()
-
     # Initialize components
-    llm_client = LLMClient(secrets, llm_config, app_config)
+    llm_client = LLMClient(secrets, llm_config)
     document_processor = DocumentProcessor(config, llm_client)
     vector_store = VectorStore(config, llm_client)
 

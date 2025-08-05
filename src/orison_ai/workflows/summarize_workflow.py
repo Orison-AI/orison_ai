@@ -30,7 +30,7 @@ from database.firestore_clients import GoogleScholarClient, ScreeningClient
 from database.firebase_config import FireStoreDB
 from database.schema import ScreeningBuilder
 from core.environment import get_env
-from core.config import VectorConfig, LLMConfig, AppConfig
+from core.config import VectorConfig, LLMConfig
 from database.secrets import OrisonSecrets
 from core.client import LLMClient
 from storage.vector_store import VectorStore
@@ -80,8 +80,7 @@ class SummarizeWorkflow(BaseWorkflow):
 
         # Initialize components
         llm_config = LLMConfig()
-        app_config = AppConfig()
-        self.llm_client = LLMClient(secrets, llm_config, app_config)
+        self.llm_client = LLMClient(secrets, llm_config)
         self.vector_store = VectorStore(config, self.llm_client)
 
         # Initialize base class

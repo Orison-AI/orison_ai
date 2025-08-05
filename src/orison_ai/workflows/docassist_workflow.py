@@ -27,7 +27,7 @@ from langgraph.graph import StateGraph, END
 from workflows.base import BaseWorkflow, WorkflowState
 from workflows.models import Prompt, DetailLevel
 from core.environment import get_env
-from core.config import VectorConfig, LLMConfig, AppConfig
+from core.config import VectorConfig, LLMConfig
 from database.secrets import OrisonSecrets
 from core.client import LLMClient
 from storage.vector_store import VectorStore
@@ -74,8 +74,7 @@ class DocAssistWorkflow(BaseWorkflow):
 
         # Initialize components
         llm_config = LLMConfig()
-        app_config = AppConfig()
-        self.llm_client = LLMClient(secrets, llm_config, app_config)
+        self.llm_client = LLMClient(secrets, llm_config)
         self.vector_store = VectorStore(config, self.llm_client)
         self.chat_memory_client = ChatMemoryClient()
 

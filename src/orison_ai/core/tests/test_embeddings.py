@@ -20,7 +20,7 @@ import time
 import asyncio
 
 from core.client import LLMClient
-from core.config import LLMConfig, AppConfig
+from core.config import LLMConfig
 from core.environment import get_env
 from database.secrets import OrisonSecrets
 
@@ -40,9 +40,7 @@ class TestEmbeddings:
             collection_name="test_embeddings",
         )
         llm_config = LLMConfig()
-        app_config = AppConfig()
-
-        self.llm_client = LLMClient(secrets, llm_config, app_config)
+        self.llm_client = LLMClient(secrets, llm_config)
 
     @pytest.mark.asyncio
     async def test_single_embedding(self):

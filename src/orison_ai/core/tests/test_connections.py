@@ -23,7 +23,7 @@ import asyncio
 # Internal
 
 from core.environment import get_env
-from core.config import LLMConfig, VectorConfig, AppConfig
+from core.config import LLMConfig, VectorConfig
 from core.client import LLMClient
 from database.secrets import OrisonSecrets
 from qdrant_client import QdrantClient
@@ -60,9 +60,7 @@ class TestConnections:
             collection_name="test_openai",
         )
         llm_config = LLMConfig()
-        app_config = AppConfig()
-
-        llm_client = LLMClient(secrets, llm_config, app_config)
+        llm_client = LLMClient(secrets, llm_config)
 
         # Test actual API call
         messages = [
@@ -147,17 +145,3 @@ class TestConnections:
         assert config.retrieval_limit == 10, "Default retrieval limit incorrect"
 
         logger.info("Vector configuration creation verified")
-
-    def test_app_config_factory_methods(self):
-        """Test app configuration factory methods"""
-        logger.info("Testing app configuration factory methods")
-
-        # Test self-hosted config
-        hosted_config = AppConfig.for_self_hosted_langsmith(
-            "http://localhost:8000", "test_key"
-        )
-        assert hosted_config.project == "orison-ai", "Hosted project name incorrect"
-        assert hosted_config.endpoint == "http://localhost:8000", "Endpoint not set"
-        assert hosted_config.api_key == "test_key", "API key not set"
-
-        logger.info("App configuration factory methods verified")

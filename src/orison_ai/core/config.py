@@ -51,22 +51,3 @@ class VectorConfig:
     grpc_port: int = 6333
     https: bool = True
     timeout: int = 10
-
-
-@dataclass
-class AppConfig:
-    """Application configuration with local/remote observability options"""
-
-    project: str = os.getenv("LANGCHAIN_PROJECT")
-    # Support for local LangSmith hosting
-    endpoint: Optional[str] = os.getenv("LANGCHAIN_ENDPOINT")
-    api_key: Optional[str] = os.getenv("LANGCHAIN_API_KEY")
-
-    @classmethod
-    def for_self_hosted_langsmith(cls, endpoint: str, api_key: Optional[str] = None):
-        """Factory method for self-hosted LangSmith"""
-        return cls(
-            project="orison-ai",
-            endpoint=endpoint,
-            api_key=api_key,
-        )

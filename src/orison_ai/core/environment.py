@@ -44,9 +44,9 @@ class Environment:
 
     # LangSmith (optional)
     langchain_api_key: Optional[str] = None
-    langsmith_endpoint: Optional[str] = None
     langchain_project: Optional[str] = None
     langchain_tracing: Optional[str] = None
+    langchain_tracing_v2: Optional[str] = None  # LangSmith v2
 
     # SerpAPI (optional)
     serpapi_key: Optional[str] = None
@@ -122,16 +122,14 @@ class Environment:
             qdrant_api_key=qdrant_key,
             firebase_credentials_json=firebase_creds,
             langchain_api_key=get_value("LANGCHAIN_API_KEY"),
-            langsmith_endpoint=get_value(
-                "LANGCHAIN_ENDPOINT",
-                default="https://api.smith.langchain.com",
-                skip_secret_manager=True,
-            ),
             langchain_project=get_value(
                 "LANGCHAIN_PROJECT", default="orison_ai", skip_secret_manager=True
             ),
             langchain_tracing=get_value(
                 "LANGCHAIN_TRACING", default="true", skip_secret_manager=True
+            ),
+            langchain_tracing_v2=get_value(
+                "LANGCHAIN_TRACING_V2", default="true", skip_secret_manager=True
             ),
             serpapi_key=get_value("SERPAPI_KEY"),
             scholar_requests_per_minute=int(
@@ -156,4 +154,8 @@ def get_env() -> Environment:
     if ENV is None:
         ENV = Environment.load()
         logger.info("Environment configuration loaded")
+    os.environ["LANGCHAIN_PROJECT"] = ENV.langchain_project
+    os.environ["LANGCHAIN_TRACING"] = ENV.langchain_tracing
+    os.environ["LANGCHAIN_TRACING_V2"] = ENV.langchain_tracing_v2
+    os.environ["LANGCHAIN_API_KEY"] = ENV.langchain_api_key
     return ENV

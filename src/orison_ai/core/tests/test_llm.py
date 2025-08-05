@@ -23,7 +23,7 @@ import asyncio
 # Internal
 
 from core.client import LLMClient
-from core.config import LLMConfig, AppConfig
+from core.config import LLMConfig
 from core.environment import get_env
 from database.secrets import OrisonSecrets
 
@@ -43,9 +43,7 @@ class TestLLM:
             collection_name="test_llm",
         )
         llm_config = LLMConfig()
-        app_config = AppConfig()
-
-        self.llm_client = LLMClient(secrets, llm_config, app_config)
+        self.llm_client = LLMClient(secrets, llm_config)
 
     def teardown_method(self):
         """Clean up after each test"""
