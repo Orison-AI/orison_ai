@@ -53,32 +53,41 @@ class LLMClient:
         self.logger = logging.getLogger(__name__)
 
         # Configure LangSmith if available
-        if app_config.api_key or app_config.endpoint:
-            try:
-                # Get environment for additional LangSmith config
-                from core.environment import get_env
+        try:
+            # Get environment for LangSmith config (includes Secret Manager)
+            from core.environment import get_env
 
-                env = get_env()
+            env = get_env()
 
+            # Check if LangSmith is configured via environment or Secret Manager
+            if env.langchain_api_key or app_config.api_key or app_config.endpoint:
                 # Set environment variables for LangSmith
-                if app_config.api_key:
+                if env.langchain_api_key:
+                    os.environ["LANGCHAIN_API_KEY"] = env.langchain_api_key
+                elif app_config.api_key:
                     os.environ["LANGCHAIN_API_KEY"] = app_config.api_key
-                if app_config.endpoint:
-                    os.environ["LANGCHAIN_ENDPOINT"] = app_config.endpoint
-                if app_config.project or env.langchain_project:
+
+                if env.langsmith_endpoint or app_config.endpoint:
+                    os.environ["LANGCHAIN_ENDPOINT"] = (
+                        env.langsmith_endpoint or app_config.endpoint
+                    )
+
+                if env.langchain_project or app_config.project:
                     os.environ["LANGCHAIN_PROJECT"] = (
-                        app_config.project or env.langchain_project or "orison-ai"
+                        env.langchain_project or app_config.project or "orison-ai"
                     )
 
                 self.logger.info("LangSmith tracing configured successfully")
                 self.logger.info(
-                    f"Project: {app_config.project or env.langchain_project or 'orison-ai'}"
+                    f"Project: {env.langchain_project or app_config.project or 'orison-ai'}"
                 )
-                self.logger.info(f"Endpoint: {app_config.endpoint or 'Default'}")
-            except Exception as e:
-                self.logger.warning(f"Failed to configure LangSmith: {e}")
-        else:
-            self.logger.info("LangSmith not configured - skipping tracing setup")
+                self.logger.info(
+                    f"Endpoint: {env.langsmith_endpoint or app_config.endpoint or 'Default'}"
+                )
+            else:
+                self.logger.info("LangSmith not configured - skipping tracing setup")
+        except Exception as e:
+            self.logger.warning(f"Failed to configure LangSmith: {e}")
 
         # Rate limiter
         self._rate_limiter = InMemoryRateLimiter(

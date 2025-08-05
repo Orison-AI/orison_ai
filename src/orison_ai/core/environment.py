@@ -128,7 +128,7 @@ class Environment:
                 skip_secret_manager=True,
             ),
             langchain_project=get_value(
-                "LANGCHAIN_PROJECT", default="orison-ai", skip_secret_manager=True
+                "LANGCHAIN_PROJECT", default="orison_ai", skip_secret_manager=True
             ),
             langchain_tracing=get_value(
                 "LANGCHAIN_TRACING", default="true", skip_secret_manager=True
