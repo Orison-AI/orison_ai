@@ -75,25 +75,11 @@ class GatewayRequest(BaseModel):
     or_request_payload: Dict[str, Any]
 
 
-# Initialize workflow instances (lightweight - actual initialization happens when needed)
-logger.info("Initializing workflow instances...")
-try:
-    docassist_workflow = DocAssistWorkflow()
-    summarize_workflow = SummarizeWorkflow()
-    scholar_service = ScholarService()
-    firestore_db = FireStoreDB()
-    vectorize_files_service = VectorizeFiles()
-    delete_file_vectors_service = DeleteFileVectors()
-    logger.info("All workflow instances initialized successfully")
-except Exception as e:
-    logger.error(f"Failed to initialize workflow instances: {e}")
-    raise
-
-
 async def get_applicant_name(applicant_id: str) -> str:
     """Get applicant name from Firestore applicants collection"""
     logger.info(f"Fetching applicant name for ID: {applicant_id}")
     try:
+        firestore_db = FireStoreDB()
         doc_ref = firestore_db.client.collection("applicants").document(applicant_id)
         logger.info(
             f"Firestore document reference created for applicant: {applicant_id}"
@@ -140,7 +126,7 @@ async def router(request_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         logger.info(f"Processing request: {request_type}")
-
+        scholar_service = ScholarService()
         if request_type == "process-scholar-link":
             logger.info("Processing scholar link request")
             # Get applicant name from Firestore
@@ -187,6 +173,7 @@ async def router(request_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
 
         elif request_type == "vectorize-files":
             logger.info("Processing vectorize files request")
+            vectorize_files_service = VectorizeFiles()
             result = await vectorize_files_service.vectorize_file(
                 attorney_id=payload["attorneyId"],
                 applicant_id=payload["applicantId"],
@@ -204,6 +191,7 @@ async def router(request_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
 
         elif request_type == "delete-file-vectors":
             logger.info("Processing delete file vectors request")
+            delete_file_vectors_service = DeleteFileVectors()
             result = await delete_file_vectors_service.delete_vectors(
                 attorney_id=payload["attorneyId"],
                 applicant_id=payload["applicantId"],
@@ -221,6 +209,7 @@ async def router(request_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
 
         elif request_type == "summarize":
             logger.info("Processing summarize request")
+            summarize_workflow = SummarizeWorkflow()
             result = await summarize_workflow.execute_with_ids(
                 attorney_id=payload["attorneyId"], applicant_id=payload["applicantId"]
             )
@@ -233,6 +222,7 @@ async def router(request_type: str, payload: Dict[str, Any]) -> Dict[str, Any]:
 
         elif request_type == "docassist":
             logger.info("Processing docassist request")
+            docassist_workflow = DocAssistWorkflow()
             result = await docassist_workflow.execute_with_ids(
                 attorney_id=payload["attorneyId"],
                 applicant_id=payload["applicantId"],
@@ -277,13 +267,32 @@ def gateway_function(request):
     # Handle CORS preflight requests
     if request.method == "OPTIONS":
         logger.info("Handling CORS preflight request")
-        return ("", 204, CORS_PREFLIGHT_HEADERS)
+        origin = request.headers.get("Origin", "*")
+        request_headers = request.headers.get(
+            "Access-Control-Request-Headers", "Content-Type, Authorization"
+        )
+        request_method = request.headers.get(
+            "Access-Control-Request-Method", "GET, POST, OPTIONS"
+        )
+        preflight_headers = {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Methods": request_method,
+            "Access-Control-Allow-Headers": request_headers,
+            "Access-Control-Max-Age": "3600",
+            "Access-Control-Allow-Credentials": "true",
+            "Vary": "Origin, Access-Control-Request-Headers, Access-Control-Request-Method",
+        }
+        return ("", 204, preflight_headers)
 
     # Set CORS headers for main request
     headers = {
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": request.headers.get("Origin", "*"),
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Headers": request.headers.get(
+            "Access-Control-Request-Headers", "Content-Type, Authorization"
+        ),
+        "Access-Control-Allow-Credentials": "true",
+        "Vary": "Origin, Access-Control-Request-Headers",
     }
 
     try:

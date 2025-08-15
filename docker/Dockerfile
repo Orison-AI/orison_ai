@@ -49,6 +49,8 @@ RUN chmod 755 /app/docker/entrypoint.sh
 
 EXPOSE 5004
 EXPOSE 5005
+EXPOSE 5001
+EXPOSE 5002
 
 RUN echo 'export PYTHONPATH="${PYTHONPATH}:/app/src/"' >> /root/.bashrc
 
