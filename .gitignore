@@ -5,3 +5,48 @@ models/
 vault/
 build/
 .next/
+
+# Google Drive downloads (can be very large)
+src/drive-service/downloads/
+downloads/
+**/downloads/
+
+# Credentials and sensitive files
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!tailwind.config.js
+!postcss.config.js
+!next.config.js
+!firebase.json
+credentials/
+**/credentials/
+.env
+.env.local
+.env.production
+.env.development
+*.key
+*.pem
+*.p12
+*.pfx
+service-account-*.json
+google-credentials.json
+firebase-service-account.json
+
+# Python specific
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Node modules (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
