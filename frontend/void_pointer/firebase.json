@@ -1,0 +1,23 @@
+{
+    "hosting": {
+        "public": "build",
+        "ignore": [
+            "firebase.json",
+            "**/.*",
+            "**/node_modules/**"
+        ],
+        "rewrites": [
+            {
+                "source": "**",
+                "destination": "/index.html"
+            }
+        ]
+    },
+    "functions": {
+        "timeoutSeconds": 540,
+        "memory": "2GB"
+    },
+    "firestore": {
+        "rules": "firestore.rules"
+    }
+}

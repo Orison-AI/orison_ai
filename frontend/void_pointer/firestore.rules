@@ -1,0 +1,48 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Match any top-level collection and document
+    match /{collection}/{attorneyId} {
+      // Match any sub-collection and document within the top-level document
+      // Authenticated user UID match not needed since documents get indexed by attorneyId and applicantId
+      match /{applicantId}/{document=**} {
+        allow read, delete: if request.auth != null;
+        allow write: if request.auth != null;
+      }
+    }
+
+    // Match any top-level collection and document directly (non-nested documents)
+    match /{collection}/{documentId} {
+      // Allow read, write, and delete operations if the attorney_id matches the authenticated user's ID
+      allow read, delete: if request.auth != null && resource.data.attorney_id == request.auth.uid;
+      allow write: if request.auth != null && request.resource.data.attorney_id == request.auth.uid;
+    }
+    
+    // Rule for public questionnaire template that all authenticated users can read
+    match /templates/eb1_a_questionnaire {
+      // Allow read access for all authenticated users
+      allow read: if request.auth != null;
+      
+      // Disallow write and delete operations
+      allow write, delete: if false;
+    }
+
+    // Rule for custom attorney templates
+    match /templates/{document=**} {
+      // Allow the attorney to read, write, and delete their own questionnaire templates
+      allow read, write, delete: if request.auth != null;
+    }
+    
+    // ====== GOOGLE DRIVE CONNECTOR RULES ======
+    // Allow authenticated users to read and write their own jobs
+    match /jobs/{jobId} {
+      allow read, write: if request.auth != null && resource.data.user_id == request.auth.uid;
+    }
+    
+    // Allow authenticated users to read and write their own loaded files
+    match /user_loaded_files/{userId} {
+      allow read, write: if request.auth != null && userId == request.auth.uid;
+    }
+  }
+}
